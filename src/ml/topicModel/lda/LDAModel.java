@@ -18,6 +18,9 @@ public class LDAModel {
     // temp variables for sampling
     private double [] p; 
     
+    private void init(){
+        
+    }
     
     public void saveParamtersToFile(){
         
