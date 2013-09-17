@@ -1,4 +1,4 @@
-package ml.topicModel.lda;
+package ml.topicModel.ngram;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

@@ -1,4 +1,4 @@
-package ml.topicModel.lda;
+package ml.topicModel.ngram;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -189,7 +189,7 @@ public class DataSet{
         Map<Integer, String> indexToToken = new HashMap<Integer, String>();
         for (String token: tokenMap.keySet()){
             int cnt = tokenMap.get(token);
-            if (cnt >= 30 && cnt <= 2000){
+            if (cnt >= 40 && cnt <= 2000){
                 tokenToIndex.put(token, index);
                 indexToToken.put(index, token);
                 index++;
