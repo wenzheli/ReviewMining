@@ -1,6 +1,9 @@
 package ml.topicModel.ngram;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -25,17 +28,24 @@ public class Inference {
         
     }
     
-    public void runSampler(){
+    public void runSampler() throws FileNotFoundException, UnsupportedEncodingException{
         int niter = option.niters;
         for (int itr = 0; itr < niter; itr++){
             System.out.println("gibbs sampling: " + itr + " iteration");
             model.runSampler();
+            
+            if (itr % 50== 0){
+                // we save the results for every 50 iterations...
+                model.updateParamters();
+                printTopWordsFromNGram(itr);
+                printTopWords(itr);
+            }
         }
         
         model.updateParamters();
     }
     
-    public void printTopWords(){
+    public void printTopWords(int itr) throws FileNotFoundException, UnsupportedEncodingException{
       
         double[][] phi = model.getTopicWordDistribution();
         int tTop = option.tWords; // get the tTop words from each topic
@@ -66,9 +76,21 @@ public class Inference {
             
             System.out.println("****************************************");
         }
+        
+        // also, write into file
+        PrintWriter writer = new PrintWriter("result/yelp_unigram-"+itr+".txt", "UTF-8");
+        for (int k = 0; k < option.K; k++){
+            writer.println("Top words for topic: " + k);
+            for (int i = 0; i < topWords[k].length; i++){
+                writer.println(topWords[k][i]);
+            }
+            
+            writer.println("****************************************");
+        }
+        writer.close();
     } 
     
-    public void printTopWordsFromNGram(){
+    public void printTopWordsFromNGram(int itr) throws FileNotFoundException, UnsupportedEncodingException{
         double[][] phi = model.getTopWordsFromNGram();
         Map<Integer, List<Integer>> indexToNGramMap = model.getIndexToNGramMap();
         int vocabSize = indexToNGramMap.keySet().size();
@@ -76,19 +98,14 @@ public class Inference {
         String[][] topWords = new String[option.K][tTop];
         for (int k = 0; k < option.K; k++){
             // select the top words for topic k
-            Map<Double, Integer> map = new TreeMap<Double, Integer>();
+            int[] index = new int[vocabSize];
             for (int v = 0; v < vocabSize; v++){
-                map.put(phi[k][v], v);
+                index[v] = v;
             }
-            
-            Collection<Integer> indices = map.values();
-            Object[] objects =  indices.toArray();
-            int[] sortedIndexs = new int[objects.length];
-            for (int i = 0; i < objects.length; i++){
-                sortedIndexs[i] = Integer.parseInt(objects[i].toString());
-            }
+            QuickSort.quicksort(phi[k], index);
+           
             for (int i = 0; i < tTop; i++){
-                List<Integer> termIndexs = indexToNGramMap.get(sortedIndexs[objects.length-i-1]);
+                List<Integer> termIndexs = indexToNGramMap.get(index[vocabSize-i-1]);
                 topWords[k][i] = convertIndexToWords(termIndexs);
             }
         }
@@ -101,6 +118,19 @@ public class Inference {
             
             System.out.println("****************************************");
         }
+        
+        
+     // also, write into file
+        PrintWriter writer = new PrintWriter("result/yelp_ngram-"+itr+".txt", "UTF-8");
+        for (int k = 0; k < option.K; k++){
+            writer.println("Top words for topic: " + k);
+            for (int i = 0; i < topWords[k].length; i++){
+                writer.println(topWords[k][i]);
+            }
+            
+            writer.println("****************************************");
+        }
+        writer.close();
     }
     
     private String convertIndexToWords(List<Integer> indexs){
@@ -113,21 +143,21 @@ public class Inference {
     }
     
     public static void main(String[] args) throws IOException{
-        DataSet dataset = new DataSet("data/nipstxt", true);
+        DataSet dataset = new DataSet("data/yelp");
         Inference inference = new Inference(dataset);
         Options opt = new Options();
-        opt.alpha = 1;
+        opt.alpha = 5;
         opt.beta = 0.01;
         opt.gamma = 0.1;
         opt.delta = 0.01;
-        opt.niters = 100;
-        opt.K = 50;
+        opt.niters = 10000;
+        opt.K = 10;
         opt.tWords = 20;
         
         inference.initModel(opt);
         inference.runSampler();
         
-        inference.printTopWords();  
-        inference.printTopWordsFromNGram();
+        inference.printTopWords(opt.niters);  
+        inference.printTopWordsFromNGram(opt.niters);
     }
 }

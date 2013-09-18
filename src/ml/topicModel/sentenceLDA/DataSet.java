@@ -1,4 +1,4 @@
-package ml.topicModel.lda;
+package ml.topicModel.sentenceLDA;
 
 import java.io.BufferedReader;
 import java.io.File;

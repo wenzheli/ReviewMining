@@ -1,4 +1,4 @@
-package ml.topicModel.lda;
+package ml.topicModel.sentenceLDA;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -71,13 +71,13 @@ public class Inference {
     
     public static void main(String[] args) throws IOException{
         
-        DataSet dataset = new DataSet("data/yelp");
+        DataSet dataset = new DataSet("data/nipstxt", true);
         Inference inference = new Inference(dataset);
         Options opt = new Options();
         opt.alpha = 1;
         opt.beta = 0.01;
         opt.niters = 2000;
-        opt.K = 10;
+        opt.K = 50;
         opt.tWords = 20;
         
         inference.initModel(opt);
