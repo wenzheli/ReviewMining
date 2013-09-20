@@ -1,24 +1,31 @@
 package ml.topicModel.sentenceLDA;
 
+import ml.topicModel.lda.LatentVariable;
+
 
 public class LDAModel {
  
     private double alpha;
     private double beta;
+    private double gamma;
     
     private int K;  // # of topics
     private int D;  // # of documents in the data set
+    private int S = 2; // # of sentiments
     private int V;  // vocabulary size
     
     private double [][] theta; // document - topic distributions, size D x K
-    private double [][] phi;   // topic-word distributions, size K x V
+    private double [][][] phi;   // sentiment-topic-word distributions, size S * K * V
+    private double [][] pi; // document - sentiment distribution, D * S
     
     private int[][] z; // latent variable, topic assignments for each word. D * document.size()
+    private int[][] l; // latent variable, sentiment assignment for each word. D * document.size()
     
-    private int [][] nTopicWords; // nTopicWords[i][j]: # of instances of word/term j assigned to topic i, size K*V
-    private int [][] nDocTopic;   // nDocTopic[i][j]: # of words in document i that assigned to topic j, size D x K
-    private int [] nWordTopicSum; // nWordTopicSum[j]: total number of words assigned to topic j, size K. 
-    private int [] nWordsSum;     // nWordsSum[i]: total number of words in document i, size D
+    private int [][] nSentimentTopicWords; // nSentimentTopicWords[i][j]:  # of words assigned to sentiment i, and topic j. 
+    private int [][][] nSentimentTopicWordWords; // nSentimentTopicWordWords[i][j][k]: # of word w_{k} assigned to sentiment i, topic j, 
+    private int [][][] nDocSentimentTopicWords; // total number of words in document i, assigned to sentiment j, and topic k. 
+    private int [][] nDocSentimentWords; // nDocSentimentWords[i][j]: total number of words in document i, assigned to sentiment j
+    private int [] nDocWords;     // nWordsSum[i]: total number of words in document i, size D
     
     private DataSet dataset;
      
@@ -27,35 +34,44 @@ public class LDAModel {
         this.alpha = options.alpha;
         this.beta = options.beta;
         this.K = options.K;
+        this.S = options.S;
         this.D = dataset.getDocumentCount();
         this.V = dataset.getVocabulary().getVocabularySize();
-        
         this.dataset = dataset;
         
         // these parameters are sufficient statistics of latent variable Z. We only sample z instead
         theta = new double[D][K];
-        phi = new double[K][V];
+        phi = new double[S][K][V];
         
         // initialize temporary variables
-        nTopicWords = new int[K][V];
-        nDocTopic = new int[D][K];
-        nWordTopicSum = new int[K];
-        nWordsSum = new int[D];
+        nSentimentTopicWords = new int[S][K];
+        nSentimentTopicWordWords = new int[S][K][V];
+        nDocSentimentTopicWords = new int[D][S][K];
+        nDocSentimentWords = new int[D][S];
+        nDocWords = new int[D];
         
+
         // initialize latent variable - z
         z = new int[D][];
+        l = new int[D][];
         for (int i = 0; i < D; i++){
             Document d = dataset.getDocument(i);
             int numTerms = d.getNumOfTokens();
             z[i] = new int[numTerms];
+            l[i] = new int[numTerms];
             for (int j = 0; j < numTerms; j++){
                 int randTopic = (int)(Math.random() * K);
+                int randSentiment = (int)(Math.random() * S);
                 z[i][j] = randTopic;
-                nTopicWords[randTopic][d.getToken(j)]++;
-                nDocTopic[i][randTopic]++;
-                nWordTopicSum[randTopic]++;      
+                l[i][j] = randSentiment;
+                
+                nSentimentTopicWords[randSentiment][randTopic]++;
+                nSentimentTopicWordWords[randSentiment][randTopic][d.getToken(j)]++;
+                nDocSentimentTopicWords[i][randSentiment][randTopic]++;
+                nDocSentimentWords[i][randSentiment]++;
+                nDocWords[i]++;
+                
             }
-            nWordsSum[i] = numTerms;
         }   
     }
     
@@ -65,8 +81,9 @@ public class LDAModel {
             Document d = dataset.getDocument(i);
             for (int j = 0; j < d.getNumOfTokens(); j++){
                 // random sample z[i][j] 
-                int newTopic = sampleNewTopic(i,j);
-                z[i][j] = newTopic;
+                LatentVariable latentVariable = sample(i,j);
+                z[i][j] = latentVariable.getTopic();
+                l[i][j] = latentVariable.getSentiment();
             }
         }
     }

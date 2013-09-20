@@ -8,5 +8,6 @@ public class Options {
     public int liter = 80;     // the iteration at which the model was saved  
     public int savestep = 10;  // saving period
     public int tWords = 10;    // # of top words to display
-    public int K = 50;         // # of topics we learn from the model. 
+    public int K = 50;         // # of topics we learn from the model.
+    public int S = 2;          // # of sentiments
 }

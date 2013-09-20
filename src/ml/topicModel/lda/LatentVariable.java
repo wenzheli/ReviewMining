@@ -2,18 +2,18 @@ package ml.topicModel.lda;
 
 public class LatentVariable {
     private int topic;
-    private int indicator;
+    private int sentiment;
     
-    public LatentVariable(int topic, int indicator){
+    public LatentVariable(int topic, int sentiment){
         this.topic = topic;
-        this.indicator = indicator;
+        this.sentiment = sentiment;
     }
     
     public int getTopic(){
         return topic;
     }
     
-    public int getIndicator(){
-        return indicator;
+    public int getSentiment(){
+        return sentiment;
     }
 }

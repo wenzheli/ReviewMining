@@ -1,6 +1,5 @@
 package ml.topicModel.ngram;
 
-import ml.topicModel.lda.LatentVariable;
 
 public class DistributionUtils {
     /**

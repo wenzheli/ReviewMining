@@ -1,4 +1,4 @@
-package ml.topicModel.sentenceLDA;
+package ml.topicModel.ngram;
 
 public class LatentVariable {
     private int topic;
