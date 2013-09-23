@@ -152,42 +152,22 @@ public class NGramModel {
         // update nTopicPreWordIndicator and nTopicPreWordIndicatorSum
         if (j == 0){
             nTopicPreWordIndicator[K][V][oldIndicatorValue]--;
-            if (nTopicPreWordIndicator[K][V][oldIndicatorValue]<0){
-                int aa =1;
-            }
             nTopicPreWordIndicatorSum[K][V]--;
-            if (nTopicPreWordIndicatorSum[K][V] <0){
-                int aa = 1;
-            }
+          
             // and not the last word
             if (j < termCnt - 1){
                 nTopicPreWordIndicator[oldTopic][d.getToken(j)][x[i][j+1]]--;
-                if( nTopicPreWordIndicator[oldTopic][d.getToken(j)][x[i][j+1]]<0){
-                    int aa =1;
-                }
                 nTopicPreWordIndicatorSum[oldTopic][d.getToken(j)]--;
-                if (nTopicPreWordIndicatorSum[oldTopic][d.getToken(j)]<0){
-                    int aa =1;
-                }
+               
             }
         } else {
             nTopicPreWordIndicator[z[i][j-1]][d.getToken(j-1)][oldIndicatorValue]--;
-            if(nTopicPreWordIndicator[z[i][j-1]][d.getToken(j-1)][oldIndicatorValue]<0){
-                int aa =1;
-            }
             nTopicPreWordIndicatorSum[z[i][j-1]][d.getToken(j-1)]--;
-            if(nTopicPreWordIndicatorSum[z[i][j-1]][d.getToken(j-1)]<0){
-                int aa =1;
-            }
+
             if (j < termCnt - 1){
                 nTopicPreWordIndicator[oldTopic][d.getToken(j)][x[i][j+1]]--;
-                if( nTopicPreWordIndicator[oldTopic][d.getToken(j)][x[i][j+1]] <0){
-                    int aa = 1;
-                }
                 nTopicPreWordIndicatorSum[oldTopic][d.getToken(j)]--;
-                if(nTopicPreWordIndicatorSum[oldTopic][d.getToken(j)] < 0){
-                    int aa =1;
-                }
+                
             }
         }
         
@@ -200,24 +180,9 @@ public class NGramModel {
                 nTopicPrevWordWord[oldTopic][V][d.getToken(j)]--;
                 nTopicPreWord[oldTopic][V]--; 
                 
-                if(nTopicPreWord[oldTopic][V]<0){
-                    int aa =1;
-                }
-                if(nTopicPrevWordWord[oldTopic][V][d.getToken(j)]<0){
-                    int aa =1;
-                }
-                      
             } else{ 
                 nTopicPrevWordWord[oldTopic][d.getToken(j-1)][d.getToken(j)]--;
                 nTopicPreWord[oldTopic][d.getToken(j-1)]--;
-                
-                if(nTopicPrevWordWord[oldTopic][d.getToken(j-1)][d.getToken(j)]<0){
-                    int aa =1;
-                }
-                
-                if(nTopicPreWord[oldTopic][d.getToken(j-1)]<0){
-                    int aa =1;
-                }   
             }
         }
         
