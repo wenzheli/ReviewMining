@@ -69,7 +69,7 @@ public class StopWords {
     add("actually");
     add("after");
     add("afterwards");
-    add("again");
+    //add("again");
     add("against");
     add("all");
     add("allow");
@@ -109,7 +109,7 @@ public class StopWords {
     add("at");
     add("available");
     add("away");
-    add("awfully");
+    //add("awfully");
     add("b");
     add("be");
     add("became");
@@ -126,8 +126,8 @@ public class StopWords {
     add("below");
     add("beside");
     add("besides");
-    add("best");
-    add("better");
+    //add("best");
+    //add("better");
     add("between");
     add("beyond");
     add("both");
@@ -137,9 +137,9 @@ public class StopWords {
     add("c");
     add("came");
     add("can");
-    add("certain");
-    add("certainly");
-    add("clearly");
+    //add("certain");
+    //add("certainly");
+    //add("clearly");
     add("co");
     add("com");
     add("come");
@@ -152,9 +152,9 @@ public class StopWords {
     add("course");
     add("currently");
     add("d");
-    add("definitely");
+    //add("definitely");
     add("described");
-    add("despite");
+    //add("despite");
     add("did");
     add("different");
     add("do");
@@ -172,7 +172,7 @@ public class StopWords {
     add("either");
     add("else");
     add("elsewhere");
-    add("enough");
+    //add("enough");
     add("entirely");
     add("especially");
     add("et");
@@ -185,12 +185,12 @@ public class StopWords {
     add("everything");
     add("everywhere");
     add("ex");
-    add("exactly");
+    //add("exactly");
     add("example");
     add("except");
     add("f");
-    add("far");
-    add("few");
+    //add("far");
+    //add("few");
     add("fifth");
     add("first");
     add("five");
@@ -221,7 +221,7 @@ public class StopWords {
     add("h");
     add("had");
     add("happens");
-    add("hardly");
+   //add("hardly");
     add("has");
     add("have");
     add("having");
@@ -319,7 +319,7 @@ public class StopWords {
     add("nd");
     add("near");
     add("nearly");
-    add("necessary");
+    //add("necessary");
     add("need");
     add("needs");
     //add("neither");
@@ -351,7 +351,7 @@ public class StopWords {
     add("off");
     add("often");
     add("oh");
-    add("ok");
+    //add("ok");
     //add("okay");
     //add("old");
     add("on");
@@ -422,7 +422,7 @@ public class StopWords {
     add("sensible");
     add("sent");
     add("serious");
-    add("seriously");
+    //add("seriously");
     add("seven");
     add("several");
     add("shall");
@@ -591,16 +591,16 @@ public class StopWords {
     add("she'll");
     add("he'll");
     add("it's");
-    add("don't");
-    add("can't");
-    add("didn't");
+    //add("don't");
+    //add("can't");
+    //add("didn't");
     add("i've");
     add("that's");
     add("there's");
-    add("isn't");
+    //add("isn't");
     add("what's");
     add("rt");
-    add("doesn't");
+    //add("doesn't");
     add("w/");
     add("w/o");
   }

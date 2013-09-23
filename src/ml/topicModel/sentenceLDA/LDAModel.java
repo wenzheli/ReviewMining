@@ -7,7 +7,7 @@ public class LDAModel {
  
     private double alpha;
     private double beta;
-    private double gamma;
+    private double[] gamma;
     
     private int K;  // # of topics
     private int D;  // # of documents in the data set
@@ -30,9 +30,12 @@ public class LDAModel {
     private DataSet dataset;
      
     // initialize parameters. 
-    public void init(Options options, DataSet dataset){
+    public void init(Options options, DataSet dataset, Vocabulary vocab){
         this.alpha = options.alpha;
         this.beta = options.beta;
+        this.gamma = new double[2];
+        gamma[0] = 1;
+        gamma[1] = 1;
         this.K = options.K;
         this.S = options.S;
         this.D = dataset.getDocumentCount();
@@ -42,6 +45,7 @@ public class LDAModel {
         // these parameters are sufficient statistics of latent variable Z. We only sample z instead
         theta = new double[D][K];
         phi = new double[S][K][V];
+        pi = new double[D][S];
         
         // initialize temporary variables
         nSentimentTopicWords = new int[S][K];
@@ -63,12 +67,18 @@ public class LDAModel {
                 int randTopic = (int)(Math.random() * K);
                 int randSentiment = (int)(Math.random() * S);
                 z[i][j] = randTopic;
-                l[i][j] = randSentiment;
                 
-                nSentimentTopicWords[randSentiment][randTopic]++;
-                nSentimentTopicWordWords[randSentiment][randTopic][d.getToken(j)]++;
-                nDocSentimentTopicWords[i][randSentiment][randTopic]++;
-                nDocSentimentWords[i][randSentiment]++;
+                if (vocab.isPositiveWord(d.getToken(j)))
+                    l[i][j] = 0;
+                else if (vocab.isNegativeWord(d.getToken(j)))
+                    l[i][j] = 1;
+                else
+                    l[i][j] = randSentiment;
+                
+                nSentimentTopicWords[l[i][j]][randTopic]++;
+                nSentimentTopicWordWords[l[i][j]][randTopic][d.getToken(j)]++;
+                nDocSentimentTopicWords[i][l[i][j]][randTopic]++;
+                nDocSentimentWords[i][l[i][j]]++;
                 nDocWords[i]++;
                 
             }
@@ -88,44 +98,76 @@ public class LDAModel {
         }
     }
     
-    private int sampleNewTopic(int i,  int j){
+    private LatentVariable sample(int i,  int j){
         Document d = dataset.getDocument(i);
         int oldTopic = z[i][j];
-        nTopicWords[oldTopic][d.getToken(j)]--;
-        nDocTopic[i][oldTopic]--;
-        nWordTopicSum[oldTopic]--;
-        nWordsSum[i]--;
+        int oldSentiment = l[i][j];
+        nSentimentTopicWords[oldSentiment][oldTopic]--;
+        if (nSentimentTopicWords[oldSentiment][oldTopic] < 0){
+            int aa =1;
+        }
+            
+        nSentimentTopicWordWords[oldSentiment][oldTopic][d.getToken(j)]--;
+        if (nSentimentTopicWordWords[oldSentiment][oldTopic][d.getToken(j)] < 0){
+            int aa =1;
+        }
+        nDocSentimentTopicWords[i][oldSentiment][oldTopic]--;
+        if ( nDocSentimentTopicWords[i][oldSentiment][oldTopic] < 0){
+            int aa =1;
+        }
+        nDocSentimentWords[i][oldSentiment]--;
+        if (nDocSentimentWords[i][oldSentiment] < 0){
+            int aa =1;
+        }
+        nDocWords[i]--;
+        if (nDocWords[i] < 0){
+            int aa =1;
+        }
         
         // compute p(z[i][j]|*)
-        double[] p = new double[K];
-        for (int k = 0; k < K; k++){
-            p[k] = ((alpha + nDocTopic[i][k])/(K*alpha + nWordsSum[i])) 
-                    * ((beta+nTopicWords[k][d.getToken(j)])/(V*beta+nWordTopicSum[k]));
+        double[][] p = new double[S][K];
+        for (int s = 0; s < S; s++){
+            for (int k = 0; k < K; k++){
+                p[s][k] = ((alpha + nDocSentimentTopicWords[i][s][k])/(K*alpha + nDocSentimentWords[i][s])) 
+                        * ((beta+nSentimentTopicWordWords[s][k][d.getToken(j)])/(V*beta+nSentimentTopicWords[s][k]))
+                        * ((gamma[s] + nDocSentimentWords[i][s])/(gamma[0]+gamma[1] + nDocWords[i]));
+            } 
         }
         
         // sample the topic topic from the distribution p[j].
-        int newTopic = DistributionUtils.getSample(p);
+        LatentVariable latentVariable = DistributionUtils.getSample(p);
+        int newTopic = latentVariable.getTopic();
+        int newSentiment = latentVariable.getSentiment();
         
-        nTopicWords[newTopic][d.getToken(j)]++;
-        nDocTopic[i][newTopic]++;
-        nWordTopicSum[newTopic]++;
-        nWordsSum[i]++;
+        nSentimentTopicWords[newSentiment][newTopic]++;
+        nSentimentTopicWordWords[newSentiment][newTopic][d.getToken(j)]++;
+        nDocSentimentTopicWords[i][newSentiment][newTopic]++;
+        nDocSentimentWords[i][newSentiment]++;
+        nDocWords[i]++;
         
-        return newTopic;
+        return latentVariable;
     }
     
     public void updateParamters(){
         // update theta
-        for (int i = 0; i < D; i++){
+        //for (int i = 0; i < D; i++){
+        //    for (int k = 0; k < K; k++){
+        //        theta[i][k] = (alpha + nDocTopic[i][k]) / (K * alpha + nWordsSum[i]);
+        //    }
+        //}
+        
+        // update phi
+        for (int s = 0; s < S; s++){
             for (int k = 0; k < K; k++){
-                theta[i][k] = (alpha + nDocTopic[i][k]) / (K * alpha + nWordsSum[i]);
+                for (int v = 0; v < V; v++){
+                    phi[s][k][v] = (beta + nSentimentTopicWordWords[s][k][v]) / (V * beta + nSentimentTopicWords[s][k]); 
+                }
             }
         }
         
-        // update phi
-        for (int k = 0; k < K; k++){
-            for (int v = 0; v < V; v++){
-                phi[k][v] = (beta + nTopicWords[k][v]) / (V * beta + nWordTopicSum[k]); 
+        for (int i = 0; i < D; i++){
+            for (int s = 0; s < S; s++){
+                pi[i][s] = ((gamma[s] + nDocSentimentWords[i][s])/(gamma[0] + gamma[1] + nDocWords[i]));
             }
         }
     }
@@ -134,7 +176,11 @@ public class LDAModel {
         return theta;
     }
     
-    public double[][] getTopicWordDistribution(){
+    public double[][][] getTopicWordDistribution(){
         return phi;
+    }
+    
+    public double[][] getSentimentDistribution(){
+        return pi;
     }
 }

@@ -43,52 +43,13 @@ public class DistributionUtils {
                 break;
         }
         int topic;
-        int indicatorValue;
+        int sentiment;
         
       
-            topic = idx/2;
-            indicatorValue = idx%2;
+            sentiment = idx/50;
+            topic = idx%50;
      
-        return new LatentVariable(topic, indicatorValue);
+        return new LatentVariable(topic, sentiment);
     }
-    
-    public static void main(String[] args){
-        double[][] p = new double[3][2];
-        p[0][0] = 0;
-        p[0][1] = 10;
-        p[1][0] = 0;
-        p[1][1] = 0;
-        p[2][0] = 10;
-        p[2][1] = 0;    
-        
-        LatentVariable l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        l = DistributionUtils.getSample(p);
-        System.out.println(l.getTopic() + ", " + l.getIndicator());
-        
-    }
+   
 }
