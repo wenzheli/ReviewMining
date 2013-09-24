@@ -1,0 +1,337 @@
+Policy Search via Density Estimation 
+Andrew Y. Ng 
+Computer Science Division 
+U.C. Berkeley 
+Berkeley, CA 94720 
+ang @ cs. berkeley. edu 
+Ronald Parr 
+Computer Science Dept. 
+Stanford University 
+Stanford, CA 94305 
+parr @ cs. stanford. edu 
+Daphne Koller 
+Computer Science Dept. 
+Stanford University 
+Stanford, CA 94305 
+kolle r@ cs. stanfo rd. edu 
+Abstract 
+We propose a new approach to the problem of searching a space of 
+stochastic controllers for a Markov decision process (MDP) or a partially 
+observable Markov decision process (POMDP). Following several other 
+authors, our approach is based on searching in parameterized families 
+of policies (for example, via gradient descent) to optimize solution qual- 
+ity. However, rather than trying to estimate the values and derivatives 
+of a policy directly, we do so indirectly using estimates for the proba- 
+bility densities that the policy induces on states at the different points 
+in time. This enables our algorithms to exploit the many techniques for 
+efficient and robust approximate density propagation in stochastic sys- 
+tems. We show how our techniques can be applied both to deterministic 
+propagation schemes (where the MDP's dynamics are given explicitly in 
+compact form,) and to stochastic propagation schemes (where we have 
+access only to a generative model, or simulator, of the MDP). We present 
+empirical results for both of these variants on complex problems. 
+1 Introduction 
+In recent years, there has been growing interest in algorithms for approximate planning 
+in (exponentially or even infinitely) large Markov decision processes (MDPs) and par- 
+tially observable MDPs (POMDPs). For such large domains, the value and Q-functions 
+are sometimes complicated and difficult to approximate, even though there may be simple, 
+compactly representable policies which perform very well. This observation has led to par- 
+ticular interest in direct policy search methods (e.g., [9, 8, 1]), which attempt to choose a 
+good policy from some restricted class II of policies. In our setting, II = {ro: 0 C I ' } is 
+a class of policies smoothly parameterized by 0 C 11 m . If the value of ro is differentiable 
+in 0, then gradient ascent methods may be used to find a locally optimal 'o. However, 
+estimating values of ro (and the associated gradient) is often far from trivial. One simple 
+method for estimating ro's value involves executing one or more Monte Carlo trajectories 
+using ro, and then taking the average empirical return; cleverer algorithms executing sin- 
+gle trajectories also allow gradient estimates [9, 1]. These methods have become a standard 
+approach to policy search, and sometimes work fairly well. 
+In this paper, we propose a somewhat different approach to this value/gradient estimation 
+problem. Rather than estimating these quantities directly, we estimate the probability den- 
+sity over the states of the system induced by ro at different points in time. These time slice 
+Policy Search via Density Estimation 1023 
+densities completely determine the value of the policy 7to. While density estimation is not 
+an easy problem, we can utilize existing approaches to density propagation [3, 5], which al- 
+low users to specify prior knowledge about the densities, and which have also been shown, 
+both theoretically and empirically, to provide robust estimates for time slice densities. We 
+show how direct policy search can be implemented using this approach in two very differ- 
+ent settings of the planning problem: In the first, we have access to an explicit model of the 
+system dynamics, allowing us to provide an explicit algebraic operator that implements the 
+approximate density propagation process. In the second, we have access only to a genera- 
+tive model of the dynamics (which allows us only to sample from, but does not provide an 
+explicit representation of, next-state distributions). We show how both of our techniques 
+can be combined with gradient ascent in order to perform policy search, a somewhat subtle 
+argument in the case of the sampling-based approach. We also present empirical results for 
+both variants in complex domains. 
+2 Problem description 
+A Markov Decision Process (MDP) is a tuple (S, so, A,/, P) where:  S is a (possibly 
+infinite) set of states; so C $ is a start state; A is a finite set of actions; / is a reward 
+function trl ß S  [0,/,n:]; P is a transition model P ß S x A  As, such that 
+P( s I s, a) gives the probability of landing in state s  upon taking action a in state s. 
+A stochastic policy is a map 7r ß $  AA, where 7r(a I s) is the probability of taking action 
+a in state s. There are many ways of defining a policy 7r's "quality" or value. For a horizon 
+T and discount factor 3`, the finite horizon discounted value function VT,. [7r] is defined by 
+V0,7171-]($ ) -- .R($); Vt+1,7171-]($) -- ]($) q- 3` Ea 71'(a I $) Es, P(s' l s,a)¬,,[w](s'). 
+For an infinite state space (here and below), the summation is replaced by an integral. We 
+can now define several optimality criteria. The finite horizon total reward with horizon 
+T is Vy[7r] = Vy, l[7r](so). The infinite horizon discounted reward with discount 3' < 
+1 is V.[7r] = limr_, VT,,[7r](so). The infinite horizon average reward is V,a[7r ] = 
+limT_ 1 
+ VT, 1 [7r] (So), where we assume that the limit exists. 
+Fix an optimality criterion V. Our goal is to find a policy that has a high value. As dis- 
+cussed, we assume we have a restricted set II of policies, and wish to select a good 7r C II. 
+We assume that II - {7to ] 0  11 m } is a set of policies parameterized by 0  11 m, and 
+that 7to (a I s) is continuously differentiable in 0 for each s, a. As a very simple example, 
+we may have a one-dimensional state, two-action MDP with "sigmoidal" 7to, such that the 
+probability of choosing action ao at state x is 7ro(ao [ x) = 1/(1 + exp(-0 - 02x)). 
+Note that this framework also encompasses cases where our family II consists of policies 
+that depend only on certain aspects of the state. In particular, in POMDPs, we can restrict 
+attention to policies that depend only on the observables. This restriction results in a sub- 
+class of stochastic memory-free policies. By introducing artificial "memory bits" into the 
+process state, we can also define stochastic limited-memory policies. [6] 
+Each 0 has a value V[O] = V[7ro], as specified above. To find the best policy in II, we can 
+search for the 0 that maximizes V[O]. If we can compute or approximate V[O], there are 
+many algorithms that can be used to find a local maximum. Some, such as NeMer-Mead 
+simplex search (not to be confused with the simplex algorithm for linear programs), require 
+only the ability to evaluate the function being optimized at any point. If we can compute 
+or estimate V[O]'s gradient with respect to 0, we can also use a variety of (deterministic or 
+stochastic) gradient ascent methods. 
+We write rewards as R(s) rather than R(s, a), and assume a single start state rather than an 
+initial-state distribution, only to simplify exposition; these and several other minor extensions are 
+trivial. 
+1024 A. Y. Ng, R. Parr and D. Koller 
+3 Densities and value functions 
+Most optimization algorithms require some method for computing V[O] for any 0 (and 
+sometimes also its gradient). In many real-life MDPs, however, doing so exactly is com- 
+pletely infeasible, due to the large or even infinite number of states. Here, we will consider 
+an approach to estimating these quantities, based on a density-based reformulation of the 
+value function expression. A policy r induces a probability distribution over the states at 
+each time t. Letting ½(o) be the initial distribution (giving probability 1 to so), we define 
+the time slice distributions via the recurrence: 
+(1) 
+It is easy to verify that the standard notions of value defined earlier can reformulated in 
+terms of ½(t). e.g., Vr,,[r](so) r 
+, -- Y'-t=0 ß R), where ß is the dot-product operation 
+(equivalently, the expectation of R with respect to ½(t)). Somewhat more subtly, for the 
+case of infinite horizon average reward, we have that V, vg [r] = ½() ß R, where ½() is 
+the limiting distribution of (1), if one exists. 
+This reformulation gives us an alternative approach to evaluating the value of a policy ro' 
+we first compute the time slice densities ½(t) (or ½()), and then use them to compute the 
+value. Unfortunately, that modification, by itself, does not resolve the difficulty. Repre- 
+senting and computing probability densities over large or infinite spaces is often no easier 
+than representing and computing value functions. However, several results [3, 5] indicate 
+that representing and computing high-quality approximate densities may often be quite 
+feasible. The general approach is an approximate density propagation algorithm, using 
+time-slice distributions in some restricted family  For example, in continuous spaces, E 
+might be the set of multivariate Gaussians. 
+The approximate propagation algorithm modifies equation (1) to maintain the time-slice 
+densities in E. More precisely, for a policy ro, we can view (1) as defining an operator 
+(I)[0] that takes one distribution in As and returns another. For our current policy roo, 
+we can rewrite (1) as: ½(t+) = (i)[0o](½(t)). In most cases, E will not be closed under 
+(I); approximate density propagation algorithms use some alternative operator , with the 
+properties that, for ½ 6 =' (a) (½) is also in E, and (b) (½) is (hopefully)close to (1)(6). 
+We use ,[0] to denote the approximation to (I)[0], and ((t) to denote (,[0])(t)(½(ø)). If 
+, is selected carefully, it is often the case that ((t) is close to ½(t). Indeed, a standard 
+contraction analysis for stochastic processes can be used to show: 
+Proposition 1 Assume that for all t, I1(I)(½ ('9) - '(((*))ll -< - Then there exists some 
+constant/X such that for all t, 
+In some cases, ,X might be arbitrarily small, in which case the proposition is meaningless. 
+However, there are many systems where/X is reasonable (and independent of e) [3]. Fur- 
+thermore, empirical results also show that approximate density propagation can often track 
+the exact time slice distributions quite accurately. 
+Approximate tracking can now be applied to our planning task. Given an optimality crite- 
+rion V expressed with ½(t) s, we define an approximation 1 to it by replacing each ½(t) with 
+((t), e.g., ½T,h,[71-](8O) T 
+-- Y-t=0 3/t (t) ' t. Accuracy guarantees on approximate tracking 
+induce comparable guarantees on the value approximation; from this, guarantees on the 
+^ 
+performance of a policy r b found by optimizing V are also possible: 
+Proposition 2 Assume that, for all t, we have that - ½c*)111 Then for each fixed 
+T, %' IVT,.[r](so)- T,,-),[71-1($o)1--- O((). 
+Policy Search via Density Estimation 1025 
+Proposition3 Let 0* -- argmaxo VIOl and  = argmaxo 1[0]. /f maxo IV[0] - 
+01011 _< e, then V[0*] - V[O] _< 2e. 
+4 Differentiating approximate densities 
+In this section we discuss two very different techniques for maintaining an approximate 
+density ½(t) using an approximate propagation operator , and show when and how they 
+can be combined with gradient ascent to perform policy search. In general, we will assume 
+that E is a family of distributions parameterized by  C 11  . For example, if E is the set 
+of d-dimensional multivariate Gaussians with diagonal covariance matrices,  would be a 
+2d-dimensional vector, specifying the mean vector and the covariance matrix's diagonal. 
+Now, consider the task of doing gradient ascent over the space of policies, using some 
+optimality criterion 1, say lrT,7[O ]. Differentiating it relative to 0, we get 701rr,710 ] : 
+r t ½(*) . R. To avoid introducing new notation, we also use ½(t) to denote the as- 
+Et=O t dO 
+sociated vector of parameters  c I  . These parameters are a function of O. Hence, the 
+internal gradient term is represented by an g x m Jacobian matrix, with entries representing 
+the derivative of a parameter i relative to a parameter Oj. This gradient can be computed 
+using a simple recurrence, based on the chain rule for derivatives: 
+--(Oo). (2) 
+The first summand (an  x m Jacobian) is the derivative of the transition operator  relative 
+to the policy parameters 0. The second is a product of two terms: the derivative of , 
+relative to the distribution parameters, and the result of the previous step in the recurrence. 
+4.1 Deterministic density propagation 
+Consider a transition operator ß (for simplicity, we omit the dependence on 0). The idea in 
+this approach is to try to get  (½) to be as close as possible to ß (½), subject to the constraint 
+^ ^ 
+that (½)  E. Specifically, we define a projection operator F that takes a distribution b 
+not in E, and returns a distribution in E which is closest (in some sense) to b. We then 
+define (½) = F((½)). In order to ensure that gradient descent applies in this setting, 
+we need only ensure that F and ß are differentiable functions. Clearly, there are many 
+instantiations of this idea for which this assumption holds. We provide two examples. 
+Consider a continuous-state process with nonlinear dynamics, where ß is a mixture of 
+conditional linear Gaussians. We can define E to be the set of multivariate Gaussians. 
+The operator F takes a distribution (a mixture of gaussians) b and computes its mean 
+and covariance matrix. This can be easily computed from 's parameters using simple 
+differentiable algebraic operations. 
+A very different example is the algorithm of [3] for approximate density propagation in 
+dynamic Bayesian networks (DBNs). A DBN is a structured representation of a stochastic 
+process, that exploits conditional independence properties of the distribution to allow com- 
+pact representation. In a DBN, the state space is defined as a set of possible assignments 
+a: to a set of random variables X,... , Xn. The transition model P(a? [ a:) is described 
+using a Bayesian network fragment over the nodes {X,..., X,, XI,..., X}. A node 
+Xi represents X? ) and X represents X? +). The nodes Xi in the network are forced 
+to be roots (i.e., have no parents), and are not associated with conditional probability dis- 
+tributions. Each node X is associated with a conditional probability distribution (CPD), 
+which specifies P(X [ Parents(X)). The transition probability P(Xt[ X) is defined as 
+1026 A. Y. Ng, R. Parr and D. Koller 
+I-[i P(X I Parents(X)). DBNs support a compact representation of complex transition 
+models in MDPs [2]. We can extend the DBN to encode the behavior of an MDP with a 
+stochastic policy r by introducing a new random variable A representing the action taken 
+at the current time. The parents of A will be those variables in the state on which the action 
+is allowed to depend. The CPD of A (which may be compactly represented with function 
+approximation) is the distribution over actions defined by r for the different contexts. 
+In discrete DBNs, the number of states grows exponentially with the number of state vari- 
+ables, making an explicit representation of a joint distribution impractical. The algorithm 
+of [3] defines E to be a set of distributions defined compactly as a set of marginals over 
+smaller clusters of variables. In the simplest example, E is the set of distributions where 
+X,... , X, are independent. The parameters  defining a distribution in E are the param- 
+eters of n multinomials. The projection operator F simply marginalizes distributions onto 
+the individual variables, and is differentiable. One useful corollary of [3]'s analysis is that 
+the decay rate of a structured ' over E can often be much higher than the decay rate of 
+ß , so that multiple applications of  can converge very rapidly to a stationary distribution; 
+this property is very useful when approximating p(m) to optimize relative to V, v9. 
+4.2 Stochastic density propagation 
+In many settings, the assumption that we have direct access to ß is too strong. A weaker 
+assumption is that we have access to a generative model -- a black box from which we 
+can generate samples with the appropriate distribution; i.e., for any s, a, we can generate 
+samples s t from P(s' I s, a). In this case, we use a different approximation scheme, 
+based 6n [5]. The operator , is a stochastic operator. It takes the distribution ½, and 
+generates some number of random state samples si from it. Then, for each si and each 
+action a, we generate a sample s' i from the transition distribution P(. I si, a). This sample 
+(si, ai, si) is then assigned a weight wi = ro(ai I si), to compensate for the fact that not 
+all actions would have been selected by ro with equal probability. The resulting set of N 
+samples si weighted by the wis is given as input to a statistical density estimator, which 
+uses it to estimate a new density ½. We assume that the density estimation procedure is a 
+differentiable function of the weights, often a reasonable assumption. 
+Clearly, this , can be used to compute ½(t) for any t, and thereby approximate ro's value. 
+However, the gradient computation for  is far from trivial. In particular, to compute the 
+derivative 0'/0, we must consider ,'s behavior for some perturbed ½?) other than the 
+one (say, ½(o t)) to which it was applied originally. In this case, an entirely different set of 
+samples would probably have been generated, possibly leading to a very different density. 
+It is hard to see how one could differentiate the result of this perturbation. We propose an 
+alternative solution based on importance sampling. Rather than change the samples, we 
+modify their weights to reflect the change in the probability that they would be generated. 
+Specifically, when fitting ½t+), we now define a sample (si, ai, s:)'s weight to be 
+w,(½?,o) -- Is,) (3) 
+We can now compute "s derivatives at (0o, ½(o t)) with respect to any of its parameters, as 
+required in (2). Let ( be the vector of parameters (0, ). Using the chain rule, we have 
+o,i,[o](½) o4[o1(½) 
+The first term is the derivative of the estimated density relative to the sample weights (an 
+œ x N matrix). The second is the derivative of the weights relative to the parameter vector 
+(an N x (m + œ) Jacobian), which can easily be computed from (3). 
+Policy Search via Density Estimation 1027 
+0.42 
+0.4 
+038 
+0.36 
+(' 0.32 
+0.28 
+026 
+024 
+0 
+Actual avg. cost 
+Estimatedavg. cost 
+50 100 150 200 250 300 350 400 450 
+#Function evaluations 
+(a) (b) 
+Figure 1: Driving task: (a) DBN model; (b) policy-search/optimization results (with 1 s.e.) 
+5 Experimental results 
+We tested our approach in two very different domains. The first is an average-reward 
+DBN-MDP problem (shown in Figure 1 (a)), where the task is to find a policy for changing 
+lanes when driving on a moderately busy two-lane highway with a slow lane and a fast 
+lane. The model is based on the BAT DBN of [4], the result of a separate effort to build a 
+good model of driver behavior. For simplicity, we assume that the car's speed is controlled 
+automatically, so we are concerned only with choosing the Lateral Action - change lane or 
+drive straight. The observables are shown in the figure: LClr and RClr are the clearance to 
+the next car in each lane (close, medium or far). The agent pays a cost of 1 for each step 
+it is "blocked" by (meaning driving close to) the car to its front; it pays a penalty of 0.2 
+per step for staying in the fast lane. Policies are specified by action probabilities for the 18 
+possible observation combinations. Since this is a reasonably small number of parameters, 
+we used the simplex search algorithm described earlier to optimize 1 [0]. 
+The process mixed quite quickly, so ½(2o) was a fairly good approximation to ½().  used 
+a fully factored representation of the joint distribution except for a single cluster over the 
+three observables. Evaluations are averages of 300 Monte Carlo trials of 400 steps each. 
+Figure l(b) shows the estimated and actual average rewards, as the policy parameters are 
+evolved over time. The algorithm improved quickly, converging to a very natural policy 
+with the car generally staying in the slow lane, and switching to the fast lane only when 
+necessary to overtake. 
+In our second experiment, we used the bicycle simulator of [7]. There are 9 actions cor- 
+responding to leaning leftYcenter/right and applying negative/zero/positive torque to the 
+handlebar; the six-dimensional state used in [7] includes variables for the bicycle's tilt an- 
+gle and orientation, and the handlebar's angle. If the bicycle tilt exceeds 7r/15, it falls over 
+and enters an absorbing state. We used policy search over the following space: we selected 
+twelve (simple, manually chosen but not fine-tuned) features of each state; actions were 
+chosen with a softmax -- the probability of taking action ai is exp (a: .wi) / Y']j exp (a: .w j). 
+As the problem only comes with a generative model of the complicated, nonlinear, noisy 
+bicycle dynamics, we used the stochastic density propagation version of our algorithm, 
+with (stochastic) gradient ascent. Each distribution in E was a mixture of a singleton point 
+consisting of the absorbing-state, and of a 6-D multivariate Gaussian. 
+1028 A. Y. Ng, R. Parr and D. Koller 
+The first task in this domain was to balance reliably on the bicycle. Using a horizon of 
+T -- 200, discount 3' -- 0.995, and 600 si samples per density propagation step, this was 
+quickly achieved. Next, trying to learn to ride to a goal 2 10m in radius and 1000m away, 
+it also succeeded in finding policies that do so reliably. Formal evaluation is difficult, but 
+this is a sufficiently hard problem that even finding a solution can be considered a success. 
+There was also some slight parameter sensitivity (and the best results were obtained only 
+with ½(o) picked/fit with some care, using in part data from earlier and less successful trials, 
+to be "representative" of a fairly good rider's state distribution,) but using this algorithm, 
+we were able to obtain solutions with median riding distances under 1.1 km to the goal. This 
+is significantly better than the results of [7] (obtained in the learning rather than planning 
+setting, and using a value-function approximation solution), which reported much larger 
+riding distances to the goal of about 7km, and a single "best-ever" trial of about 1.7km. 
+6 Conclusions 
+We have presented two new variants of algorithms for performing direct policy search in 
+the deterministic and stochastic density propagation settings. Our empirical results have 
+also shown these methods working well on two large problems. 
+Acknowledgements. We warmly thank Kevin Murphy for use of and help with his Bayes 
+Net Toolbox, and Jette Rand10v and Preben Alstr0m for use of their bicycle simulator. A. 
+Ng is supported by a Berkeley Fellowship. The work of D. Koller and R. Parr is sup- 
+ported by the ARO-MURI program "Integrated Approach to Intelligent Systems", DARPA 
+contract DACA76-93-C-0025 under subcontract to IET, Inc., ONR contract N66001-97-C- 
+8554 under DARPA's HPKB program, the Sloan Foundation, and the Powell Foundation. 
+References 
+[1] L. Baird and A.W. Moore. Gradient descent for general Reinforcement Learning. In NIPS 11, 
+1999. 
+[2] C. Boutilier, T. Dean, and S. Hanks. Decision theoretic planning: Structural assumptions and 
+computational leverage. J. Artificial Intelligence Research, 1999. 
+[3] X. Boyen and D. Koller. Tractable inference for complex stochastic processes. In Proc. UAI, 
+pages 33-42, 1998. 
+[4] J. Forbes, T Huang, K. Kanazawa, and S.J. Russell. The BATmobile: Towards a Bayesian 
+automated taxi. In Proc. IJCAI, 1995. 
+[5] D. Koller and R. Fratkina. Using learning for approximation in stochastic processes. In Proc. 
+ICML, pages 287-295, 1998. 
+[6] N. Meuleau, L. Peshkin, K-E. Kim, and L.P. Kaelbling. Learning finite-state controllers for 
+partially observable environments. In Proc. UAI 15, 1999. 
+[7] J. Rand10v and P. Alstr0m. Learning to drive a bicycle using reinforcement learning and shaping. 
+In Proc. ICML, 1998. 
+[8] J.K. Williams and S. Singh. Experiments with an algorithm which learns stochastic memoryless 
+policies for POMDPs. In NIPS 11, 1999. 
+[9] R.J. Williams. Simple statistical gradient-following algorithms for connectionist reinforcement 
+learning. Machine Learning, 8:229-256, 1992. 
+2For these experiments, we found learning could be accomplished faster with the simulator's 
+integration delta-time constant tripled for training. This and "shaping" reinforcements (chosen to 
+reward progress made towards the goal) were both used, and training was with the bike "infinitely 
+distant" from the goal. For this and the balancing experiments, sampling from the fallen/absorbing- 
+state portion of the distributions ½(t) is obviously inefficient use of samples, so all samples were 
+drawn from the non-absorbing state portion (i.e. the Gaussian, also with its tails corresponding to tilt 
+angles greater than -/15 truncated), and weighted accordingly relative to the absorbing-state portion. 

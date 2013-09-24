@@ -1,0 +1,298 @@
+Hierarchies of adaptive experts 
+Michael I. Jordan Robert A. Jacobs 
+Department of Brain and Cognitive Sciences 
+Massachusetts Institute of Technology 
+Cambridge, MA 02139 
+Abstract 
+In this paper we present a neural network architecture that discovers a 
+recursive decomposition of its input space. Based on a generalization of the 
+modular architecture of Jacobs, Jordan, Nowlan, and Hinton (1991), the 
+architecture uses competition among networks to recursively split the input 
+space into nested regions and to learn separate associative mappings within 
+each region. The learning algorithm is shown to perform gradient ascent 
+in a log likelihood function that captures the architecture's hierarchical 
+structure. 
+1 INTRODUCTION 
+Neural network learning architectures such as the multilayer perceptron and adap- 
+tive radial basis function (RBF) networks are a natural nonlinear generalization 
+of classical statistical techniques such as linear regression, logistic regression and 
+additive modeling. Another class of nonlinear algorithms, exemplified by CART 
+(Breiman, Friedman, Olshen, & Stone, 1984) and MARS (Friedman, 1990), gen- 
+eralizes classical techniques by partitioning the training data into non-overlapping 
+regions and fitting separate models in each of the regions. These two classes of algo- 
+rithms extend linear techniques in essentially independent directions, thus it seems 
+worthwhile to investigate algorithms that incorporate aspects of both approaches 
+to model estimation. Such algorithms would be related to CART and MARS as 
+multilayer neural networks are related to linear statistical techniques. In this pa- 
+per we present a candidate for such an algorithm. The algorithm that we present 
+partitions its training data in the manner of CART or MARS, but it does so in a 
+parallel, on-line manner that can be described as the stochastic optimization of an 
+appropriate cost functional. 
+986 Jordan and Jacobs 
+Why is it sensible to partition the training data and to fit separate models within 
+each of the partitions? Essentially this approach enhances the flexibility of the 
+learner and allows the data to influence the choice between local and global repre- 
+sentations. For example, if the data suggest a discontinuity in the function being 
+approximated, then it may be more sensible to fit separate models on both sides of 
+the discontinuity than to adapt a global model across the discontinuity. Similarly, 
+if the data suggest a simple functional form in some region, then it may be more 
+sensible to fit a global model in that region than to approximate the function locally 
+with a large number of local models. Although global algorithms such as backprop- 
+agation and local algorithms such as adaptive RBF networks have some degree of 
+flexibility in the tradeoff that they realize between global and local representation, 
+they do not have the flexibility of adaptive partitioning schemes such as CART and 
+MARS. 
+In a previous paper we presented a modular neural network architecture in which 
+a number of "expert networks" compete to learn a set of training data (Jacobs, 
+Jordan, Nowlan & Hinton, 1991). As a result of the competition, the architecture 
+adaptively splits the input space into regions, and learns separate associative map- 
+pings within each region. The architecture that we discuss here is a generalization 
+of the earlier work and arises from considering what would be an appropriate inter- 
+nal structure for the expert networks in the competing experts architecture. In our 
+earlier work, the expert networks were multilayer perceptrons or radial basis func- 
+tion networks. If the arguments in support of data partitioning are valid, however, 
+then they apply equally well to a region in the input space as they do to the en- 
+tire input space, and therefore each expert should itself be composed of competing 
+sub-experts. Thus we are led to consider recursively-defined hierarchies of adaptive 
+experts. 
+2 THE ARCHITECTURE 
+Figure 1 shows two hierarchical levels of the architecture. (We restrict ourselves to 
+two levels throughout the paper to simplify the exposition; the algorithm that we 
+develop, however, generalizes readily to trees of arbitrary depth). The architecture 
+has a number of expert networks that map from the input vector x to output 
+vectors Yij. There are also a number of gattrig networks that define the hierarchical 
+structure of the architecture. There is a gating network for each cluster of expert 
+networks and a gating network that serves to combine the outputs of the clusters. 
+The output of the ith cluster is given by 
+Yi -  gjliYij (1) 
+J 
+where gjli is the activation of the jth output unit of the gating network in the ith 
+cluster. The output of the architecture as a whole is given by 
+y =  giyi (2) 
+where gi is the activation of the ith output unit of the top-level gating network. 
+Hierarchies of adaptive experts 987 
+Expe 
+Network 
+Expe 
+Network 
+Expe 
+Network 
+I Expe 
+Network 
+Gating 
+Network 
+gl/l 
+}/12 
+Gating 
+Network 
+g I/2 
+¾22 
+Gating 
+Network 
+g2 
+Figure 1: Two hierarchical levels of adaptive experts. All of the expert networks 
+and all of the gating networks have the same input vector. 
+We assume that the outputs of the gating networks are given by the normalizing 
+softmax function (Bridle, 1989): 
+(a) 
+gi -- Zj es 
+and 
+(2S gJ 
+gjii- 5-k el' (4) 
+where si and mjj i are the weighted sums arriving at the output units of the corre- 
+sponding gating networks. 
+The gating networks in the architecture are essentially classifiers that are responsi- 
+ble for partitioning the input space. Their choice of partition is based on the ability 
+988 Jordan and Jacobs 
+of the expert networks to model the input-output functions within their respec- 
+tive regions (as quantified by their posterior probabilities; see below). The nested 
+arrangement of gating networks in the architecture (cf. Figure 1) yields a nested 
+partitioning much like that found in CART or MARS. The architecture is a more 
+general mathematical object than a CART or MARS tree, however, given that the 
+gating networks have non-binary outputs and given that they may form nonlinear 
+decision surfaces. 
+3 THE LEARNING ALGORITHM 
+We derive a learning algorithm for our architecture by developing a probabilistic 
+model of a tree-structured estimation problem. The environment is assumed to be 
+characterized by a finite number of stochastic processes that map input vectors x 
+into output vectors y*. These processes are partitioned into nested collections of 
+processes that have commonalities in their input-output parameterizations. Data 
+are assumed to be generated by the model in the following wy. For any given x, 
+collection i is chosen with probability gi, and a particular process j is then chosen 
+with conditional probability gill. The selected process produces an output vector 
+y* according to the probability density f(y* I x; yij), where Yij is a vector of 
+parameters. The total probability of generating y* is: 
+P(y* [ x) -- E gi E gjlif(Y* [ x; Yij), (5) 
+i j 
+where gi, gjti, and Yij are unknown nonlinear functions of x. 
+Treating the probability P(y* Ix) as a likelihood function in the unknown param- 
+eters gi, gjli, and YiS, we obtain a learning algorithm by using gradient ascent to 
+maximize the log likelihood. Let us assume that the probability density associated 
+with the residual vector (y* - Yij) is the multivariate normal density, where Yij is 
+the mean of the jth process of the i t cluster (or the (i,j)th expert network) and 
+El5 is its covariance matrix. Ignoring the constant terms in the normal density, the 
+log likelihood is: 
+lnL = In Egi Egjli[Eijl-«e-«(Y*-Y")'z (y*-y') (6) 
+i j 
+We define the following posterior probability: 
+ (y -Y.) . (Y 
+gi S- 4 gjIi[Eijl-Se -' * v- ß 
+hi - __ _,(y -Y,,) 
+which is the posterior probability that  process in the i tn cluster generates  pr- 
+ticulr trget vector y*. We Mso define the conditionM posterior probability: 
+hjl = J gjl]Ej[_e_3(y._y,)g5(y._y,), (8) 
+which is the conditionM posterior probability that the jth expert in the ith cluster 
+generates  prticulr trget vector y*. Differentiating 6, nd using Equations 3, 4, 
+Hierarchies oœ adaptive experts 989 
+7, and 8, we obtain the partial derivative of the log likelihood with respect to the 
+output of the (i,j)th expert network: 
+clnL 
+- hi hjli (y* - yij ). (9) 
+OYij 
+This partial derivative is a supervised error term modulated by the appropriate 
+posterior probabilities. Similarly, the partial derivatives of the log likelihood with 
+respect to the weighted sums at the output units of the gating networks are given 
+by: 
+(91nL 
+- hi - gi (10) 
+(9 si 
+and 
+OlnL 
+- - (11) 
+Osjli 
+These derivatives move the prior probabilities associated with the gating networks 
+toward the corresponding posterior probabilities. 
+It is interesting to note that the posterior probability hi appears in the gradient for 
+the experts in the ith cluster (Equation 9) and in the gradient for the gating network 
+in the ith cluster (Equation 11). This ties experts within a cluster to each other and 
+implies that experts within a cluster tend to learn similar mappings early in the 
+training process. They differentiate later in training as the probabilities associated 
+with the cluster to which they belong become larger. Thus the architecture tends 
+to acquire coarse structure before acquiring fine structure. This feature of the 
+architecture is significant because it implies a natural robustness to problems with 
+overfitting in deep hierarchies. 
+We have also found it useful in practice to obtain an additional degree of control over 
+the coarse-to-fine development of the algorithm. This is achieved with a heuristic 
+that adjusts the learning rate at a given level of the tree as a function of the time- 
+average entropy of the gating network at the next higher level of the tree: 
+lU.li(t 4- 1)- cu.li(t) + (Mi q- Zgjlilngjli ) 
+J 
+where Mi is the maximum possible entropy at level i of the tree. This equation 
+has the effect that the networks at level i-3- i are less inclined to diversify if the 
+superordinate cluster at level i has yet to diversify (where diversification is quantified 
+by the entropy of the gating network). 
+4 SIMULATIONS 
+We present simulation results from an unsupervised learning task and two super- 
+vised learning tasks. 
+In the unsupervised learning task, the problem was to extract regularities from a set 
+of measurements of leaf morphology. Two hundred examples of maple, poplar, oak, 
+and birch leaves were generated from the data shown in Table 1. The architecture 
+that we used had two hierarchical levels, two clusters of experts, and two experts 
+990 Jordan and Jacobs 
+Maple Poplar Oak Birch 
+Length 3,4,5,6 1,2,3 5,6,7,8,9 2,3,4,5 
+Width 3,4,5 1,2 2,3,4,5 1,2,3 
+Flare 0 0,1 0 1 
+Lobes 5 1 7,9 1 
+Margin Entire Crenate, Serrate Entire Doubly-Serrate 
+Apex Acute Acute Rounded Acute 
+Base Truncate Rounded Cumeate Rounded 
+Color Light Yellow Light Dark 
+Table 1: Data used to generate examples of leaves from four types of trees. The 
+columns correspond to the type of tree; the rows correspond to the features of a 
+tree's leaf. The table's entries give the possible values for each feature for each type 
+of leaf. See Preston (1976). 
+within each cluster. Each expert network was an auto-associator that maps forty- 
+eight input units into forty-eight output units through a bottleneck of two hidden 
+units. Within the experts, backpropagation was used to convert the derivatives 
+in Equation 9 into changes to the weights. The gating networks at both levels 
+were affine. We found that the hierarchical architecture consistently discovers the 
+decomposition of the data that preserves the natural classes of tree species (cf. 
+Preston, 1976). That is, within one cluster of expert networks, one expert learns 
+the maple training patterns and the other expert learns the oak patterns. Within the 
+other cluster, one expert learns the poplar patterns and the other expert learns the 
+birch patterns. Moreover, due to the use of the autoassociator experts, the hidden 
+unit representations within each expert are principal component decompositions 
+that are specific to a particular species of leaf. 
+We have also studied a supervised learning problem in which the learner must 
+predict the grayscale pixel values in noisy images of human faces based on values of 
+the pixels in surrounding 5x5 masks. There were 5000 masks in the training set. We 
+used a four-level binary tree, with affine experts (each expert mapped from twenty- 
+five input units to a single output unit) and affine gating networks. We compared 
+the performance of the hierarchical architecture to CART and to backpropagation.  
+In the case of backpropagation and the hierarchical architecture, we utilized cross- 
+validation (using a test set of 5000 masks) to stop the iterative training procedure. 
+As shown in Figure 2, the performance of the hierarchical architecture is comparable 
+to backpropagation and better than CART. 
+Finally we also studied a system identification problem involving learning the sim- 
+ulated forward dynamics of a four-joint, three-dimensional robot arm. The task 
+was to predict the joint accelerations from the joint positions, sines and cosines of 
+joint positions, joint velocities, and torques. There were 6000 data items in the 
+training set. We used a four-level tree with trinary splits at the top two levels, 
+and binary splits at lower levels. The tree had arline experts (each expert mapped 
+X Fifty hidden units were used in the backpropagation network, making the num- 
+ber of parameters in the backpropagation network and the hierarchical network roughly 
+comparable. 
+Hierarchies of adaptive experts 991 
+0.08 - 
+Relative 0.06- 
+Error 
+0.04 - 
+0.02 - 
+CART BP Hier4 
+Figure 2' The results on the image restoration task. The dependent measure is 
+relative error on the test set, (cf. Breiman, ctal., 1984). 
+from twenty input units to four output units) and affine gating networks. We once 
+again compared the performance of the hierarchical architecture to CART and to 
+backpropagation. In the case of backpropagation and the hierarchical architecture, 
+we utilized a conjugate gradient technique, and halted the training process after 
+1000 iterations. In the case of CART, we ran the algorithm four separate times on 
+the four output variables. Two of these runs produced 100 percent relative error, 
+a third produced 75 percent relative error, and the fourth (the most proxima! joint 
+acceleration) yielded 46 percent relative error, which is the value we report in Fig- 
+ure 3. As shown in the figure, the hierarchical architecture and backpropagation 
+achieve comparable levels of performance. 
+5 DISCUSSION 
+In this paper we have presented a neural network learning algorithm that captures 
+aspects of the recursire approach to function approximation exemplified by algo- 
+rithms such as CART and MARS. The results obtained thus far suggest that the 
+algorithm is computationally viable, comparing favorably to backpropagation in 
+terms of generalization performance on a set of small and medium-sized tasks. The 
+algorithm also has a number of appealing theoretical properties when compared to 
+backpropagation: In the aftinc case, it is possible to show that (1) no backward 
+propagation of error terms is required to adjust parameters in multi-level trees (cf. 
+the activation-dependence of the multiplicative terms in Equations 9 and 11), (2) 
+all of the parameters in the tree are maximum likelihood estimators. The latter 
+property suggests that the arline architecture may be a particularly suitable archi- 
+tecture in which to explore the effects of priors on the parameter space (cf. Nowlan 
+992 Jordan and Jacobs 
+0,6-- 
+Relative 
+Error 
+0.4-- 
+0,2-- 
+0.0 
+CART 
+BP Hier4 
+Figure 3: The results on the system identification task. 
+Hinton, this volume). 
+Acknowledgements 
+This project was supported by grant IRI-9013991 awarded by the National Science 
+Foundation, by a grant from Siemens Corporation, by a grant from ATR Auditory 
+and Visual Perception Research Laboratories, by a grant from the Human Frontier 
+Science Program, and by an NSF Presidential Young Investigator Award to the first 
+author. 
+References 
+Breiman, L., Friedman, J.H., Olshen, R.A., & Stone, C.J. (1984) Classification and 
+Regression Trees. Belmont, CA: Wadsworth International Group. 
+Bridle, J. (1989) Probabilistic interpretation of feedforward classification network 
+outputs, with relationships to statistical pattern recognition. In F. Fogelman-Soulie 
+& J. Hrault (Eds.), Neuro-computing: Algorithms, Architectures, and Applications. 
+New York: Springer-Verlag. 
+Friedman, J.H. (1990) Multivariate adaptive regression splines. 
+Statistics, 19, 1-141. 
+Jacobs, R.A, Jordan, M.I., Nowlan, S.J., & Hinton, G.E. (1991) Adaptive mixtures 
+of local experts. Neural Computation, 3, 79-87. 
+Preston, R.J. (1976) North American Trees (Third Edition). Ames, IA: Iowa State 
+University Press. 
+The Annals of 

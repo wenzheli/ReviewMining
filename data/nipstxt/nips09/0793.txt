@@ -1,0 +1,312 @@
+Dual Kalman Filtering Methods for 
+Nonlinear Prediction, Smoothing, and 
+Estimation 
+Eric A. Wan 
+ericwan@ee.ogi.edu 
+Alex T. Nelson 
+atnelson@ee.ogi.edu 
+Department of Electrical Engineering 
+Oregon Graduate Institute 
+P.O. Box 91000 Portland, OR 97291 
+Abstract 
+Prediction, estimation, and smoothing are fundamental to signal 
+processing. To perform these interrelated tasks given noisy data, 
+we form a time series model of the process that generates the 
+data. Taking noise in the system explicitly into account, maximum- 
+likelihood and Kalman frameworks are discussed which involve the 
+dual process of estimating both the model parameters and the un- 
+derlying state of the system. We review several established meth- 
+ods in the linear case, and propose several extensions utilizing dual 
+Kalman filters (DKF) and forward-backward (FB) filters that are 
+applicable to neural networks. Methods are compared on several 
+simulations of noisy time series. We also include an example of 
+nonlinear noise reduction in speech. 
+1 INTRODUCTION 
+Consider the general autoregressive model of a noisy time series with both process 
+and additive observation noise: 
+x(k) : f(x(k- 1),...x(k- M),w) + v(k- 1) (1) 
+y(k) : =(k) + r(), (2) 
+where x(k) corresponds to the true underlying time series driven by process noise 
+v(k), and f(.) is a nonlinear function of past vaiues of x(k) parameterized by w. 
+794 E. A. Wan and A. T. Nelson 
+The only available observation is y(k) which contains additional additive noise r(k). 
+Prediction refers to estimating an 5:(k) given past observations. (For purposes of 
+this paper we will restrict ourselves to univariate time series.) In estimation, 
+is determined given observations up to and including time k. Finally, smoothing 
+refers to estimating 5:(k) given all observations, past and future. 
+The minimum mean square nonlinear prediction of z(k) (or of y(k)) can be writ- 
+ten as the conditional expectation E[z(k)lx(k- 1)], where x(k) = [z(k),z(k- 
+1),... z(0)]. If the time series z(k) were directly available, we could use this data 
+to generate an approximation of the optimal predictor. However, when z(k) is not 
+available (as is generally the case), the common approach is to use the noisy data 
+directly, leading to an approximation of E[y(k)ly(k- 1)]. However, this results in a 
+biased predictor: E[y(k)ly(k- 1)] = E[z(k)lx(k- 1)+ R(k- 1)]  E[z(k)lx(k- 1)]. 
+We may reduce the above bias in the predictor by exploiting the knowledge that 
+the observations y(k) are measurements arising from a time series. Estimates 5:(k) 
+are found (either through estimation or smoothing) such that ]]z(k)- 5:(k)l ] < 
+]]z(k)-y(k)l 1. These estimates are then used to form a predictor that approximates 
+In the remainder of this paper, we will develop methods for the dual estimation of 
+both states 5: and weights/v. We show how a maximum-likelihood framework can 
+be used to relate several existing algorithms and how established linear methods 
+can be extended to a nonlinear framework. New methods involving the use of dual 
+Kalman filters are also proposed and experiments are provided to compare results. 
+2 DUAL ESTIMATION 
+Given only noisy observations y(k), the dual estimation problem requires considera- 
+tion of both the standard prediction (or output) errors er(k ) = y(k)-f(r(k- 1), w) 
+as well as the observation (or input) errors eo(k) = y(k) - &(k). The minimum ob- 
+2 The prediction error, however, 
+servation error variance equals the noise variance 
+is correlated with the observation error since y(k) - f(x(k - 1)) = r(k- 1) + v(k), 
+2  Assuming the errors are Gaussian, 
+and thus has a minimum variance of 
+we may construct a log-likelihood function which is proportional to eTE-le, where 
+e T = [eo(O),eo(1) .... eo(N),er(M),er(M + 1),...er(N)] , a vector of all errors up to 
+E A E[ee T] = 
+time N, and 
+2 
+0 trr IN--M 
+o o 
+o o 
+aIN-a4 0 
+(s) 
+Minimization of the log-likelihood function leads to the maximum-likelihood esti- 
+mates for both 5:(k) and w. (Although we may also estimate the noise variances r r 
+and rv, we will assume in this paper that they are known.) Two general frameworks 
+for optimization are available: 
+Because models are trained on estimated data (k), it is important that estimated 
+data still be used for prediction of out-of training set (on-line) data. In other words, if our 
+model was formed as an approximation of E[x(k)lc(k - 1)], then we should not provide it 
+with y(k - 1) as an input in order to avoid a model mismatch. 
+Dual Kalman Filtering Methods 795 
+2.1 Errors-In-Variables (EIV) Methods 
+This method comes from the statistics literature for nonlinear regression (see Seber 
+and Wild, 1989), and involves batch optimization of the cost function in Equation 
+3. Only minor modifications are made to account for the time series model. These 
+methods, however, are memory intensive (E is approx. 2N x 2N) and also do not 
+accommodate new data in an efficient manner. Retraining is necessary on all the 
+data in order to produce estimates for the new data points. 
+If we ignore the cross correlation between the prediction and observation error, then 
+E becomes a diagonal matrix and the cost function may be expressed as simply 
+N 2 2 
+',= 7e(k) + eo(k), with 7 = rr/(rr + r). This is equivalent to the Clearning 
+(CLRN) cost function (Weigend, 1995), developed as a heuristic method for cleaning 
+the inputs in neural network modelling problems. While this allows for stochastic 
+optimization, the assumption in the time series formulation may lead to severely 
+biased results. Note also that no estimate is provided for the last point :(N). 
+When the model f - wTx is known and linear, EIV reduces to a standard (batch) 
+weighted least squares procedure which can be solved in closed form to generate 
+a maximum-likelihood estimate of the noise free time series. However, when the 
+linear model is unknown, the problem is far more complicated. The inner product 
+of the parameter vector w with the vector x(k - 1) indicates a bilinear relationship 
+between these unknown quantities. Solving for x(k) requires knowledge of w, while 
+solving for w requires x(k). Iterative methods are necessary to solve the nonlin- 
+ear optimization, and a Newton's-type batch method is typically employed. An 
+EIV method for nonlinear models is also readily developed, but the computational 
+expense makes it less practical in the context of neural networks. 
+2.2 Kalman Methods 
+Kalman methods involve reformulation of the problem into a state-space framework 
+in order to efficiently optimize the cost function in a recursive manner. At each time 
+point, an optimal estimation is achieved by combining both a prior prediction and 
+new observation. Connor (1994), proposed using an Extended Kalman filter with a 
+neural network to perform state estimation alone. Puskorious and Feldkamp (1994) 
+and others have posed the weight estimation in a state-space framework to allow 
+Kalman training of a neural network. Here we extend these ideas to include the 
+dual Kalman estimation of both states and weights for efficient maximum-likelihood 
+optimization. We also introduce the use of forward-backward information filters and 
+further explicate relationships to the EIV methods. 
+A state-space formulation of Equations 1 and 2 is as follows: 
+x(k) = Fix(k- 1)] q-Bv(k- 1) (4) 
+y(k) = Cx(k) + r() (5) 
+where 
+x() = 
+x(k- 1) 
+x(k- M + 1) 
+[x(:)] = 
+f(x(k),... ,(- 4 + ), w) 
+() 
+(- 4 + 2) 
+S 
+1 
+0 
+, (6) 
+796 E. A. Wan and A. T. Nelson 
+and G = B y. If the model is linear, then f(x(k)) takes the form w'x(k), and 
+Fix(k)] can be written as Ax(k), where A is in controllable canonical form. 
+If the model is linear, and the parameters w are known, the Kalman filter (KF) 
+algorithm can be readily used to estimate the states (see Lewis, 1986). At each 
+time step, the filter computes the linear least squares estimate/:(k) and prediction 
+/:-(k), as well as their error covariances, P,,(k) and P(k). In the linear case with 
+Gaussian statistics, the estimates are the minimum mean square estimates. With 
+no prior information on a:, they reduce to the maximum-likelihood estimates. 
+Note, however, that while the Kalman filter provides the maximum-likelihood es- 
+timate at each instant in time given all past data, the EIV approach is a batch 
+method that gives a smoothed estimate given all data. Hence, only the estimates 
+/:(N) at the final time step will match. An exact equivalence for all time is achieved 
+by combining the Kalman filter with a backwards information filter to produce a 
+forward-backward (FB) smoothing filter (Lewis, 1986). 2 Effectively, an inverse co- 
+variance is propagated backwards in time to form backwards state estimates that 
+are combined with the forward estimates. When the data set is large, the FB filter 
+offers significant computational advantages over the batch form. 
+When the model is nonlinear, the Kalman filter cannot be applied directly, but 
+requires a linearization of the nonlinear model at the each time step. The resulting 
+algorithm is known as the extended Kalman filter (EKF) and effectively approxi- 
+mates the nonlinear function with a time-varying linear one. 
+2.2.1 Batch Iteration for Unknown Models 
+Again, when the linear model is unknown, the bilinear relationship between the time 
+series estimates,/:, and the weight estimates,/v requires an iterative optimization. 
+One approach (referred to as LS-KF) is to use a Kalman filter to estimate 5:(k) with 
+/v fixed, followed by least-squares optimization to find/v using the current /:(k). 
+Specifically, the parameters are estimated as v = (XFXr:F)-xXr:Fy, where Xr:F 
+is a matrix of KF state estimates, and y is a 1 x N vector of observations. 
+For nonlinear models, we use a feedforward neural network to approximate f(.), and 
+replace the LS and KF procedures by backpropagation and extended Kalman filter- 
+ing, respectively (referred to here as BP-EKF, see Connor 1994). A disadvantage 
+of this approach is slow convergence, due to keeping a set of inaccurate estimates 
+fixed at each batch optimization stage. 
+2.2.2 Dual Kalman Filter 
+Another approach for unknown models is to concatenate both w and x into a joint 
+state vector. The model and time series are then estimated simultaneously by 
+applying an EKF to the nonlinear joint state equations (see Goodwin and Sin, 1994 
+for the linear case). This algorithm, however, has been known to have convergence 
+problems. 
+An alternative is to construct a separate state-space formulation for the underlying 
+weights as follows: 
+w(k) = w(k- 1) (7) 
+V() = /(/'(- 1),w()) + n(), (8) 
+2A slight modification of the cost in Equation 3 is necessary 1;o account for initial 
+conditions in the Kalman form. 
+Dual Kalman Filtering Methods 797 
+where the state transition is simply an identity matrix, and f((k- 1), w(k)) plays 
+the role of a time-varying nonlinear observation on w. 
+When the unknown model is linear, the observation takes the form/r(k - 1)rw(k). 
+Then a pair of dual Kalman filters (DKF) can be run in parallel, one for state 
+estimation, and one for weight estimation (see Nelson, 1976). At each time step, 
+all current estimates are used. The dual approach essentially allows us to separate 
+the non-linear optimization into two linear ones. Assumptions are that /r and v 
+remain uncorrelated and that statistics remain Gaussian. Note, however, that the 
+error in each filter should be accounted for by the other. We have developed several 
+approaches to address this coupling, but only present one here for the sake of brevity. 
+2 in Equation 
+In short, we write the variance of the noise n(k) as CP' (k)C T + o' r . 
+8, and replace v(k - 1) by v(k - 1) + (w(k) T - WT(k))x(k - 1) in Equation 4 for 
+estimation of (k). Note that the ability to couple statistics in this manner is not 
+possible in the batch approaches. 
+We further extend the DKF method to nonlinear neural network models by in- 
+troducing a dual extended Kalman filtering method (DEKF). This simply requires 
+that Jacobians of the neural network be computed for both filters at each time step. 
+Note, by feeding (k) into the network, we are implicitly using a recurrent network. 
+2.2.3 Forward-Backward Methods 
+All of the Kalman methods can be reformulated by using forward-backward (FB) 
+Kalman filtering to further improve state smoothing. However, the dual Kalman 
+methods require an interleaving of the forward and backward state estimates in 
+order to generate a smooth update at each time step. In addition, using the FB 
+estimates requires caution because their noncausal nature can lead to a biased v 
+if they are used improperly. Specifically, for LS-FB the weights are computed as: 
+v = (XgTrXrB)-Xgry ,where XrB is a matrix of FB (smooth) state estimates. 
+Equivalent adjustments are made to the dual Kalman methods. Furthermore, a 
+model of the time-reversed system is required for the nonlinear case. The explication 
+and results of these algorithms will be appear in a future publication. 
+3 EXPERIMENTS 
+Table I compares the different approaches on two linear time series, both when 
+the linear model is known and when it is unknown. The least square (LS) estima- 
+tion for the weights in the bottom row represents a baseline performance wherein 
+no noise model is used. In-sample training set predictions must be interpreted 
+carefully as all training set data is being used to optimize for the weights. We 
+see that the Kalman-based methods perform better out of training set (recall the 
+model-mismatch issue 1). Further, only the Kalman methods allow for on-line es- 
+timations (on the test set, the state-estimation Kalman filters continue to operate 
+with the weight estimates fixed). The forward-backward method further improves 
+performance over KF methods. Meanwhile, the clearning-equivalent cost function 
+sacrifices both state and weight estimation MSE for improved in-sample prediction; 
+the resulting test set performance is significantly worse. 
+Several time series were used to compare the nonlinear methods, with the results 
+summarized in Table 2. Conclusions parallel those for the linear case. Note, the 
+DEKF method performed better than the baseline provided by standard backprop- 
+798 E. A. Wan and A. T. Nelson 
+Table 1: Comparison of methods for two linear models 
+Model Known 
+Train I Test I Train 2 Test 2 
+Est. Pred. Est. Pred. w Est. Pred. Est. Pred. w 
+MLE .094 .322 - 1.09 - .165 .558 1.32 
+CLRN .203 .134 - 1.08 - .343 .342 - 1.32 - 
+KF .134 .559 .132 0.59 - .197 .778 .221 0.85 - 
+FB .094 .559 .132 0.59 - .165 .778 .221 0.85 
+Model Unknown 
+Est. Pred. Est. Pred. w Est. Pred. Est. Pred. w 
+EIV .172 .545 1.81 .122 
+CLRN .278 .049 14.1 11.28 
+LS-KF .138 .563 .139 .605 .134 .197 .778 .226 0.85 .325 
+LS-FB .099 .347 .136 .603 .281 .169 .612 .229 0.89 .369 
+DKF .135 .557 .133 .595 .212 .198 .779 .221 .863 .149 
+DFB .096 .329 .134 .596 .187 .165 .587 .221 .859 .065 
+LS - .886 - 1.09 .612 - 1.08 - 1.32 0.590 
+MSE values for estimation (Est.), prediction (Pred.) and weights (w) (normalized to 
+2 4, 2 1, 2000 training samples, 1000 testing 
+signal var.). I- AR(11) model, crr - c% - 
+samples. EIV and CLRN were not computed for the unknown model due to memory 
+2 .7., 2 .5., 375 training, 125 testing. 
+constraints. 2 - AR(5) model, o r -  - 
+Table 2: Comparison of methods on nonlinear time series 
+NNet I NNet 2 NNet 3 
+Train Test Train Test Train Test 
+Es. Pr. Es. Pr. Es. Pr. Es. Pr. Es. Pr. Es. Pr. 
+BP-EKF .17 .58 .15 .63 .08 .31 .08 .33 .16 .59 .17 .59 
+DEKF .14 .57 .13 .59 .07 .30 .06 .32 .14 .56 .14 .55 
+BP .35 .57 .35 .69 .œœ .30 .œ3 .36 .3œ .68 .3œ .68 
+The series Nnet 1,2,3 are generated by autoregressive neural networks which exhibit limit 
+ .16,  .81, 2700 training samples, 1300 testing 
+cycle and chaotic behavior. c% - crr - 
+samples. All network models fit using 10 inputs and 5 hidden units. Cross-validation 
+was not used in any of the methods. 
+agation (wherein no model of the noise is used). The DEKF method exhibited fast 
+convergence, requiring only 10-20 epochs for training. A DEFB method is under 
+development. 
+The DEKF was tested on a speech signal corrupted with simulated bursting white 
+noise (Figure 1). The method was applied to successive 64ms (512 point) windows 
+of the signal, with a new window starting every 8ms (64 points). The results in 
+2 and  
+the figure were computed assuming both rvr r were known. The average 
+2 and 2 
+SNR is improved by 9.94 dB. We also ran the experiment when r r rvwere 
+estimated using only the noisy signal (Nelson and Wan, 1997), and acheived an SNR 
+improvement of 8.50 dB. In comparison, available "state-of-the-art" techniques of 
+spectral subtraction (Boll, 1979) and RASTA processing (Hermansky et al., 1995), 
+achieve SNR improvements of only .65 and 1.26 dB, respectively. We extend the 
+algorithms to the colored noise case in a second paper (Nelson and Wan, 1997). 
+4 CONCLUSIONS 
+We have described various methods under a Kalman framework for the dual estima- 
+tion of both states and weights of a noisy time series. These methods utilize both 
+Dual Kalman Filtering Methods 799 
+Clean Speech 
+Noise 
+Noisy Speech 
+Cleaned Speech 
+Figure 1: Cleaning Noisy Speech With The DEKF. 33,000 pts (5 sec.) shown. 
+process and observation noise models to improve estimation performance. Work 
+in progress includes extensions for colored noise, blind signal separation, forward- 
+backward filtering, and noise estimation. While further study is needed, the dual 
+extended Kalman filter methods for neural network prediction, estimation, and 
+smoothing offer potentially powerful new tools for signal processing applications. 
+A cknowledgemen/s 
+This work was sponsored in part by NSF 
+ARPA/AASERT Grant DAAH04-95-1-0485. 
+under grant ECS-9410823 and by 
+References 
+S.F. Boll. Suppression of acoustic noise in speech using spectral subtraction. IEEE 
+ASSP-œ7, pp. 113-120. April 1979. 
+J. Connor, R. Martin, L. Atlas. Recurrent neural networks and robust time series 
+prediction. IEEE Tr. on Neural Networks. March 1994. 
+F. Lewis. Optimal Estimation John Wiley & Sons, Inc. New York. 1986. 
+G. Goodwin, K.S. Sin. Adaptive Filtering Prediction and Control. Prentice-Hall, 
+Inc., Englewood Cliffs, NJ. 1994. 
+H. Hermansky, E. Wan, C. Avendano. Speech enhancement based on temporal 
+processing. ICASSP Proceedings. 1995. 
+A. Nelson, E. Wan. Neural speech enhancement using dual extended Kalman fil- 
+tering. Submitted to ICNN'97. 
+L. Nelson, E. Stear. The simultaneous on-line estimation of parameters and states 
+in linear systems. IEEE Tr. on Automatic Control. February, 1976. 
+G. Puskorious, L. Feldkamp. Neural control of nonlinear dynamic systems with 
+kalman filter trained recurrent networks. IEEE Trn. on NN, vol. 5, no. 2. 1994. 
+G. Seber, C. Wild. Nonlinear Regression. John Wiley & Sons. 1989. 
+A. Weigend, H.G. Zimmerman. Clearning. University of Colorado Computer Sci- 
+ence Technical Report CU-CS-772-95. May, 1995. 

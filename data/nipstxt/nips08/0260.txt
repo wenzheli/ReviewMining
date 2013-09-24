@@ -1,0 +1,270 @@
+Implementation Issues in the Fourier 
+Transform Algorithm 
+Yishay Mansour* Sigal Sahar t 
+Computer Science Dept. 
+Tel-Aviv University 
+TeLAviv, ISRAEL 
+Abstract 
+The Fourier transform of boolean functions has come to play an 
+important role in proving many important learnability results. We 
+aim to demonstrate that the Fourier transform techniques are also 
+a useful and practical algorithm in addition to being a powerful 
+theoretical tool. We describe the more prominent changes we have 
+introduced to the algorithm, ones that were crucial and without 
+which the performance of the algorithm would severely deterio- 
+rate. One of the benefits we present is the confidence level for each 
+prediction which measures the likelihood the prediction is correct. 
+I INTRODUCTION 
+Over the last few years the Fourier Transform (FT) representation of boolean func- 
+tions has been an instrumental tool in the computational learning theory commu- 
+nity. It has been used mainly to demonstrate the learnability of various classes of 
+functions with respect to the uniform distribution. The first connection between the 
+Fourier representation and learnability of boolean functions was established in [6] 
+where the class AC ø was learned (using its FT representation) in O(n pøy-øg(n)) 
+time. The work of [5] developed a very powerful algorithmic procedure: given a 
+function and a threshold parameter it finds in polynomial time all the Fourier co- 
+efficients of the function larger than the threshold. Originally the procedure was 
+used to learn decision trees [5], and in [8, 2, 4] it was used to learn polynomial size 
+DNF. The FT technique applies naturally to the uniform distribution, though some 
+of the learnability results were extended to product distribution [1, 3]. 
+*e-mail: mansour@cs.tau.ac.il 
+re-mail: gMes@cs.tau.ac.il 
+Implementation Issues in the Fourier Transform Algorithm 261 
+A great advantage of the FT algorithm is that it does not make any assumptions 
+on the function it is learning. We can apply it to any function and hope to obtain 
+"large" Fourier coefficients. The prediction function simply computes the sum of 
+the coefficients with the corresponding basis functions and compares the sum to 
+some threshold. The procedure is also immune to some noise and will be able to 
+operate even if a fraction of the examples are maliciously misclassified. Its drawback 
+is that it requires to query the target function on randomly selected inputs. 
+We aim to demonstrate that the FT technique is not only a powerful theoretical 
+tool, but also a practical one. In the process of implementing the Fourier algorithm 
+we enhanced it in order to improve the accuracy of the hypothesis we generate while 
+maintaining a desirable run time. We have added such feartures as the detection 
+of inaccurate approximations "on the fly" and immediate correction of the errors 
+incurred at a minimal cost. The methods we devised to choose the "right" parame- 
+ters proved to be essential in order to achieve our goals. Furthermore, when making 
+predictions, it is extremely beneficial to have the prediction algorithm supply an 
+indicator that provides the confidence level we have in the prediction we made. Our 
+algorithm provides us naturally with such an indicator as detailed in Section 4.1. 
+The paper is organized as follows: section 2 briefly defines the FT and describes 
+the algorithm. In Section 3 we describe the experiments and their outcome and in 
+Section 4 the enhancements made. We end with our conclusions in Section 5. 
+2 FOURIER TRANSFORM (FT) THEORY 
+In this section we briefly introduce the FT theory and algorithm. its connection to 
+learning and the algorithm that finds the large coefficients. A comprehensive survey 
+of the theoretical results and proofs can be found in [7]. 
+We consider boolean functions of n variables: f: {0, 1}'* -- {-1, 1}. We define the 
+inner product: < g, f >= 2-'* '{0,i}n f(z)g(z) = E[g. f], where E is the ex- 
+pected value with respect to the uniform distribution. The basis is defined as follows: 
+for each z  {0, 1}'*, we define the basis function Xz(z,...,z,,) = (-1) :z' 
+Any function of n boolean inputs can be uniquely expressed as a linear combination 
+of the basis functions. For a function f, the z ta Fourier coefficient of f is denoted 
+by ](z), i.e., f(z) = --,{0,1}n ](z)X,(x). The Fourier coefficients are computed 
+by ](z) =< f, X, > and we call z the coefficient-name of ](z). We define a t-sparse 
+function to be a function that has at most t non-zero Fourier coefficients. 
+2.1 PREDICTION 
+Our aim is to approximate the target function f by a t-sparse function h. In many 
+cases h will simply include the "large" coefficients of f. That is, if A = {zx,..., z,} 
+is the set of z's for which ](zi) is "large", we set h(x) = '.,^ aixz,(x), where 
+at is our approximation of ](zi). The hypothesis we generate using this process, 
+h(x), does not have a boolean output. In order to obtain a boolean prediction 
+we use $ign(h(x)), i.e., output +1 if h(x) >_ 0 and -1 if h(x) < 0. We want to 
+bound the error we get from approximating f by h using the expected error squared, 
+E[(f - h)2]. It can be shown that bounding it bounds the boolean prediction error 
+probability, i.e., Pr[f(z)  sign(h(x))] _< E[(f- h)2]. For a given t, the t-sparse 
+262 Y. MANSOUR, S. SAHAR 
+hypothesis h that minimizes E[(f- h) 2] simply includes the t largest coefficients of 
+f. Note that the more coefficients we include in our approximation and the better 
+we approximate their values, the smaller E[(f- h) 2] is going to be. This provides 
+us with the motivation to find the "large" coefficients. 
+2.2 FINDING THE LARGE COEFFICIENTS 
+The algorithm that finds the "large" coefficients receives as inputs a function f (a 
+black-box it can query) and an interest threshold parameter 0 > 0. It outputs a list 
+of coefficient-names that (1) includes all the coefficients-names whose correspond- 
+ing coefficients are "large", i.e., at least 0, and (2) does not include "too many" 
+coefficient-names. The algorithm runs in polynomial time in both 1/0 and n. 
+I SUBROUTINE search(a) 
+IF TEST[f, , t] THEN IF JaJ = n THEN OUTPUT a 
+ELSE search(a0); search(a.); 
+Figure 1: Subroutine search 
+The basic idea of the algorithm is to perform a search in the space of the coefficient- 
+names of f. Throughout the search algorithm (see Figure (1)) we maintain a prefix 
+of a coefficient-name and try to estimate whether any of its extensions can be 
+a coefficient-name whose value is "large". The algorithm commences by calling 
+search(A) where A is the empty string. On each invocation it computes the pred- 
+icate TEST[f, c,0]. If the predicate is true, it recursively calls search(c0) and 
+search(cl). Note that if TEST is very permissive we may reach all the coeffi- 
+cients, in which case our running time will not be polynomial; its implementation 
+is therefore of utmost interest. Formally, TEST[f, c, 0] computes whether 
+2 
+Eze{o,i},-,,Eye{o,i},,[f(yx)xa(y)] _ 0 2, where k = IIll. 
+Define f,(z) = YoeIo,x)--k ](a/?)Xo(z). It can be shown that the expected value 
+in (1) is exactly the sum of the squares of the coefficients whose prefix is a, i.e., 
+2 
+Eeio,}.-,Eyeio,p,[f(yz)x,(y)] = E[f(z)] = '.ei0,}._/(a/?), implying 
+that if there exists a coefficient ]](c/?)] _> d, then E[f] _> 02: This condition 
+guarantees the correctness of our algorithm, namely that we reach all the "large" 
+coefficientso We would like also to bound the number of recursive calls that search 
+performs. We can show that for at most 1/02 of the prefixes of size k, TEST[f, a, O] 
+is true. This bounds the number of recursive calls in our procedure by 
+In TEST we would like to compute the expected value, but in order to do so 
+efficiently we settle for an approximation of its valueo This can be done as follows: 
+(1) choose rni random zi 6 {01} n-k, (2) choose m2 random yi,j  {0,1} , (3) 
+query f on yi,jxi (which is why we need the query model--to query f on many 
+points with the same prefix z) and receive f(y,jz), and (4) compute the estimate 
+m 1 m 
+as, Ba = x '4=  -1= f(Yi,ixi)Xa(Yi,J Again for more details see [7]. 
+r 1 ' 
+3 EXPERIMENTS 
+We implemented the FT algorithm (Section 2.2) and went forth to run a series of 
+experimentsø The parameters of each experiment include the target function, 0 rni 
+Implementation Issues in the Fourier Transform Algorithm 263 
+and rn2. We briefly introduce the parameters here and defer the detailed discussion. 
+The parameter 0 determines the threshold between "small" and "large" coefficients, 
+thus controlling the number of coefficients we will output. The parameters m I and 
+m 2 determine how accurately we approximate the TEST predicate. Failure to ap- 
+proximate it accurately may yield faulty, even random, results (e.g., for a ludicrous 
+choice of m = 1 and m2 = 1) that may cause the algorithm to fail (as detailed in 
+Section 4.3). An intelligent choice of ml and m2 is therefore indispensable. This 
+issue is discussed in greater detail in Sections 4.3 and 4.4. 
+Figure 2: Typical frequency plots and typical errors. Errors occur in two cases: (1) the algorithm 
+predicts a +1 response when the actual response is -1 (the lightly shaded area), and (2) the algorithm 
+predicts a -1 response, while the true response is +1 (the darker shaded area). 
+Figures (3)-(5) present representative results of our experiments in the form of 
+graphs that evaluate the output hypothesis of the algorithm on randomly chosen 
+test points. The target function, f, returns a boolean response, +1, while the FT 
+hypothesis returns a real response. We therefore present, for each experiment, a 
+graph constituting of two curves: the frequency of the values of the hypothesis, 
+h(z), when f(x) = +1, and the second curve for f(z) = -1. If the two curves 
+intersect, their intersection represents the inherent error the algorithm makes. 
+Figure 3: Decision trees of depth 5 and 3 with 41 variables. The 5-deep (3-deep) decision tree 
+returns -1 about 50% (62.5%) of the time. The results shown above are for values 0 = 0.03, m 1 = 100 
+and m 2 = 5600 (0 = 0.06, m 1 -- 100 and m 2 -- 1300). Both graphs are disjoint, signifying 0% error. 
+4 RESULTS AND ALGORITHM ENHANCEMENTS 
+4.1 CONFIDENCE LEVELS 
+One of our most consistent and interesting empirical findings was the distribution 
+of the error versus the value of the algorithm's hypothesis: its shape is always that 
+of a bell shaped curveø Knowing the error distribution permits us to determine with 
+a high (often 100%) confidence level the result for most of the instances, yielding 
+the much sought after confidence level indicator. Though this simple logic thus far 
+has not been supported by any theoretical result, our experimental results provide 
+overwhelming evidence that this is indeed the case. 
+Let us demonstrate the strength of this technique: consider the results of the 16-term 
+DNF portrayed in Figure (4). If the algorithm's hypothesis outputs 0.3 (translated 
+264 Y. MANSOUR, S. SAHAR 
+Figure 4:16 term DNF. This (randomly generated) DNF of 40 variables returns -1 about 61% of 
+the time. The results shown above are for the values of / = 0.02, m 2 -- 12500 and m 1 -- 100. The 
+hypothesis uses 186 non-zero coefficients. A total of 9.628% error was detected. 
+into 1 in boolean terms by the Sign function), we know with an 83% confidence 
+level that the prediction is correct. If the algorithm outputs -0.9 as its prediction, 
+we can virtually guarantee that the response is correct. Thus, although the total 
+error level is over 9% we can supply a confidence level for each prediction. This is 
+an indispensable tool for practical usage of the hypothesisø 
+4.2 DETERMINING THE THRESHOLD 
+Once the list of large coefficients is built and we compute the hypothesis h(z), we 
+still need to determine the threshold, a, to which we compare h(x) (i.e., predict +1 
+iff h(x) > a). In the theoretical work it is assumed that a - 0, since a priori one 
+cannot make a better guess. We observed that fixing a's value according to our 
+hypothesis, improves the hypothesis. a is chosen to minimize the error with respect 
+to a number of random examples. 
+Figure 5:8 term r)NF. This (randomly generated) DNF of 40 variables returns -1 about 43% of the 
+time. The results shown above are for the values of  ---- 0.03, m 2 -- 5600 and m 1 -- 100. The hypothesis 
+consists of 112 non-zero coefficients. 
+For example, when trying to learn an 8-term DNF with the zero threshold we will 
+receive a total of 1.22% overall error as depicted in Figure (5). However, if we 
+choose the threshold to be 0.32, we will get a diminished error of 0.068%. 
+4.3 ERROR DETECTION ON THE FLY - RETRY 
+During our experimentations we have noticed that at times the estimate B for 
+E[f, 2] may be inaccurate. A faulty approximation may result in the abortion of the 
+traversal of "interesting" subtreees, thus decreasing the hypothesis' accuracy, or in 
+traversal of "uninteresting" subtrees, thereby needlessly increasing the algorithm's 
+runtime. Since the properties of the FT guarantee that E[f] = E[f,20] + E[f], 
+we expect Ba  B,0 + B,i. Whenever this is not true, we conclude that at least 
+one of our approximations is somewhat lacking. We can remedy the situation by 
+Implementation Issues in the Fourier Transform Algorithm 265 
+running the search procedure again on the children, i.e., retry node a. This solu- 
+tion increases the probability of finding all the "large" coefficients. A brute force 
+implementation may cost us an inordinate amount of time since we may petraverse 
+subtrees that we have previously visited. However, since any discrepancies between 
+the parent and its children are discovered--and corrected--as soon as they appear, 
+we can circumvent any retraversal. Thus, we correct the errors without any super- 
+fluous additions to the run time. 
+_,,., i' 
+? 
+-i ,,.. :i 
+Figure 6: Majority function of 41 variables. The result portrayed are for values m I : 100, m 2: 800 
+and 0 ---- 0.08. Note the majority-function characteristic distribution of the resultsl  
+We demonstrate the usefulness of this approach with an example of learning the 
+majority function of 41 boolean variables Without the retry mechanism, 8 (of a 
+total of 42) large coefficients were missed, giving rise to 13.724% error represented by 
+the shaded area in Figure (6). With the retries all the correct coefficients were found, 
+yielding perfect (flawless) results represented in the dotted curve in Figure (6). 
+4.4 DETERMINING THE PARAMETERS 
+One of our aims was to determine the values of the different parameters, rnl, rn2 and 
+0. Recall that in our algorithm we calculate B,, the approximation of 
+where rnl is the number of times we sample x in order to make this approximation. 
+We sample y randomly m2 times to approximate fa(xi) = Ey[f(yxi)Xa(y)], for each 
+zio This approximation of fa(xi) has a standard deviation of approximately 
+Assume that the true value is/3i, i.e. 3i = f(,(xi), then we expect the contribution 
+of the i th element to B, to be (/3i q- m )2 =/3 q-  + -. The algorithm tests 
+Ba = t /3 > 02 therefore, to ensure a low error, based on the above argument, 
+we choose m2 = . 
+Choosing the right value for rn2 is of great importance. We have noticed on more 
+than one occasion that increasing the value of m2 actually decreases the overall run 
+time. This is not obvious at first: seemingly, any increase in the number of times we 
+loop in the algorithm only increases the run time. However, a more accurate value 
+for m2 means a more accurate approximation of the TEST predicate, and therefore 
+less chance of redundant recursive calls (the run time is linear in the number of 
+recursive calls). We can see this exemplified in Figure (7) where the number of 
+recursive calls increase drastically as m2 decreases. In order to present Figure (7), 
+1 
+The "peaked" distribution of the results is not coincidental. The PT of the majority function has 42 large 
+equal coefficients, labeled Crnaj: one for each singleton (a vector of the form 0..010..0) and one for parity (the 
+all-ones vector). The zeros of an input vector with z zeros we will contribute q-[(2z --41) * Crnaj I to the result 
+and the parity will contribute q-Crna$ (depending on whether z is odd or even), so that the total contribution is 
+/'40' _J,_ ~ 0.12, we have peaks around factors of 0.24. The distribution 
+an even factor of crna$. Since Cma $ : ,20/ 240 
+around the peaks is due to the fct we only approximate each coefficient and get a value close to Cma $. 
+266 Y. MANSOUR, S. SAHAR 
+we learned the same 3 term DNF always using 0 = 0.05 and rn , rn2 = 100000. 
+The trials differ in the specific values chosen in each trial for rn2. 
+Figure 7: Determining m 2. Note that the number of recursive calls grows dramatically as m2's 
+value decreases. For example, for m 2 -- 400, the number of recursire calls is 14,433 compared with only 
+1,329 recursire calls for rn 2 -- 500. 
+SPECIAL CASES: When k = Ilall is either very small or very large, the values we 
+choose for mx and m2 can be self-defeating: when k ~ n we still loop mx (>> 2 '-) 
+times, though often without gaining additional information.The same holds for very 
+small values of k, and the corresponding m2 (>> 2 ) values. We therefore add the 
+following feature: for small and large values of k we calculate exactly the expected 
+value thereby decreasing the run time and increasing accuracy. 
+5 CONCLUSIONS 
+In this work we implemented the FT algorithm and showed it to be a useful practical 
+tool as well as a powerful theoretical technique. We reviewed major enhancements 
+the algorithm underwent during the processø The algorithm successfully recovers 
+functions in a reasonable amount of time. Furthermore, we have shown that the 
+algorithm naturally derives a confidence parameter. This parameter enables the user 
+in many cases to conclude that the prediction received is accurate with extremely 
+high probability, even if the overall error probability is not negligible. 
+Acknowledgement s 
+This research was supported in part by The Israel Science Foundation administered by The Israel 
+Academy of Science and Humanities and by a grant of the Israeli Ministry of Science and Technology. 
+References 
+[1] Mihir Bellare. A technique for upper bounding the spectral norm with applications to learning. In 5 th 
+Annual Workshop on Computational Learning Theory, pages 62-70, July 1992. 
+[2] Avrim Blum, Merrick Furst, Jeffrey Jackson, Michael Kearns, Yishay Mansour, and Steven Rudich. Weakly 
+learning DNF and characterizing statistical query learning using fourier analysis. In The 26 th Annual ACM 
+Symposium on Theory of Computing, pages 253 - 262, 1994. 
+[3] Merrick L. Furst, Jeffrey C. Jackson, and Sean W. Smith. Improved learning of AC 0 functions. In 4 th 
+Annual Workshop on Computational Learnin 9 Theory, pages 317-325, August 1991. 
+[4] J. Jackson. An efficient membership-query algorithm for learning DNF with respect to the uniform distribu- 
+tion. In Annual Symposium on Switchin 9 and Automata Theory, pages 42 - 53, 1994. 
+[5] E. Kushilevitz and Y. Mansour. Learning decision trees using the fourier spectrum. SIAM Journal on 
+Computing 22(6): 1331-1348, 1993. 
+[6] N. LiniM, Y. Mansour, and N. Nisan. Constant depth circuits, fourier transform and learnability. JACM 
+40(3):607-620, 1993. 
+[7] Y. Mansour. Learning Boolean Functions via the Fourier Transform. Advances in Neural Computat,on, 
+edited by V.P. lq. oychodhury and K-Y. Siu and A. Orlitsky, Kluwer Academic Pub. 1994. Can be accessed 
+via ft p://ft p.mat h.t au.ac.il]pub/mansour/PAPERS/LEARNING/fourier-survey.ps. Z. 
+[8] Yishay Mansour. An o{n 1øg log n) learning algorihm for DNF under the uniform distribution. J. of Computer 
+and System Science, 50(3):543-550, 1995. 

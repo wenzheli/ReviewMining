@@ -1,0 +1,311 @@
+Clustering with a Domain-Specific 
+Distance Measure 
+Steven Gold, Eric Mjolsness and Anand Rangarajan 
+Department of Computer Science 
+Yale University 
+New Haven, CT 06520-8285 
+Abstract 
+With a point matching distance measure which is invariant under 
+translation, rotation and permutation, we learn 2-D point-set ob- 
+jects, by clustering noisy point-set images. Unlike traditional clus- 
+tering methods which use distance measures that operate on feature 
+vectors - a representation common to most problem domains - this 
+object-based clustering technique employs a distance measure spe- 
+cific to a type of object within a problem domain. Formulating 
+the clustering problem as two nested objective functions, we derive 
+optimization dynamics similar to the Expectation-Maximization 
+algorithm used in mixture models. 
+I Introduction 
+Clustering and related unsupervised learning techniques such as competitive learn- 
+ing and self-organizing maps have traditionally relied on measures of distance, like 
+Euclidean or Mahalanobis distance, which are generic across most problem domains. 
+Consequently, when working in complex domains like vision, extensive preprocess- 
+ing is required to produce feature sets which reflect properties critical to the domain, 
+such as invariance to translation and rotation. Not only does such preprocessing 
+increase the architectural complexity of these systems but it may fail to preserve 
+some properties inherent in the domain. For example in vision, while Fourier de- 
+composition may be adequate to handle reconstructions invariant under translation 
+and rotation, it is unlikely that distortion invariance will be as amenable to this 
+technique (von der Malsburg, 1988). 
+Clustering with a Domain-Specific Distance Measure 97 
+These problems may be avoided with the help of more powerful, domain-specific 
+distance measures, including some which have been applied successfully to visual 
+recognition tasks (Simard, Le Cun, and Denker, 1993; Huttenlocher el al., 1993). 
+Such measures can contain domain critical properties; for example, the distance 
+measure used here to cluster 2-D point images is invariant under translation, rota- 
+tion and labeling permutation. Moreover, new distance measures may constructed, 
+as this was, using Bayesian inference on a model of the visual domain given by a 
+probabilistic grammar (Mjolsness, 1992). Distortion invariant or graph matching 
+measures, so formulated, can then be applied to other domains which may not be 
+amenable to description in terms of features. 
+Objective functions can describe the distance measures constructed from a proba- 
+bilistic grammar, as well as learning problems that use them. The clustering prob- 
+lem in the present paper is formulated as two nested objective functions: the inner 
+objective computes the distance measures and the outer objective computes the 
+cluster centers and cluster memberships. A clocked objective function is used, with 
+separate optimizations occurring in distinct clock phases (Mjolsness and Miranker, 
+1993). The optimization is carried out with coordinate ascent/descent and deter- 
+ministic annealing and the resulting dynamics is a generalization of the Expectation- 
+Maximization (EM) algorithm commonly used in mixture models. 
+2 Theory 
+2.1 The Distance Measure 
+Our distance measure quantifies the degree of similarity between two unlabeled 
+2-D point images, irrespective of their position and orientation. It is calculated 
+with an objective that can be used in an image registration problem. Given two 
+sets of points {Xj } and {Yk }, one can minimize the following objective to find the 
+translation, rotation and permutation which best maps Y onto X ß 
+E,a(m, t, O) - mjkllX j - t - R(O). 
+with constraints: ¾j : rnj = 1 , ¾k j rnjk = 1. 
+Such a registration permits the matching of two sparse feature images in the presence 
+of noise (Lu and Mjolsness, 1994). In the above objective, m is a permutation matrix 
+which matches one point in one image with a corresponding point in the other image. 
+The constraints on m ensure that each point in each image corresponds to one and 
+only one point in the other image (though note later remarks regarding fuzziness). 
+Then given two sets of points {Xj} and {Y} the distance between them is defined 
+as: 
+D({Xj}, {Y})= min(E,.,a(m,t,O) l constraints on m) (1) 
+m,t,O 
+This measure is an example of a more general image distance measure derived in 
+(Mjolsness, 1992): 
+d(x,y) = mind(x,T(y)) e [0, 
+T 
+where T is a set of transformation parameters introduced by a visual grammar. In 
+(1) translation, rotation and permutation are the transformations, however scaling 
+98 Gold, Mjolsness, and Rangarajan 
+or distortion could also have been included, with consequent changes in the objective 
+function. 
+The constraints are enforced by applying the Potts glass mean field theory ap- 
+proximations (Peterson and Soderberg,1989) and then using an equivalent form of 
+the resulting objective, which employs Lagrange multipliers and an x log x barrier 
+function (as in Yuille and Kosowsky, 1991): 
+1 1) 
+Ereg(m, t, O) = E mJk[[XJ -- t-- R(O) o yk[}2 +  E mjk(log mjk -- 
+jk jk 
+j k k j 
+In this objective we are looking for a saddle point. (2) is minimized with respect to 
+m, t, and , which are the correspondence matrix, translation,and rotation, and is 
+maximized with respect to  and , the Lagrange multipliers tat enforce te row 
+and column constrMnts for m. 
+2.2 The Clustering Objective 
+The learning problem is formulated as follows: Given a set of I images, {Xi), with 
+each image consisting of J points, find a set of A cluster centers {Ya) and match 
+variables {Mia) defined as 
+1 ifXi is in Y.'s cluster 
+Mia = 0 otherwise, 
+such that each image is in only one cluster, and the total distance of all the images 
+from their respective cluster centers is minimized. To find {Ya) and {Mia) minimize 
+the cost function, 
+with the constraint that Vi . Mi = 1. D(Xi,Y), the distance function, is 
+defined by (1). 
+The constraints on M are enforced in a manner similar to that described for the 
+distance measure, except that now only the rows of the matrix M need to add to 
+one, instead of both the rows and the columnsø The Potts glass mean field theory 
+method is applied and an equivalent form of the resulting objective is used: 
+1 
+Eca,.t,.(Y,M) = Z Mi.D(Xi,Y.) +  Z Mi.(logMi. - 1)+ Z Ai(Z Mi. - 1) 
+ia ia i a 
+(3) 
+Replacing the distance measure by (2), we derive: 
+Edu.,er(Y, M, t, O,m) - Z Mi. E m'"llXq - t,. - R(O,.) . 
+ia jk 
+jk j k 
+. 1 
+) ,Viak(E miajk -- 1)] +   Mi.(logMi. - 1)+ ' Ai(y. Mi. - 1) 
+k j za i a 
+Clustering with a Domain-Specific Distance Measure 99 
+A saddle point is required. The objective is minimized with respect to Y, M, m, 
+t, O, which are respectively the cluster centers, the cluster membership matrix, the 
+correspondence matrices, the rotations, and the translations. It is maximized with 
+respect to A, which enforces the row constraint for M, and tt and v which enforce 
+the column and row constraints for m. M is a cluster membership matrix indicating 
+for each image i, which cluster a it falls within, and mia is a permutation matrix 
+which assigns to each point in cluster center Ya a corresponding point in image Xi. 
+Oia gives the rotation between image i and cluster center a. Both M and m are 
+fuzzy, so a given image may partially fall within several clusters, with the degree of 
+fuzziness depending upon/, and/M. 
+Therefore, given a set of images, X, we construct E½ust,. and upon finding the 
+appropriate saddle point of that objective, we will have Y, their cluster centers, 
+and M, their cluster memberships. 
+3 The Algorithm 
+3.1 Overview- A Clocked Objective Function 
+The algorithm to minimize the above objective consists of two loops - an inner 
+loop to minimize the distance measure objective (2) and an outer loop to minimize 
+the clustering objective (3). Using coordinate descent in the outer loop results 
+in dynamics similar to the EM algorithm for clustering (Hathaway, 1986). (The 
+EM algorithm has been similarly used in supervised learning [Jordan and Jacobs, 
+1993].) All variables occurring in the distance measure objective are held fixed 
+during this phase. The inner loop uses coordinate ascent/descent which results in 
+repeated row and column projections for m. The minimization of m, t and O occurs 
+in an incremental fashion, that is their values are saved after each inner loop call 
+from within the outer loop and are then used as initial values for the next call to 
+the inner loop. This tracking of the values of m, t, and O in the inner loop is 
+essential to the efficiency of the algorithm since it greatly speeds up each inner loop 
+optimization. Each coordinate ascent/descent phase can be computed analytically, 
+further speeding up the algorithm. Local minima are avoided, by deterministic 
+annealing in both the outer and inner loops. 
+The resulting dynamics can be concisely expressed by formulating the objective as 
+a clocked objective function, which is optimized over distinct sets of variables in 
+phases, 
+Eclockecl -- Ectuser( ( ((la, m)A, (v, m)A), oA, tA)b, (.,, M)A, yA) b 
+with this special notation employed recursively: 
+E(x, y), ß coordinate descent on x, then y, iterated (if necessary) 
+x A ß use analytic solution for x phase 
+The algorithm can be expressed less concisely in English, as follows: 
+Initialize t, 13 to zero, Y to random values 
+Begin Outer Loop 
+Begin Inner Loop 
+Initialize t, 13 with previous values 
+100 Gold, Mjolsness, and Rangarajan 
+Find m, t, 13 for each ia pair: 
+Find m by softmax, projecting across j, then k, iteratively 
+Find 13 by coordinate descent 
+Find t by coordinate descent 
+End Inner Loop 
+If first time through outer loop T/- and repeat inner loop 
+Find M,Y using fixed values of m, t, 13 determined in inner loop: 
+Find M by softmax, across i 
+Find Y by coordinate descent 
+End Outer Loop 
+When the distances are calculated for all the X - Y pairs the first time time through 
+the outer loop, annealing is needed to minimize the objectives accurately. However 
+on each succeeding iteration, since good initial estimates are available for t and 13 
+(the values from the previous iteration of the outer loop) annealing is unnecessary 
+and the minimization is much faster. 
+The speed of the above algorithm is increased by not recalculating the X - Y distance 
+for a given ia pair when its Mia membership variable drops below a threshold. 
+3.2 Inner Loop 
+The inner loop proceeds in three phases. In phase one, while t and 13 are held fixed, 
+m is initialized with the softmax function and then iteratively projected across its 
+rows and columns until the procedure converges. In phases two and three, t and 13 
+are updated using coordinate descent. Then/, is increased and the loop repeats. 
+In phase one m is updated with softmax: 
+exp(-/m[[Xij - tia -- R(13ia) ' Yall =) 
+rniaj: : 5-' exp(-.llXij - - R(13ia) . I[ 2) 
+Then m is iteratively normalized across j and k until yj Amiajk < e ' 
+mi aj k 
+miajk -- Ej t miaj k 
+miaj k 
+; miajk -- Ek t miaj k' 
+Using coordinate descent 13 is calculated in phase two: 
+Y/, ,,s, ( ( x,s-t, )¾,-( x,s -t )¾, ) 
+13ia = tan - Ys'ms'((xs-t')¾'-(x's-t)¾) 
+And t in phase three: 
+tial -- Ejk rn*Jk(X*5-t'-Y& cos©,+Y,2 sin ©,) 
+tia2 ----  my&(XiJ2-t*2-Yn sin ©-Y cos©i) 
+Ejk mtajk 
+Finally 3, is increased and the loop repeats. 
+Clustering with a Domain-Specific Distance Measure 101 
+0 to zero, 
+By setting the partial derivatives of (2) to zero and initializing p? and k 
+the algorithm for phase one may be derived. Phases two and three may be derived 
+by taking the partial derivative of (2) with respect to O, setting it to zero, solving 
+for O, and then solving for the fixed point of the vector (tl, t2). 
+Beginning with a small m allows minimization over a fuzzy correspondence matrix 
+m, for which a global minimum is easier to find. Raising m drives the m's closer 
+to 0 or 1, as the algorithm approaches a saddle point. 
+3.3 Outer Loop 
+The outer loop also proceeds in three phases: (1) distances are calculated by calling 
+the inner loop, (2) M is projected across a using the softmaxfunction, (3) coordinate 
+descent is used to update Y o 
+Therefore, using softmax M is updated in phase two: 
+exp(--M jk miajlllXij - tia - R(Oi,) ' ¾kll 2) 
+Mia = Ea' exp(--m Ejk mi='jllxo - ti=' - R(Oga') ' ra'11 =) 
+Y, in phase three is calculated using coordinate descent: 
+Ei Mia Yj mij(cosOi(Xij - ti) + sin Oi(Xij2 -tia2)) 
+Yak l 
+Ei Mi Ej miaj(-sin ei(Xij - ti) q- cos ei(Xij - 
+Yak2 -- 
+Then M is increased and the loop repeats. 
+4 Methods and Experimental Results 
+In two experiments (Figures la and lb) 16 and 100 randomly generated images of 
+15 and 20 points each are clustered into 4 and 10 clusters, respectively. 
+A stochastic model, formulated with essentially the same visual grammar used to 
+derive the clustering algorithm (Mjolsness, 1992), generated the experimental data. 
+That model begins with the cluster centers and then applies probabilistic trans- 
+formations according to the rules laid out in the grammar to produce the images. 
+These transformations are then inverted to recover cluster centers from a starting 
+set of images. Therefore, to test the algorithm, the same transformations are ap- 
+plied to produce a set of images, and then the algorithm is run in order to see if it 
+can recover the set of cluster centers, from which the images were produced. 
+First, n - 10 points are selected using a uniform distribution across a normalized 
+square. For each of the n: 10 points a model prototype (cluster center) is created 
+by generating a set of k - 20 points uniformly distributed across a normalized 
+square centered at each orginal point. Then, m - l0 new images consisting of 
+k = 20 points each are generated from each model prototype by displacing all k 
+model points by a random global translation, rotating all k points by a random 
+global rotation within a 54 ø arc, and then adding independent noise to each of the 
+translated and rotated points with a Gaussian distribution of variance er 2. 
+102 Gold, Mjolsness, and Rangarajan 
+I 0.2 O.i 0.6 0.8 I 1.2 1. 
+0.5 0.75 1 1.25 1. 
+Figure 1: (a): 16 images, 15 points each (b)'100 images, 20 points each 
+The p = n x m = 100 images so generated is the input to the algorithm. The 
+algorithm, which is initially ignorant of cluster membership information, computes 
+n = 10 cluster centers as well as n x p = 1000 match variables determining the 
+cluster membership of each point image. cr is varied and for each cr the average 
+distance of the computed cluster centers to the theoretical cluster centers (i.e. the 
+original n = 10 model prototypes) is plotted. 
+Data (Figure la) is generated with 20 random seeds with constants of n = 4, k = 
+15, m = 4, p = 16, varying cr from .02 to .14 by increments of .02 for each seed. 
+This produces 80 model prototype-computed cluster center distances for each value 
+of cr which are then averaged and plotted, along with an error bar representing 
+the standard deviation of each set. 15 random seeds (Figure lb) with constants 
+of n = 10, k = 20, m = 10,p = 100, cr varied from ø02 to .16 by increments of 
+.02 for each seed, produce 150 model prototype-computed cluster center distances 
+for each value of or. The straight line plotted on each graph shows the expected 
+model prototype-cluster center distances, /5 = ko'/x/ , which would be obtained if 
+there were no translation or rotation for each generated image, and if the cluster 
+memberships were known. It can be considered a lower bound for the reconstruction 
+performance of our algorithm. Figures la and lb together summarize the results of 
+280 separate clustering experiments. 
+For each set of images the algorithm was run four times, varying the initial randomly 
+selected starting cluster centers each time and then selecting the run with the lowest 
+energy for the results. The annealing rate for/m and /, was a constant factor of 
+1.031. Each run of the algorithm averaged ten minutes on an Indigo SGI workstation 
+for the 16 image test, and four hours for the 100 image test. The running time of 
+the algorithm is O(pnk2). Parallelization, as well as hierarchical and attentional 
+mechanisms, all currently under investigation, can reduce these times. 
+5 Summary 
+By incorporating a domain-specific distance measure instead of the typical generic 
+distance measures, the new method of unsupervised learning substantially reduces 
+the amount of ad-hoc pre-processing required in conventional techniques. Critical 
+features of a domain (such as invariance under translation, rotation, and permu- 
+Clustering with a Domain-Specific Distance Measure 103 
+tation) are captured within the clustering procedure, rather than reflected in the 
+properties of feature sets created prior to clustering. The distance measure and 
+learning problem are formally described as nested objective functions. We derive 
+an efficient algorithm by using optimization techniques that allow us to divide up 
+the objective function into parts which may be minimized in distinct phases. The 
+algorithm has accurately recreated 10 prototypes from a randomly generated sample 
+database of 100 images consisting of 20 points each in 120 experiments. Finally, by 
+incorporating permutation invariance in our distance measure, we have a technique 
+that we may be able to apply to the clustering of graphs. Our goal is to develop 
+measures which will enable the learning of objects with shape or structure. 
+Acknowledgement s 
+This work has been supported by 
+ONR/DARPA grant N00014-92-J-4048. 
+AFOSR grant F49620-92-J-0465 and 
+References 
+R. Hathaway. (1986) Another interpretation of the EM algorithm for mixture 
+distributions. Statistics and Probability Letters 4:53:56. 
+D. Huttenlocher, G. Klanderman and W. Rucklidge. (1993) Comparing im- 
+ages using the Hausdorff Distance. Pattern Analysis and Machine Intelligence 
+15(9):850:863. 
+A. L. Yuille and J.J. Kosowsky. (1992). Statistical physics algorithms that converge. 
+Technical Report 92-7, Harvard Robotics Laboratory. 
+M.I. Jordan and R.A. Jacobs. (1993). Hierarchical mixtures of experts and the 
+EM algorithm. Technical Report 9301, MIT Computational Cognitive Science. 
+C. P. Lu and E. Mjolsness. (1994). Two-dimensional object localization by coarse- 
+to-fine correlation matching. In this volume, NIPS 6. 
+C. yon der Malsburg. (1988). Pattern recognition by labeled graph matching. 
+Neural Networks,l:141:148. 
+E. Mjolsness and W. Miranker. (1993). Greedy Lagrangians for neural networks: 
+three levels of optimization in relaxation dynamics. Technical Report 945, Yale 
+University, Department of Computer Science. 
+E. Mjolsness. Visual grammars and their neural networks. (1992) SPIE Conference 
+on the Science of Artificial Neural Networks, 1710:63:85. 
+C. Peterson and B. SSderberg. A new method for mapping optimization problems 
+onto neural networks. (1989) International Journal of Neural Systems,l(1):3:22. 
+P. Simard, Y. Le Cun, and J. Denker. Efficient pattern recognition using a new 
+transformation distance. (1993). In S. Hanson, J. Cowan, and C. Giles, (eds.), 
+NIPS 5. Morgan Kaufmann, San Mateo CA. 

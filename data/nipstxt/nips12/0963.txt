@@ -1,0 +1,320 @@
+Image Recognition in Context: Application to 
+Microscopic Urinalysis 
+Xubo Song* 
+Department of Electrical and Computer Engineering 
+Oregon Graduate Institute of Science and Technology 
+Beaverton, OR 97006 
+xubosong @ ece. ogi. edu 
+Joseph Sill 
+Department of Computation and Neural Systems 
+California Institute of Technology 
+Pasadena, CA 91125 
+joe @ busy. work. caltech. edu 
+Yaser Abu-Mostafa 
+Department of Electrical Engineering 
+California Institute of Technology 
+Pasadena, CA 91125 
+yase r@ work. caltech. edu 
+Harvey Kasdan 
+International Remote Imaging Systems, Inc. 
+Chatsworth, CA 91311 
+Abstract 
+We propose a new and efficient technique for incorporating contextual 
+information into object classification. Most of the current techniques face 
+the problem of exponential computation cost. In this paper, we propose a 
+new general framework that incorporates partial context at a linear cost. 
+This technique is applied to microscopic urinalysis image recognition, 
+resulting in a significant improvement of recognition rate over the context 
+free approach. This gain would have been impossible using conventional 
+context incorporation techniques. 
+1 BACKGROUND: RECOGNITION IN CONTEXT 
+There are a number of pattern recognition problem domains where the classification of an 
+object should be based on more than simply the appearance of the object itself. In remote 
+sensing image classification, where each pixel is part of ground cover, a pixel is more like- 
+ly to be a glacier if it is in a mountainous area, than if surrounded by pixels of residential 
+areas. In text analysis, one can expect to find certain letters occurring regularly in particu- 
+lar arrangement with other letters(qu, ee,est, tion, etc.). The information conveyed by the 
+accompanying entities is referred to as contextual information. Human experts apply con- 
+textual information in their decision making [2][6]. It makes sense to design techniques and 
+algorithms to make computers aggregate and utilize a more complete set of information in 
+their decision making the way human experts do. In pattern recognition systems, however, 
+*Author for correspondence 
+964 X. B. Song, J. Sill, Y. Abu-Mostafa and H. Kasdan 
+the primary (and often only) source of information used to identify an object is the set of 
+measurements, or features, associated with the object itself. Augmenting this information 
+by incorporating context into the classification process can yield significant benefits. 
+Consider a set of N objects Ti, i = 1,...N. With each object we associate a 
+class label ci that is a member of a label set ft = 
+is characterized by a set of measurements xi E R P, 
+tor. Many techniques [1][2][4][6] incorporate context 
+{1,...,D}. Each object Ti 
+which we call a feature vec- 
+by conditioning the posterior 
+probability of objects' identities on the joint features of all accompanying objects, œe., 
+p(Cl, C2,..., CN IX1, ß ß ß , XN), and then maximizing it with respect to c1, c2,..., CN. It can 
+be shown that p(ci c2 ... civlxl,.. xiv) cr p(cllXl) ..p(civlxiv) v(c,...,cN) given 
+' ' ' '' ' p(Cl)...p(CN) 
+certain reasonable assumptions. 
+Once the context-free posterior probabilities p(cilxi) are known, e.g. through the 
+use of a standard machine learning model such as a neural network, computing 
+p(cl,..., civlx,..., xiv) for all possible Cl,..., c/v would entail (2N + 1)D/v multi- 
+plications, and finding the maximum has complexity of D iv, which is intractable for large 
+N and D. [2] 
+Another problem with this formulation is the estimation of the high dimensional joint dis- 
+tribution p(cl, ß ß ß, CN), which is ill-posed and data hungry. 
+One way of dealing with these problems is to limit context to local regions. With this 
+approach, only the pixels in a close neighborhood, or letters immediately adjacent are con- 
+sidered [4][6][7]. Such techniques may be ignoring useful information, and will not apply 
+to situations where context doesn't have such locality, as in the case of microscopic uri- 
+nalysis image recognition. Another way is to simplify the problem using specific domain 
+knowledge [1 ], but this is only possible in certain domains. 
+These difficulties motivate the efficient incorporation of partial context as a general frame- 
+work, formulated in section 2. In section 3, we discuss microscopic urinalysis image recog- 
+nition, and address the importance of using context for this application. Also in section 3, 
+techniques are proposed to identify relevant context. Empirical results are shown in section 
+4, followed by discussions in section 5. 
+2 
+FORMULATION FOR INCORPORATION OF PARTIAL 
+CONTEXT 
+To avoid the exponential computational cost of using the identities of all accompanying 
+objects directly as context, we use "partial context", denoted by A. It is called "partial" be- 
+cause it is derived from the class labels, as opposed to consisting of an explicit labelling of 
+all objects. The physical definition of A depends on the problem at hand. In our application, 
+A represents the presence or absence of certain classes. Then the posterior probability of 
+an object Ti having class label ci conditioned on its feature vector and the relevant context 
+A is 
+p(cilxi, A) = 
+p(ci,xi;A) 
+p(xilci, A)P(ci; A) 
+p(xi;A) p(xi;A) 
+We assume that the feature distribution of an object depends only on its own class, i.e., 
+p(xilc, A) - p(xlci). This assumption is roughly true for most real world problems. 
+Then, 
+Image Recognition in Context: Application to Microscopic Urinalysis 965 
+p(xilci)p(ci; A) p(ci[A) p(A)p(xi) 
+p(ci[xi, A) - - p(cilxi) 
+J; p(xi; A) 
+oc p(ci 11A) - p(ci[xi)p(PcliA )) 
+p(ci) 
+where p(ci A) - p(ci[A) is called the context ratio, through which context plays its role. 
+, p(c) 
+The context-sensitive posterior probability p(ci Ixi, A) is obtained through the context-free 
+posterior probability p(ci [xi) modified by the context ratio p(ci, A). 
+The partial-context maximum likelihood decision rule chooses class label i for element i 
+such that 
+ai = argmaxp(cilxi, A) 
+½i 
+A systematic approach to identify relevant context A is addressed in section 3.3. 
+(!) 
+The partial-context approach treats each element in a set individually, but with addi- 
+tional information from the context-bearing factor A. Once p(cilxi) are known for all 
+i = 1,..., N, and the context A is obtained, to maximize p(ci[xi, A) from D possible 
+values that ci can take on and for all i, the total number of multiplications is 2N, and the 
+complexity for finding the maximum is ND. Both are linear in N. The density estimation 
+part is also trivial since it is very easy to estimate p(c[A). 
+3 MICROSCOPIC URINALYSIS 
+3.1 INTRODUCTION 
+Urine is one of the most complex body fluid specimens: it potentially contains about 60 
+meaningful types of elements. Microscopic urinalysis detects the presence of elements that 
+often provide early diagnostic information concerning dysfunction, infection, or inflamma- 
+tion of the kidneys and urinary tract. Thus this non-invasive technique can be of great value 
+in clinical case management. Traditional manual microscopic analysis relies on human op- 
+erators who read the samples visually and identify them, and therefore is time-consuming, 
+labor-intensive and difficult to standardize. Automated microscopy of all specimens is more 
+practical than manual microscopy, because it eliminates variation among different technol- 
+ogists. This variation becomes more pronounced when the same technologist examines 
+increasing numbers of specimens. Also, it is less labor-intensive and thus less costly than 
+manual microscopy. It also provides more consistent and accurate results. An automat- 
+ed urinalysis system workstation (The YellowIRIS TM, International Remote Imaging 
+Systems, Inc.) has been introduced in numerous clinical laboratories for automated mi- 
+croscopy. Urine samples are processed and examined at 100x (low power field) and 400x 
+magnifications (high power field) with bright-field illumination. The YellowIRIS TM au- 
+tomated system collects video images of formed analytes in a stream of uncentrifuged urine 
+passing an optical assembly. Each image has one analyte in it. These images are given to a 
+computer algorithm for automatic identification of analytes. 
+Context is rich in urinalysis and plays a crucial role in analyte classification. Some com- 
+binations of analytes are more likely than others. For instance, the presence of bacteria 
+indicates the presence of white blood cells, since bacteria tend to cause infection and thus 
+trigger the production of more white blood cells. If amorphous crystals show up, they tend 
+to show up in bunches and in all sizes. Therefore, if there are amorphous crystal look-alikes 
+in various sizes, it is quite possible that they are amorphous crystals. Squamous epithelial 
+cells can appear both flat or rolled up. If squamous epithelial cells in one form are detected, 
+966 X. B. Song, J. Sill, Y. Abu-Mostafa and H. Kasdan 
+Table 1' Features extracted from urine anylates images 
+feature number feature description 
+1 
+2 
+3 
+4 
+5 
+6 
+7 
+8 
+9 
+I(} 
+i1 
+12 
+13 
+14 
+15 
+16 
+area 
+length of edge 
+square n)t of area 
+length of edge 
+standard deviation of distance from center to edge 
+mean 
+sum of length of two longest straight edges 
+total length of edge 
+sum of length tit' four longest straight edges 
+total length of edge 
+sum of length of two Ionlgest .<mi-straijht ed[es 
+total length tit' 'edge 
+sum of length of four Ionl?st semi-strai.eht edges 
+total length of edge 
+the mean of red distribution 
+the mean of blue distribution 
+the mean of green distribuuon 
+15 th pcreentile of gray level histogram 
+85 th pcrcentile of gray level histogram 
+the standard deviation tit' gray level intensity 
+energy of the I,aplacian transformatkm of grey level image 
+then it is likely that there are squamous epithelial cells in the other form. Utilizing such 
+context is crucial for classification accuracy. 
+The classes we are looking at are bacteria, calcium oxalate crystals, red blood cells, white 
+blood cells, budding yeast, amorphous crystals, uric acid crystals, and artifacts. The task 
+of automated microscopic urinalysis is, given a urine specimen that consists of up to a 
+few hundred images of analytes, to classify each analyte into one of these classes. The 
+automated urinalysis system we developed consists of three steps: image processing and 
+feature extraction, learning and pattern recognition, and context incorporation. Figure 1 
+shows some example analyte images. Table I gives a list of features extracted from analyte 
+images. 1 
+3.2 CONTEXT-FREE CLASSIFICATION 
+The features are fed into a nonlinear feed-forward neural network with 16 inputs, 15 hidden 
+units with sigmoid transfer functions, and 8 sigmoid output units. A cross-entropy error 
+function is used in order to give the output a probability interpretation. Denote the input 
+feature vector as x, the network outputs a D dimensional vector (D - 8 in our case) 
+p = {p(dlx) }, d = 1, ..., D, where p(d[x) is 
+p(dlx ) -- Prob( an analyte belongs to class d[ feature x) 
+The decision made at this stage is 
+d(x) = argmax p(dlx) 
+d 
+3.3 IDENTIFICATION OF RELEVANT PARTIAL CONTEXT 
+Not all classes are relevant in terms of carrying contextual information. We propose three 
+criteria based on which we can systematically investigate the relevance of the class pres- 
+ence. To use these criteria, we need to know the following distributions: the class prior dis- 
+tribution p(c) for c = 1,..., D; the conditional class distribution p(c[Aa) for c = 1,..., D 
+A and A2 are respectively the larger and the smaller eigenvalues of the second moment matrix 
+of an image. 
+Image Recognition in Context: Application to Microscopic Urinalysis 967 
+and d = 1,..., D; and the class presence prior distribution p(Ad) for d = 1,..., D. Ad is 
+a binary random variable indicating the presence of class d. Ad = I if class d is present, 
+and Ad = 0 otherwise. All these distributions can be easily estimated from the database. 
+The first criterion is the correlation coefficient between the presence of any two class- 
+es; the second one is the classical mutual information I(c; Ad) between the presence of a 
+class Ad and the class probability p(c), where I(c; Ad) is defined as I(c; Ad) = H(c) - 
+H(c]Ad) where H(c) = y4D= p(c = i)In(p(c = i)) is the entropy of the class priors and 
+H(clAa) - P(Ad = 1)H(clAd -- 1)+P(/d = O)H(clAd -- 0)is theconditionalentropy 
+of c conditioned on Ad. The third criterion is what we call the expected relative entropy 
+D(cl lad) between the presence of a class Ad and the labeling probability p(c), which we 
+define as D(c[lAd ) = P(Ad = 1)D(p(c)llp(clAd = 1)) + P(Ad = O)D(p(c)llp(clAd = 
+0)) where O(p(c)llp(clA d 1)) D 
+= = -i= p(c = ilAd = 1)ln(P(c!A )) and 
+O(p(c)llp(clAd - o)) - = p(c - ilAd = O)ln(p(c=ilAd=ø)) 
+p(c=i) 
+According to the first criterion, one type of analyte is considered relevant to another if the 
+absolute value of their correlation coefficient is beyond a certain threshold. It shows that 
+uric acid crystals, budding yeast and calcium oxalate crystals are not relevant to any other 
+types even by a generous threshold of 0.10. Similarly, the bigger the mutual information 
+between the presence of a class and the class distribution, the more relevant this class is. 
+Ranking the analyte types in terms of I(c; Ad) in a descending manner gives rise to the 
+following list: bacteria, amorphous crystals, red blood cells, white blood cells, uric acid 
+crystals, budding yeast and calcium oxalate crystals. Once again, ranking the analyte types 
+in terms of D(c] lad) in a descending manner gives rise to the following list: bacteria, red 
+blood cells, amorphous crystals, white blood cells, calcium oxalate crystals, budding yeast 
+and uric acid crystals. All three criteria lead to similar conclusions regarding the relevance 
+of class presence - bacteria, red blood cells, amorphous crystals, and white blood cells are 
+relevant, while calcium oxalate crystals, budding yeast and uric acid crystals are not. (Baed 
+on prior knowledge, we discard artifacts from the outset as an irrelevant class.) 
+3.4 ALGORITHM FOR INCORPORATING PARTIAL CONTEXT 
+Once the M relevant classes are identified, the following algorithm is used to incorporate 
+partial context. 
+Step 0 Estimate the priors p(clAd) and p(c), for c  { 1, 2,..., D) and d  { 1, 2,..., D). 
+Step 1 For a given xi, compute p(ci IXi) for ci = 1, 2,..., D using whichever base machine 
+learning model is preferred ( in our case, a neural network). 
+Step 2 Let the M relevant classes be /1,.-.,/M- According to the no-context p(cilxi) 
+and certain criteria for detecting the presence or absence of all the relevant classes, get 
+AR , ß ß ß , ARx . 
+Step 3 Let p(ci Ixi, Ao) = p(ci Ixi), where Ao is the null element. Incorporate context from 
+each relevant class sequentially, i.e., for rn = 1 to M, iteratively compute 
+p(cilx; A0,..., ARm_l, ARm ) - p(cilx, Ao,..., ARm_x ) p(cIARm)p(AR ) 
+p(c) 
+Step 4 Recompute ARx , ..., ARM based on the new class labellings. Return to step 3 and 
+repeat until algorithm converges? 
+2Hence, the algorithm has an E-M flavor, in that it goes back and forth between finding the most 
+968 X. B. Song, J. Sill, Y. Abu-Mostafa and H. Kasdan 
+amorphous crystals 
+artifacts 
+calcium oxalate crystals 
+hyaline casts 
+Figure 1' Example of some of the analyte images. 
+Step 5 Label the objects according to the final context-containing 
+p(cilxi, ARx , . . . , ARM), i.e., 5i = argmax p(cilxi, Ax , . . . , ArtM ) for i = 1,..., N. 
+ci 
+This algorithm is invariant with respect to the ordering of the M relevant classes in 
+(A1,..., AM). The proof is omitted here. 
+4 RESULTS 
+The algorithm using partial context was tested on a database of 83 urine specimens, contain- 
+ing a total of 20,276 analyte images. Four classes are considered relevant according to the 
+criteria described in section 3.3: bacteria, red blood cells, white blood cells and amorphous 
+crystals. We measure two types of error: analyte-by-analyte error, and specimen diagnostic 
+error. The average analyte-by-analyte error is reduced from 44.48% before using context 
+to 36.66% after, resulting a relative error reduction of 17.6% (Table 2). The diagnosis for a 
+specimen is either normal or abnormal. Tables 3 and 4 compare the diagnostic performance 
+with and without using context, and Table 5 lists the relative changes. We can see using 
+context significantly increases correct diagnosis for both normal and abnormal specimens, 
+and reduces both false positives and false negatives. 
+without context with context I 
+average element-by-element error 44.48 % 36.66 % 
+Table 2: Comparison of using and not using contextual information for analyte-by-analyte 
+error. 
+probable class labels given the context and determining the context given the class labels. 
+Image Recognition in Context: Application to Microscopic Urinalysis 969 
+estimated normal estimated abnormal 
+truly normal 40.96 % 7.23 % 
+truly abnormal 19.28 % 32.53 % 
+Table 3: Diagnostic confusion matrix not using context 
+estimated normal estimated abnormal 
+truly normal 42.17 % 6.02 % 
+truly abnormal 16.87 % 34.94 % 
+Table 4: Diagnostic confusion matrix using context 
+estimated normal estimated abnormal 
+truly normal + 2.95 % - 16.73 % 
+truly abnormal - 12.50 % +7.41% 
+Table 5: Relative accuracy improvement (diagonal elements) and error reduction (off diag- 
+onal elements) in the diagnostic confusion matrix by using context. 
+5 CONCLUSIONS 
+We proposed a novel framework that can incorporate context in a simple and efficien- 
+t manner, avoiding exponential computation and high dimensional density estimation. The 
+application of the partial context technique to microscopic urinalysis image recognition 
+demonstrated the efficacy of the algorithm. This algorithm is not domain dependent, thus 
+can be readily generalized to other pattern recognition areas. 
+ACKNOWLEDGEMENTS 
+The authors would like to thank Alexander Nicholson, Malik Magdon-Ismail, Amir Atiya 
+at the Caltech Learning Systems Group for helpful discussions. 
+References 
+[1 ] Song, X.B. & Sill, J. & Abu-Mostafa & Harvey Kasdan, (1997) "Incorporating Contextual Infor- 
+mation in White Blood Cell Identification", In M. Jordan, M.J. Kearns and S.A. Solla (eds.), Advances 
+in Neural Information Processing Systems 7, 1997, pp. 950-956. Cambridge, MA: MIT Press. 
+[2] Song, Xubo (1999) "Contextual Pattern Recognition with Application to Biomedical Image Iden- 
+tiffcation", Ph.D. Thesis, California Institute of Science and Technology. 
+[3] Boehringer-Mannheim-Corporation, Urinalysis Today, Boehringer-Mannheim-Corporation, 
+1991. 
+[4] Kittier, J.,"Relaxation labelling", Pattern Recognition Theory and Applications, 1987, pp. 99- 
+108., Pierre A. Devijver and Josef Kittier, Editors, Springer-Verlag. 
+[5] Kittier, J. & Illingworth, J., "Relaxation Labelling Algorithms - A Review", Image and Vision 
+Computing, 1985, vol. 3, pp. 206-216. 
+[6] Toussaint, G., "The Use of Context in Pattern Recognition", Pattern Recognition, 1978, vol. 10, 
+pp. 189-204. 
+[7] Swain, P. & Vardeman, S. & Tilton, J., "Contextual Classification of Multispectral Image Data", 
+Pattern Recognition, 1981, Vol. 13, No. 6, pp. 429-441. 

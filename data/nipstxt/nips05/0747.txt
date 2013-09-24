@@ -1,0 +1,464 @@
+Hidden Markov Models in Molecular 
+Biology: New Algorithms and 
+Applications 
+Pierre Baldi * 
+Jet Propulsion Laboratory 
+California Institute of Technology 
+Pasadena, CA 91109 
+Yves C hauvin ? 
+Net-ID, Inc. 
+8, Cathy Place 
+Menlo Park, CA 94305 
+Tim Hunkapiller 
+Division of Biology 
+California Institute of Technology 
+Marcella A. McClure 
+Department of Evolutionary Biology 
+University of California, Irvine 
+Abstract 
+Hidden Markov Models (HMMs) can be applied to several impor- 
+tant problems in molecular biology. We introduce a new convergent 
+learning algorithm for HMMs that, unlike the classical Baum-Welch 
+algorithm is smooth and can be applied on-line or in batch mode, 
+with or without the usual Viterbi most likely path approximation. 
+Left-right HMMs with insertion and deletion states are then trained 
+to represent several protein families including immunoglobulins and 
+kinases. In all cases, the models derived capture all the important 
+statistical properties of the families and can be used efficiently in 
+a number of important tasks such as multiple alignment, motif de- 
+tection, and classification. 
+*and Division of Biology, California Institute of Technology. 
+t and Department of Psychology, Stanford University. 
+747 
+748 Baldi, Chauvin, Hunkapiller, and McClure 
+1 INTRODUCTION 
+Hidden Markov Models (e.g., Rabiner, 1989) and the more general EM algorithm in 
+statistics can be applied to the modeling and analysis of biological primary sequence 
+information (Churchill (1989), Lawrence and Reilly (1990), Baldi et al. (1992), 
+Cardon and Stormo (1992), Hz. ussler et al. (1992)). Most notably, as in speech 
+recognition applications, a family of evolutionarily related sequences can be viewed 
+as consisting of different utterances of the same prototypical sequence resulting from 
+a common underlying HMM dynamics. A model trained from a family can then be 
+used for a number of tasks including multiple alignments and classification. The 
+multiple alignment is particularly important since it reveals the highly conserved 
+regions of the molecules with functional and structural significance even in the 
+absence of any tertiary information. The multiple alignment is also an essential 
+tool for proper phylogenetic tree reconstruction and other important tasks. Good 
+algorithms based on dynamic programming exist for the alignment of two sequences. 
+However they scale exponentially with the number of sequences and the general 
+multiple alignment problem is known to be NP-complete. Here, we briefly present 
+a new algorithm and its variations for learning in HMMs and the results of some of 
+the applications of this approach to new protein families. 
+2 HMMs FOR BIOLOGICAL PRIMARY SEQUENCES 
+A HMM is characterized by a set of states, an alphabet of symbols, a probability 
+transition matrix T = (tij) and a probability emission matrix eij. As in speech 
+applications, we are going to consider left-right architectures: once a given state is 
+left it can never be visited again. Common knowledge of evolutionary mechanisms 
+suggests the choice of three types of states (in addition to the start and to the 
+end state): the main states rnl, ..., rnv, the delete states dl, ..., dv+ and the insert 
+states i, ..., iN+. N is the length of the model which is usually chosen equal to the 
+average length of the sequences in the family and, if needed, can be adjusted in later 
+stages. The details of a typical architecture are given in Figure 1. The alphabet 
+has 4 letters in the case of DNA or RNA sequences, one symbol per nucleotide, 
+and 20 letters in the case of proteins, one symbol per amino acid. Only the main 
+and insert states emit letters, while the delete states are of course mute. The 
+linear sequence of state transitions start - rn - m2 - ... - mN - end is the 
+backbone of the model and correponds to the path associated with the prototypical 
+sequence in the family under consideration. Insertions and deletions are defined 
+with respect to this backbone. Insertions and deletions are treated symmetrically 
+except for the loops on the insert states needed to account for multiple insertions. 
+The adjustable parameters of the HMM provide a natural way of incorporating 
+variable gap penalties. A number of other architectures are also possible. 
+3 LEARNING ALGORITHMS 
+Learning from examples in HMMs is typically accomplished using the Baum-Welch 
+algorithm. In the Baum-Welch algorithm, the expected number nij (resp. mij) 
+of i - j transitions (resp. emissions of letter j from state i) induced by the data 
+are calculated using the forward-backward procedure. The transition and emission 
+Hidden Markov Models in Molecular Biology: New Algorithms and Applications 749 
+Figure 1: The basic left-right HMM architecture. S and E are the start and end 
+states. 
+probabilities are then reset to the observed frequencies by 
+ti  __ nij and e- +. rnij (1) 
+ni mi 
+where ni -- -]j nij and mi - -]j mij. It is clear that this algorithm can lead to 
+abrupt jumps in parameter space and that the procedure cannot be used for on- 
+line learning (after each training example). This is even more so if, in order to 
+save some computations, the Viterbi approximation is used to estimate likelihoods 
+and transition and emission statistics by computing only the most likely paths as 
+opposed to the forward-bacward procedure where all possible paths are examined. 
+A new algorithm for HMM learning which is smooth and can be used on-line or in 
+batch mode, with or without the Viterbi approximation, can be defined as follows. 
+For each 
+First, we use a Boltzmann-Gibbs representation for the parameters. 
+(resp. eij) we define a new parameter wij (resp. vii) by 
+½wij 
+tij = -]./ eWk and 
+(2) 
+Normalisation constraints are naturally enforced by this representation throughout 
+learning with the added advantage that none of the parameters can reach the ab- 
+sorbing value 0. After computing on-line or in batch mode the statistics nij and 
+mij using the forward-backward procedure (or the usual Viterbi approximation), 
+the update equations are particularly simple and given by 
+Awij -- ](nij _ tij) and Avij -- ](mij eij) (3) 
+ni mi 
+where / is the learning rate. In Baldi et al. (1992) a proof is given that this 
+algorithm must converge to a maximum of the product of the likelihoods of the 
+training sequences. In the case of an on-line Viterbi approximation, the optimal 
+path associated with the current training sequence is first computed. The update 
+equations are then given by 
+Awij ---- rl(tj -- tij) and Avij -- rl(tj -eij) (4) 
+750 Baldi, Chauvin, Hunkapiller, and McClure 
+Here, for a fixed state i, ti and tiej are the target transition and emission val- 
+ues' ft.. - I every time the transition si -* s i is part of the Viterbi path of the 
+corresponding training sequence sequence and 0 otherwise and similarly for tie/. 
+After training, the model derived can be used for a number of tasks. First, by 
+computing for each sequence its most likely path through the model using the 
+Viterbi algorithm, multiple sequences can be aligned to each other in time O(KN2), 
+linear in the number K of sequences. The model can also be used for classification 
+and data base searches. The likelihood of any sequence (randomly generated or 
+taken from any data base) can be calc'lated and compared to the likelihood of the 
+sequences in the family being modeled. Additional applications are discussed in 
+Baldi et al. (1992). 
+4 EXPERIMENTS AND RESULTS 
+The previous approach has been applied to a number of protein families including 
+globins, immunoglobulins, kinases, aspartic acid proteases and G-coupled receptor 
+proteins. The first application and alignment of the globin family using HMMs 
+(trained with the Viterbi approximation of the Baum-Welch algorithm, and a num- 
+ber of additional heuristics) was given by Haussler et al. (1992). Here, we briefly 
+describe some of our results on the immunoglobulin and the kinase families  
+4.1 IMMUNOGLOBULINS 
+Immunoglobulins or antibodies are proteins produced by B cells that bind with 
+specificity to foreign antigens in order to neutralize them or target their destruction 
+by other effector cells (e.g., Hunkapiller  Hood, 1989). The set of sequences used in 
+our experiments consists of immunoglobulins V region sequences from the Protein 
+Identification Resources (PIR) data base. It corresponds to 294 sequences, with 
+minimum length 90, average length 117 and maximum length 254. The variation in 
+length resulted from including any sequence with a V region, including those that 
+also included signal or leader sequences, germline sequences that did not include the 
+J segment, and some that contained the C region as well. Seventy seqences contained 
+one or more special characters indicating an ambiguous amino acid determination 
+and were removed. 
+For the immunoglobulins variable V regions, we have trained a model of length 117 
+using a random subset of 150 sequences. Figure 2 displays the alignment corre- 
+sponding to the first 20 sequences in this random subset. Letters emitted from the 
+main states are upper case and letters emitted from insertion states are lower case. 
+Dashes represent deletions or accomodate for insertions. As can be observed, the 
+algorithm has been able to detect all the main regions of highly conserved residues. 
+Most importantly, the cysteine residues towards the beginning and the end respon- 
+sible for the disulphide bonds which holds the chains together are perfectly aligned 
+and marked. The only exception is the fifth sequence from the bottom which has 
+a serine residue in its terminal portion. It is also important to remark that some 
+ Recently, Hausssler et al. have also independently applied their approach to the kinase 
+family (Haussler, private communication). 
+Hidden Markov Models in Molecular Biology: New Algorithms and Applications 751 
+PH0106 
+B27563 
+MHMS76 
+D25035 
+D24672 
+PH0100 
+B27888 
+PL0160 
+E28833 
+D30539 
+C30560 
+AVMSX4 
+C30540 
+PL0123 
+H36005 
+PH0097 
+I37267 
+A25114 
+D2HUWA 
+A30539 
+mklDvrllvlmfwiDasssDvVMTQTPLSLDvSLGDQASISCRSSQSLVHSngnTYLNWYLQ--KAGQS- 
+,LQQPGAELv-KPGASVKLSCKASGYTFTN---YWIHW%rKQ--RPGRGL 
+ESGGGLv-QPGGSFS(LSCVASGFTFSN---YWMNWVRQ--SPEKGL 
+mefglswñflvañlkgvqcEvRLVESGGDLv-EPGGSLRVSCEVSGFIFSK---AWMNWVRQ--APGKGL 
+ISCKASGYTFTN---YGMNW-v-KQ--APGKGL 
+LvQLQQSGPVLv-KPGTSNS{ISCKTSGYSFTG---YTMSW%rRQ--SHGKSL 
+EvMLVESGGGLa-KPGGSLKLSCTTSGFTFSI---HA_MSWVRQ--TPEKRL 
+QvQLQQSGPGLv-KPSQTLSLTCAISGDSVSSns-AAWNWIRQ--SPSRGL 
+DvVMTQTPLSLDvSLGDQASISCRSSQSLVRSngnTYLHWYLQ--KPGQP- 
+EvKLVESGGGLv-QSGGSLRLSCATSGFTFSD---FYMEWVRQ--PPGKSL 
+QvHLQQSGAELv-KPGASVKISCKASGYTFTS---YWMNW-VKQ--RPGQGL 
+EvKLLESGGGLv-QPGGSLKLSCAASGFDFSR---YWMSWVRQ--APGKGL 
+EvKLVESGGGLv-QPGGSLRLSCATSGFTFSD---FYMEWVRQ--PPGKRL 
+EvQLVESGGGLv-QPGGSLRLSCAASGFTFSS---YWMSWVRQ--APGKGL 
+EvQLVESGGGLv-KPGGSLRLSCAASGFTFSN---AWMNW%rRQ--APGKGL 
+DvKLVESGGGLv-KPGGSLKLSCAASGFTFSS---YIMSWVRQ--TPEKRL 
+sim vQLQQSGPELv-KPGASVKISCKTSGYTFTE---YTMHWWKQ--SHGKSL 
+DvHLQESGPGLv-KPSQSLSLTCSVTGYSITRg--YNWNWIRR--FPGNKL 
+R1QLQESGPGLv-KPSETLSLTCIVSGGPIRRtg-YYWGWIRQ--PPGKGL 
+EvKLVESGGGLv-QPGGSLRLSCATSGFTFSD---FYMEWVRQ--PPGKRL 
+PH0106 
+B27563 
+MHMS76 
+D25035 
+D24672 
+PH0100 
+B27888 
+PL0160 
+E28833 
+D30539 
+C30560 
+AVMSX4 
+C30540 
+PL0123 
+H36005 
+PH0097 
+I37267 
+A25114 
+D2HUWA 
+A30539 
+-D-KLLI-YKV---SNR-FSGVPDRFSGSG--SGTDFTLKISRVEAEDLGIYFCSQ. 
+E-WIGRI-DPNSGGTKY-NEKFKNKATLTINKPSNTAYMQLSSLTSDDSAVYYCA_RGYDYSYY 
+E-WVAEIrLKSGYATHY-AESVKGRFTISRDDSKSSVYLQ5NLRAEDTGIYYCTRPGV ........... 
+Q-WVGQIkNKVDGGTIDYAAPVKGRFIISRDDSKSTVYLQMNRLKIEDTAVYYCVGNYTGT ......... 
+K-WMGWI-NTYTGEPTY-ADDFKGRFAFSLETSASTAYLQINNLKNEDTATYFCA_RGSSYDYY 
+E-WIGLI-IPSNGGTNY-NQKFKDKASLTVDKSSSTAYMELLSLTSEDSAVYYCARPSYYGSRnyy .... 
+E-WVAAI-SSGGSYTFY-PDSVKGRFTISRDNAKNTLYLQINSLRSEDTAIYYCA_REEGLRLDdy ..... 
+E-WLGRT-YYRSKWYNDYAVSVKSRITINPDTSKNQFSLQLNSVTPEDTAVYYCA3ELGDA. 
+-D-KLLI-YKV---SNR-VSGVPDRFSGSG--SGTDFTLKISRVEAEDLGVYFCSQSTHV .......... 
+E-WIAASrNE/DYTTEYSASVKGRFIVSRDTSQSILYLQMIALRADTAIYYCSRDYYGSSYw ...... 
+E-WIGEI-DPSNSYTNN-NQKFKNKATLTVDKSSNTAYMQLSSLTSEDSAVYYCA_RWGTGSSWg ...... 
+E-WIGEI-NPDSSTINY-TPSLKDKFIISRDNAKNTLYLQMSKVRSEDTALYYCA_RLHYYGY 
+E-WIAASrNKAHDYTTEYSASVKGRFIVSRDTSQSILYLQMNALRADTAIYYCA_RDADYGSSshw .... 
+E-WV/qI-KQDGSEKYY-VDSVKGRFTISRDNA/<NSLYLQMNSLRA_EDTAVYYCA_R, 
+E-WVGRIkSKTDGGTTDYAAPVKGRFTISRDDSKNTLYLQMNSLKTEDTAVYYCTTDRGGSSQ 
+E-WVATI-SSGGRYTYY-SDSVKGRFTISRDNA/<NTLYLQMSSLRSEDTA_MYYSTASGDS 
+E-WIGGI-NPNNGGTSY-NQKFKGKATLTVDKSSSTAYMELRSLTSEDSAVYYCA/{RGLTTVVaksy--- 
+E-WMGYI-NYDGS-NNY-NPSLKNRISVTRDTSKNQFFLKFSNSVTTEDTATYYCA_RLIPFSDGyyedyy- 
+E-WIGGV-YYTGS-IYY-NPSLRGRVTISVDTSRNQFSLNLRSMSAADTA_MYYCA_RGNPPPYYdñgtgsd 
+E-WIAASrNKANDYTTEYSASVKGRFIVSRDTSQSILYLQMNALRAEDTAIYYCA_RDYYGSSYvw ..... 
+PH0106 
+B27563 
+MHMS76 
+D28035 
+D24672 
+PH0100 
+B27888 
+PL0160 
+E28833 
+D30539 
+C30560 
+AVMSX4 
+C30540 
+PL0123 
+H36005 
+PH0097 
+I37267 
+A25114 
+D2HUWA 
+A30539 
+tthvDptfgggtkleikr- 
+-A/DYWGQGTSVTVSS 
+--PDYWGQGTTLTVSS 
+--VDYWGQGTLVTVSS 
+-A/DYWGQGTSVTVSS 
+-AMDYWGQGTSVTVSSak. 
+-A/DYWGQGTSVTVS 
+--FDIWGQGTMVTVSS 
+-YFD%rWGAGTTVTVSS 
+-WFAYWGQGTLVTVSA. 
+--AAYWGQGTLVTVSAe .................. 
+-YFDVWGAGTTVTVSS 
+--GDYWGQGTLVTVSS 
+--FDYWGQGTTLTVSSak 
+-YFDYWGQGTTLTVSS 
+-A/DYWGQGT 
+dGIDVWGQGTTVHVSS 
+-YFDVWGAGTTVTVSS 
+Figure 2: Immunoglobulin alignment. 
+752 Baldi, Chauvin, Hunkapiller, and McClure 
+of the sequences in the family have some sort of "header" (leader signal peptide) 
+whereas the others do not. We did not remove the headers prior to training and 
+used the sequences as they were given to us. The model was able to detect and 
+accomodate these "headers" by treating them as initial inserts as can be seen from 
+the alignment of two of the sequences. 
+4.2 KINASES 
+Eukaryotic protein knases co-.stitute a very large family of proteins that regu- 
+late the most basic of cellular processes through phosphorylation. They have been 
+termed the "transistors" of the cell (Hunter (1987)). We have used the sequences 
+available in the kinase data base maintained at the Salk Institute. Our basic set 
+consists of 224 sequences, with minimum length 156, average length 287, and max- 
+imal length 569. Only one sequence containing a special symbol (X) was discarded. 
+In one experiment, we trained a model of length 287 using a random subset of 
+150 kinase sequences. Figure 3 displays the corresponding alignment for a subset 
+of 12 phylogenetically representative sequences. These include serine/threonine, 
+tyrosine and dual specificity kinases from mammals, birds, fungi and retroviruses 
+and herpes viruses. The percentage of identical residues within the kinase data 
+sets ranges from 8-30%, suggesting that only those residues involved in catalysis 
+are conserved among these highly divergent sequences. All the 12 characteristic 
+catalytic domains or subdomains described in Hanks and Quinn (1991) are easily 
+recognizable and marked. Additional highly conserved positions can also be ob- 
+served consistent with previously constructed multiple alignments. For instance, 
+the initial hydrophobic consensus Gly-X-Gly-XX-Gly together with the Lys located 
+15 or 20 residues downstream are part of the ATP/GTP binding site. The carboxyl 
+terminus is characterized by the presence of an invariant Arg residue. Conserved 
+residues in proximity to the acceptor amino acid are found in the VIb (Asp), VII 
+(Asp-Phe-Gly) and VIII domains (Ala-Pro-Glu). In Figure 4, the entropy of the 
+emission distribution of each main state is plotted: motifs are easily detectable and 
+correspond to positions with very low entropy. 
+DISCUSSION 
+HMMs are emerging as a powerful, adaptive, and modular tool for computational 
+biology. Here, they have been used, together with a new learning algorithm, to 
+model families of proteins. In all cases, the models derived capture all the important 
+statistical properties of the families. Additional results and potential applications, 
+such as phylogenetic tree reconstruction, classification, and superfamily modeling, 
+are discussed in Baldi et al. (1992). 
+References 
+Baldi, P., Chauvin, Y., Hunkapiller, T. and McClure, M. A. (1992) Adaptive Al- 
+gorithms for Modeling and Analysis of Biological Primary Sequence Information. 
+Technical Report. 
+Cardon, L. R. and Stormo, G. D. (1992) Expectation Maximization Algorithm 
+for Identifying Protein-binding Sites with Variable Lengths from Unaligned DNA 
+Hidden Markov Models in Molecular Biology: New Algorithms and Applications 753 
+CD28 
+MLCK 
+P SKH 
+CAPK 
+WEE 1 
+CSRC 
+EGFR 
+PDGF 
+VFES 
+RAF1 
+CMOS 
+HSVK 
+any KR- - LEKVGEGTY GVVYKALDLrpg - -QGQRWALK ...... KIRLESEDEGVPSTAIRE I S LLKE L-K-DDNIVRLYDIVH 
+- -F SMn sKEALGGGKF GAVCTC TEK ..... STG LKLAAK - - -VI -KKQTPKDKE .... MVMLE I EVMNQL-N-H RNL I QLYAAIE 
+akYD I- -KAL I GRGSF SRVVRVEHR ..... ATRQPYAI K - - -MI E TKYREGRE ..... VCE SE LRVLRRV-R-HAN I I Q LVEVFE 
+dqFg R- - I KT LGTGSF GRVMLVKHM ..... E TGNHYAMK - -- I LDKQKVVKLKQ IE - -HT LNEKRI LQAV-N-FPF LVK LEF SFK 
+t r FRN--VT L LGS GEF SEVFQVEDPv .... EKT LKYAVK - - -KL- KVKF SGPKERN- -RLLQEVS I QRALkG-HDH IVE LMDSWE 
+e s LR L- -EVK LGQGCF GEVWMGTWN ...... GT TRVAIK---TLKPGNMSPE ...... AFLQEAQVMKK L-R-HEKLVQLYAWS 
+t eFKK-- I KVLGSGAFGTVYKGLWI pege-KVK IPVAIK---E LREATSPKANK .... E I LDEAYVMASV-D-NPHVCRL LG I C L 
+dqLVL- - GRT LGSGAF GQVVEATAHg 1 shsQATMKVAVK- - -MLK STARS S EKQ .... ALMSELY--GDL--v-DYLHRNKHTF L 
+e dLVL- - GEQ I GRGNF GEVF SGRLR ..... ADNT LVAVK- - - SCRET LPPD I KA .... KFLQEAK I LKQY-S-HPNIVRL I GVCT 
+s eVML--STRI GSGSFGTVYKGKWH ........ GDVAVK - - - I LKVVDPTP EQFQ-- -AFRNEVAVLRKT-R-HVNI LLFMGYMT 
+e qVC L- - LQR LGAGGF GSVYKATYR ....... GVPVAI KQvNKCTKNRLAS RR ..... SFWAE LNV-ARL-R-HDNIVRWAAST 
+mgFT I--HGALTPGSEGCVFDs SHP ..... DYPQRVIVK ...... AGWYT ........ ST SHEARL LRRL-D-HPAI LP L LDLHV 
+....................... I ...................... II ...................... III ............. IV ..... 
+CD2 
+MLCK 
+PSKH 
+CAPK 
+WEE1 
+CSRC 
+EGFR 
+PDGF 
+VFES 
+RAF1 
+CMOS 
+HSVK 
+SDAHk ......... LY-L-V-FEFLDL-DLKRYMEGIpkd ............................................. 
+TPHE .......... IV-L-F-MEYIEGGELFERIVDE ................................................ 
+TQER .......... VY-M-V-MELATGGELFDRIIAK ................................................ 
+DNSN .......... LY-M-V-MEYVPGGEMFSHLRRI ................................................ 
+HGGF .......... LY-M-Q-VELCENGSLDRFLEEQgql ............................................. 
+-EEP .......... IY-I-V-TEYMSKGSLLDFLKGE ................................................ 
+-TST .......... VQ-L-I-TQLMPFGCLLDYVREH ................................................ 
+-QRHnkhcppsaeLYs-n-a--LPGFLPHLNLTesdgymdmskdesidyvmdmkgdikyadiessymapydnyvs 
+QKQP .......... IY-I-V-MELVQGGDFLTFLRTE ................................................ 
+-KDN .......... LA-I-V-TQWCEGSSLYKHLHVQ ................................................ 
+RTPAgsnsl ..... GT-I-I-MEFGGNVTLHQVIYGAaghDegdagephcrtg ................................ 
+VSGV .......... TC-L-V-LPKYQA-DLYTYLSRR ................................................ 
+CD28 
+MLCK 
+P SKH 
+CAPK 
+WEE1 
+CSRC 
+EGFR 
+PDGF 
+VFES 
+RAF1 
+CMOS 
+HsVK 
+............... QP-LGADIVKKFMMQ-LCKGIAYCHSHRILHRDLKPQNLL-INKDG---N-LKLGDFGLARAFGVPLRAY 
+.............. DYH-LTEVDTMVFVRQ-ICDGILFMHKMRVLHLDLKPENILcVNTTG---H1VKIIDFGLARRYNPNEKL- 
+............... GS-FTERDATRVLQM-VLDGVRYLHALGITHRDLKPENLL-YYHPGtdsK-IIITDFGLASARKKGDDCL 
+............... GR-FSEPHARFYAAQ-IVLTFEYLHSLDLIYRDLKPENLL-IDQQG---Y-IQVTDFGFAKRVKGRT--- 
+............... SR-LDEFRVWKILVE-VALGLQFIHHKNYVHLDLKPANVM-ITFEG---T-LKIGDFGMASVWPVPRG-- 
+.............. MGKyLRLPQLVDMAAQ-IASGMAYVERMArYVHRDLRAANIL-VGENL---V-CKVADFGLARLIEDNEYTA 
+.............. KDN-IGSQYLLNWCVQ-IAKGMNYLEDRRLVHRDLAARNVL-VKTPQ---H-VKITDFGLAKLLGAEEKEY 
+aDertyratinds-PV-LSYTDLVGFSYQ-VANGMDFLASKNCVHRDLAARNVL-ICEGK---L-VKICDFGLARDIMRDSNYI 
+.............. GAR-LRMKTLLQMVGD-AAAGMEYLESKCCIHRDLAARNCL-VTEKN---V-LKISDFGMSREAADGIYAA 
+.............. ETK-FQMFQLIDIARQ-TAQGMDYLHAKNIIHRDMKSNNIF-LHEGL---T-VKIGDFGLATVKSRWSGSQ 
+............... GQ-LSLGKCLKYSLD-WNGLLFLHSQSIVHLDLKPANIL-ISEQD---V-CKISDFGCSEKLEDLLCFQ 
+.............. LNP-LGRPQIAAVSRQ-LLSAVDYIHRQGIIHRDIKTENIF-INTPE---D-ICLGDFGAACFVQGSRSSP 
+............................... Via ....................... VIb .................. VII ............ 
+CD28 
+MLCK 
+PSKH 
+CAPK 
+WEE1 
+CSRC 
+EGFR 
+PDGF 
+VFES 
+RAF1 
+CMOS 
+HSVK 
+---THEIVTLWYRAPEVLLgGK---QYSTGVDTWSIGCIFAEMCNRKP ............... IFSGDSE ..... IDQIFKIFRV 
+---KVNFGTPEFLSPEVVN-YD---QISDKTDMWSLGVITYMLLSGLS ............... PFLGDDD ..... TETLNNVLSG 
+M--KTTCGTPEYIAPEVLV-RK---PYTNSVDMWALGVIAYILLSGTM ............... PFEDDNR ..... TRLYRQILRG 
+---WTLCGTPEYLAPEIIL-SK---GYNKAVDWWALGVLIYEMAAGYP ............... PFFADQP ..... IQIYEKIVSG 
+---MEREGDCEYIAPEVLA-NH---LYDKPADIFSLGITVFEAAANIV .............. LPDNGQSW ..... Q .... KLRSG 
+R--QGAKFPIKWTAPEAAL-YG---RFTIKSDVWSFGILLTELTTKGR .............. VPYPGMVN ..... REVLDQVERG 
+H-AEGGKVPIKWMALESIL-HR---IYTHQSDVWSYGVTVWELMTFGS .............. KPYDGIPA ..... SEISSILEKG 
+S-KGSTYLPLKWMAPESIF-NS---LYTTLSDVWSFGILLWEIFTLGG .............. TPYPELPM .... NDQFYNAIKRG 
+S-GGLRQVPVKWTAPEALN-YG---RYSSESDVWSFGILLWETFSLGA .............. SPYPNLSN ..... QQTREFVEKG 
+Q-VEQPTGSVLWMAPEVIR-MQdnnPFSFQSDVYSYGIVLYELMTGEL ............... PYS---R ..... DQIIFMVGRG 
+TDSYPLGGTYTHRAPELLK-GE---GVTPKADIYSFAITLWQMTTKQA ............... PYSGERQ ..... HILYAWAYD 
+F-PYGIAGTIDTNAPEVLA-GD---PYTTTVDIWSAGLVIFETAVHNA ..................................... 
+..................... VIII ................ IX ......................................... X ........ 
+CD28 
+MLCK 
+P SKH 
+CAPK 
+WEE 1 
+CSRC 
+E GFR 
+PDGF 
+VFES 
+RAF1 
+CMOS 
+HSVK 
+---LGTPNEAIwpdivylpdfkpsfpqwrrkdlsqvvpsLDPRGIDLLDKLLAYDPINRISARRAAIHPYFQES ........ 
+nwyFDEETFEA ............................ VSDEAKDFVSNLIVKEQGARMSAAQCLAHPWLNNL ........ 
+kysYSGEPWPS ............................ VSNLAKDFIDRLLTVDPGARMTALQALRHPWVVSM ........ 
+---KVR-FPSH ............................ FSSDLKDLLRNLLQVDLTKRFGNLKDGVNDIKNHK ........ 
+---DLSDAPRLsstdnssltsssretansññ ...... GQGGLDRVVEWMLSPEPRNRPTIDQILATD--EVCWV ...... 
+---YRMPCPPE ............................ CPESLHDLMCQCWRRDPEERPTFEYLQAFLEDYFT ........ 
+---ERLPQPPI ............................ CTIDVYMIMVKCWMIDADSRPKFRELIIEFSKMAR ........ 
+---YRMAQPAH ............................ ASDEIYEIMQKCWEEKFETRPPFSQLVLLLERLLGEGykkky- 
+---GRLPCPEL ............................ CPDAVFRLMEQCWAYEPGQRPSFSAIYQEL ............. 
+---YASPDLSKlykn ........................ CPKAMKRLVADCVKKVKEERPLFPQILSSIELLQH ........ 
+---LRPSLSAAvfedsl ...................... PGQRLGDVIQRCWRPSAAQRPSARLLLVDLTSLKA ........ 
+.................................................................................. 
+Figure 3: Kinase alignment of 12 representative sequences. 
+754 Baldi, Chauvin, Hunkapiller, and McClure 
+Main State Entropy Values 
+10 20 30 40 50 60 70 80 90 100 110 120 130 140 
+150 160 I 70 180 190 200 210 220 230 240 250 260 270 280 
+Entropy Distribution 
+00 0;5 1;0 1;5 20 25 30 
+Figure 4: Kinase emission entropy plot and distribution. 
+Fragments. Journal of Molecular Biology, 223, 159-170. 
+Churchill, G. A. (1989) Stochastic Models for Heterogeneous DNA Sequences. Bul- 
+letin of Mathematical Biology, 51, 1, 79-94. 
+Hanks, S. K., Quinn, A.M. (1991) Protein Kinase Catalytic Domain Sequences 
+Database: Identification of Conserved Features of Primary Structure and Classifi- 
+cation of Family Members. Methods in Enzymology, 200, 38-62. 
+Haussler, D., Krogh, A., Mian, S. and Sjolander, K. (1992) Protein Modeling using 
+Hidden Markov Models. Computer and Information Sciences Technical Report 
+(UCSC-CRL-92-93), University of California, Santa Cruz. 
+Hunkapiller, T. and Hood, L. (1989) Diversity of the Immunoglobulin Gene Super- 
+family. Advances in Immunology, 44, 1-63, Academic Press, Inc. 
+Hunter, T. (1987) A Thousand and One Protein Kinases. Cell, 50, 823-829. 
+Lawrence, C. E. and Reilly, A. A. (1990) An Expectation Maximization (EM) Al- 
+gorithm for the Identification and Characterization of Common Sites in Unaligned 
+Biopolymer Sequences. Proteins: Struct. Funct. Genet., 7, 41-51. 
+Rabiner, L. R. (1989) A Tutorial on Hidden Markor Models and Selected Applica- 
+tions in Speech Recognition. Proceedings of the IEEE, 77, 2, 257-286. 

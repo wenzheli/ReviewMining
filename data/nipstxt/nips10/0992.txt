@@ -1,0 +1,330 @@
+The Observer-Observation Dilemma 
+in Neuro-Forecasting 
+Hans Georg Zimmermann 
+Siemens AG 
+Corporate Technology 
+D-81730 M'anchen, Germany 
+Georg.Zimmermannmchp.siemens. de 
+Ralph Neuneier 
+Siemens AG 
+Corporate Technology 
+D-81730 Miinchen, Germany 
+Ralp h.Neuneiermchp. siemens. de 
+Abstract 
+We explain how the training data can be separated into clean informa- 
+tion and unexplainable noise. Analogous to the data, the neural network 
+is separated into a time invariant structure used for forecasting, and a 
+noisy part. We propose a unified theory connecting the optimization al- 
+gorithms for cleaning and learning together with algorithms that control 
+the data noise and the parameter noise. The combined algorithm allows 
+a data-driven local control of the liability of the network parameters and 
+therefore an improvement in generalization. The approach is proven to 
+be very useful at the task of forecasting the German bond market. 
+1 Introduction: The Observer-Observation Dilemma 
+Human beings believe that they are able to solve a psychological version of the Observer- 
+Observation Dilemma. On the one hand, they use their observations to constitute an under- 
+standing of the laws of the world, on the other hand, they use this understanding to evaluate 
+the correctness of the incoming pieces of information. Of course, as everybody knows, 
+human beings are not free from making mistakes in this psychological dilemma. We en- 
+counter a similar situation when we try to build a mathematical model using data. Learning 
+relationships from the data is only one part of the model building process. Overrating this 
+part often leads to the phenomenon of overfitting in many applications (especially in eco- 
+nomic forecasting). In practice, evaluation of the data is often done by external knowledge, 
+i.e. by optimizing the model under constraints of smoothness and regularization [7]. If we 
+assume, that our model summerizes the best knowledge of the system to be identified, why 
+should we not use the model itself to evaluate the correctness of the data? One approach to 
+do this is called Cleaming [11]. In this paper, we present a unified approach of the interac- 
+tion between the data and a neural network (see also [8]). It includes a new symmetric view 
+on the optimization algorithms, here learning and cleaning, and their control by parameter 
+and data noise. 
+The Observer-Observation Dilemma in Neuro-Forecasting 993 
+2 Learning 
+2.1 Learning reviewed 
+We are especially interested in using the output of a neural network y(z, w), given the 
+input pattern, z, and the weight vector, w, as a forecast of financial time series. In the 
+context of neural networks learning normally means the minimization of an error function 
+E by changing the weight vector w in order to achieve good generalization performance. 
+Typical error functions can be written as a sum of individual terms over all T training 
+patterns, E  T 
+: Y't= Et. For example, the maximum-likelihood principle leads to 
+= (y(x, w)- y)2 (l) 
+with y{ as the given target pattern. If the error function is a nonlinear function of the pa- 
+rmeters, learning has to be done iteratively by a search through the weight space, changing 
+the weights from step ,- to ,- + 1 according to: 
+W(r+l) __ W (r) q- AW (r). 
+(2) 
+There are several algorithms for choosing the weight increment Aw (), the most easiest 
+being gradient descent. After each presentation of an input pattern, the gradient gt := 
+VEt Iw of the error function with respect to the weights is computed. In the batch version 
+of gradient descent the increments are based on all training patterns 
+T 
+Aw() = -g = - E gt, 
+t----1 
+(3) 
+whereas the pattern-by-pattern version changes the weights after each presentation of a 
+pattern 2: t (often randomly chosen from the training set): 
+Aw (r) : -rlgt. (4) 
+The learning rate r/is typically held constant or follows an annealing procedure during 
+training to assure convergence. Our experiments have shown that small batches are most 
+useful, especially in combination with Vario-Eta, a stochastic approximation of a Quasi- 
+Newton method [3]: 
+N 
+Aw( ) = _ r/ 1 
+4 E(gt g)2 '  gt, (5) 
+-- t----! 
+with and N < 20. Learning pattern-by-pattern or with small batches can be viewed as a 
+stochastic search process because we can write the weight increments as: 
+= gt -- g ß 
+AW (r) --r]g q-  t=l 
+(6) 
+These increments consist of the terms g with a drift to a local minimum and of noise terms 
+I EtN= gt #) disturbingthisdrift. 
+(7  - 
+2.2 Parameter Noise as an Implicit Penalty Function 
+Consider the Taylor expansion of E(w) around some point w in the weight space 
+1 
+E(w + Aw) = E(w) + VE Aw + AwHAw 
+(7) 
+994 H. G. Zimmermann and R. Neuneier 
+with H as the Hessian of the error function. Assume a given sequence of T disturbance 
+vectors Awt, whose elements Awt (i) are identically, independently distributed (i.i.d.) with 
+zero mean and variance (row-)vector var( Awi ) to approximate the expectation ( E (w)) by 
+1 1 
+7 + Xwt) : + 
+t 
+(8) 
+with Hii as the diagonal elements of H. In eq. 8, noise on the weights acts implicitly as a 
+penalty term to the error function given by the second derivatives Hii. The noise variances 
+var(Aw(i)) operate as penalty parameters. As a result of this flat minima solutions which 
+may be important for achieving good generalization performance are favored [5]. 
+Learning pattern-by-pattern introduces such noise in the training procedure i.e., Awt --- 
+-r/ß gr. Close to convergence, we can assume that gt is i.i.d. with zero mean and variance 
+vector var(g,) so that the expected value can be approximated by 
+r/2 oq2E 
++ 5- var(g,) 
+i 
+(9) 
+This type of learning introduces to a local penalty parameter var(Aw(i)), characterizing 
+the stability of the weights w = [wi]i=l,...,t,. 
+The noise effects due to Vario-Eta learning Awt(i) = - ' 
+ ß gti leads to 
+r/2 
+(lO) 
+By canceling the term var(g,) in eq. 9, Vario-Eta achieves a simplified uniform penalty 
+parameter, which depends only on the learning rate r/. Whereas pattern-by-pattern learning 
+is a slow algorithm with a locally adjusted penalty control, Vario-Eta is fast only at the cost 
+of a simplified uniform penalty term. We summarize this section by giving some advice on 
+how to learn to flat minima solutions: 
+ß Train the network to a minimal training error solution with Vario-Eta, which is a 
+stochastic approximation of a Newton method and therefore very fast. 
+ß Add a final phase of pattern-by-pattern learning with uniform learning rate to fine 
+tune the local curvature structure by the local penalty parameters (eq. 9). 
+ß Use a learning rate r/as high as possible to keep the penalty effective. The training 
+error may vary a bit, but the inclusion of the implicit penalty is more important. 
+3 Cleaning 
+3.1 Cleaning reviewed 
+When training neural networks, one typically assumes that the data is noise-free and one 
+forces the network to fit the data exactly. Even the control procedures to minimize over- 
+fitting effects (i.e., pruning) consider the inputs as exact values. However, this assumption 
+is often violated, especially in the field of financial analysis, and we are taught by the 
+phenomenon of overfitting not to follow the data exactly. Cleaming, as a combination of 
+cleaning and learning, has been introduced in the paper of [11]. The motivation was to 
+minimize overfitting effects by considering the input data as corrupted by noise whose dis- 
+tribution has also to be learned. The Cleaning error function for the pattern t is given by 
+the sum of two terms 
+1 d 2 
+E ':v =  [(/t- /t ) q- (2:t- xt d) -- E q- E (11) 
+The Observer-Observation Dilemma in Neuro-Forecasting 995 
+with z d 
+t, /t as the observed data point. In the pattern-by-pattern learning, the network 
+output y(zt, w) determines the adaptation as usual, 
+OEY 
+w (+) = w () - rlow( ) . (12) 
+We have also to memorize correction vectors zr t for all input data of the training set to 
+present the cleaned input zt to the network, 
+rt = ;rtd -' t (13) 
+The update rule for the corrections, initialized with Ax? ) = 0 can be described as 
+Az? +') -- (1 - r/)Az? ) - r/(yt -- ta) ø-y- (14) 
+-- 
+All the necessary quantities, i.e. (t - ta) 
+os are computed by typical back- 
+propagation algorithms, anyway. We experienced, that the algorithms work well, if the 
+same learning rate r/is used for both, the weight and cleaning updates. For regression, 
+cleaning forces the acceptance of a small error in z, which can in turn decrease the error in 
+ dramatically, especially in the case of outliers. Successful applications of Cleaning are 
+reported in [11 ] and [9]. 
+Although the network may learn an optimal model for the cleaned input data, there is 
+no easy way to work with cleaned data on the test set. As a consequence, the model is 
+evaluated on a test set with a different noise characteristic compared to the training set. We 
+will later propose a combination of learning with noise and cleaning to work around this 
+serious disadvantage. 
+3.2 Data Noise reviewed 
+Artificial noise on the input data is often used during training because it creates an infinite 
+number of training examples and expands the data to empty parts of the input space. As 
+a result, the tendency of learning by heart may be limited because smoother regression 
+functions are produced. 
+Now, we are considering again the Taylor expansion, this time applied to E(z) around 
+some point z in the input space. The expected value {E(z)} is approximated by 
+1 1 
+7 + = + o--: var((j))Hjj, (15) 
+t j 
+with Hjj as the diagonal elements of the Hessian H, of the error function with respect to 
+the inputs x. Again, in eq. 15, noise on the inputs acts implicitly as a penalty term to the 
+error function with the noise variances var(Dr (j)) operating as penalty parameters. Noise 
+on the input improve generalization behavior by favoring smooth models [ 1 ]. 
+The noise levels can be set to a constant value, e.g. given by a priori knowledge, or adaptive 
+as described now. We will concentrate on a uniform or normal noise distribution. Then, 
+the adaptive noise level j is estimated for each input j individually. Suppressing pattern 
+indices, we define the noise levels j or ] as the average residual errors: 
+uniform residual error: ½j =  E Oz ' (16) 
+t 
+Gaussian residual error: q = 7 (17) 
+Actual implementations use stochastic approximation, e.g. for the uniform residual error 
+996 
+H. G. Zimmermann and R. Neuneier 
+The different residual error levels can be interpreted as follows: A small level (j may 
+indicate an unimportant input j or a perfect fit of the network concerning this input j. In 
+both cases, a small noise level is appropriate. On the other hand, a high value of (j for an 
+input j indicates an important but imperfectly fitted input. In this case high noise levels are 
+advisable. High values of (j lead to a stiffer regression model and may therefore increase 
+the generalization performance of the network. 
+3.3 Cleaning with Noise 
+Typically, training with noisy inputs takes a data point and adds a random variable drawn 
+from a fixed or adaptive distribution. This new data point 2it is used as an input to the 
+network. If we assume, that the data is corrupted by outliers and other influences, it is 
+preferable to add the noise term to the cleaned input. For the case of Gaussian noise the 
+resulting new input is: 
+2:t -- 2:t d q- /2:t q-b, (19) 
+with  drawn from the normal distribution. The cleaning of the data leads to a corrected 
+mean of the data and therefore to a more symmetric noise distribution, which also covers 
+the observed data xt. 
+We propose a variant which allows more complicated noise distributions: 
+2:t -- 2:t d q- /2:t -- A2:k, (20) 
+with k as a random number drawn from the indices of the correction vectors [/ct]t-1,...,T. 
+In this way we use a possibly asymmetric and/or dependent noise distribution, which still 
+covers the observed data xt by definition of the algorithm. 
+One might wonder, why to disturb the cleaned input xt  + Axt with an additional noisy 
+term Axk. The reason for this is, that we want to benefit from representing the whole input 
+distribution to the network instead of only using one particular realization. 
+4 A Unifying Approach 
+4.1 The Separation of Structure and Noise 
+In the previous sections we explained how the data can be separated into clean information 
+and unexplainable noise. Analogous, the neural network is described as a time invariant 
+structure (otherwise no forecasting is possible) and a noisy part. 
+data --+ cleaned data q-time invariant data noise 
+neural network--+ time invariant parameters q-parameter noise 
+We propose to use cleaning and adaptive noise to separate the data and to use learning and 
+stochastic search to separate the structure of the neural network. 
+data - cleaning(neural network) q- adaptive noise (neural network) 
+neural network<--learning (data) q-stochastic search(data) 
+The algorithms analyzing the data depend directly o'n the network whereas the methods 
+searching for structure are directly related to the data. It should be clear that the model 
+building process should combine both aspects in an alternate or simultaneous manner. The 
+interaction of algorithms concerning data analysis and network structure enables the real- 
+ization of the the concept of the Observer-Observation Dilemma. 
+The Observer-Observation Dilemma in Neuro-Forecasting 997 
+The aim of the unified approach can be described, exemplary assuming here a Gaussian 
+noise model, as the minimization of the error due to both, the structure and the data: 
+T 
+2T E Yt - Yt ) + (zt - zt ) -+rain (21) 
+Combining the algorithms and 
+data 
+Ax? +) -- (1 - rl)Ax ? - rl(y t- yt) 
+cleaning noise 
+approximating the cumulative gradient g by .0, we receive 
+structure 
+0 (+) - (1 - c) () + o(yt - 
+W(r+I) __ w(r) _ rllr ) _ rl(g t _ (r)) 
+learning noise 
+(22) 
+The cleaning of the data by the network computes an individual correction term for each 
+training pattern. The adaptive noise procedure according to eq. 20 generates a potentially 
+asymmetric and dependent noise distribution which also covers the observed data. The 
+implied curvature penalty, whose strength depends on the individual liability of the input 
+variables, can improve the generalization performance of the neural network. 
+The learning of the structure searches for time invariant parameters characterized by 
+ E gt -- O. The parameter noise supports this exploration as a stochastic search to find 
+better "global" minima. Additionally, the generalization performance may be further im- 
+proved by the implied curvature penalty depending on the local liability of the parameters. 
+Note that, although the description of the weight updates collapses to the simple form of 
+eq. 4, we preferred the formula above to emphasize the analogy between the mechanism 
+which handles the data and the structure. 
+In searching for an optimal combination of data and parameters, the noise of both parts is 
+not a disastrous failure to build a perfect model but it is an important element to control the 
+interaction of data and structure. 
+4.2 Pruning 
+The neural network topology represents only a hypothesis of the true underlying class of 
+functions. Due to possible misspecification, we may have defects of the parameter noise 
+distribution. Pruning algorithms are not only a way to limit the memory of the network, but 
+they also appear useful to correct the noise distribution in different ways. 
+Stochastic-Pruning [2] is basically a t-test on the weights w. Weights with low testu values 
+constitute candidates for pruning to cancel weights with low liability measured by the size 
+of the weight divided by the standard deviation of its fluctuations. By this, we get a stabi- 
+lization of the learning against resampling of the training data. A further weight pruning 
+method is EBD, Early-Brain-Damage [10], which is based on the often cited OBD prun- 
+ing method of [6]. In contrast to OBD, EBD allows its application before the training has 
+reached a local minimum. One of the advantages of EBD over OBD is the possibility to 
+perform the testing while being slidely away from a local minimum. In our training pro- 
+cedure we propose to use noise even in the final part of learning and therefore we are only 
+nearby a local minimum. Furthermore, EBD is also able to revive already pruned weights. 
+Similar to Stochastic Pruning, EBD favors weights with a low rate of fluctuations. If a 
+weight is pushed around by a high noise, the implicit curvature penalty would favor a flat 
+minimum around this weight which leads to its elimination by EBD. 
+998 H. G. Zimmermann and R. Neuneier 
+5 Experiments 
+In a research project sponsored by the European Community we are applying the proposed 
+approach to estimate the returns of 3 financial markets for each of the G7 countries subse- 
+quently using these estimations in an asset allocation scheme to create a Markowitz-optimal 
+portfolio [4]. This paper reports the 6 month forecasts of the German bond rate, which is 
+one of the more difficult tasks due to the reunification of Germany and GDR. The inputs 
+consist of 39 variables achieved by preprocessing 16 relevant financial time series. The 
+training set covers the time from April, 1974 to December, 1991, the test set runs from Jan- 
+uary, 1992 to May, 1996. The network arcitecture consists of one hidden layer (20 neurons, 
+tanh transfer function) and one linear output. First, we trained the neural network until 
+convergence with pattern-by-pattern learning using a small batch size of 20 patterns (clas- 
+sical approach). Then, we trained the network using the unified approach as described in 
+section 4.1 using pattern-by-pattern learning. We compare the resulting predictions of the 
+networks on the basis of four performance measures (see table). First, the hit rate counts 
+how often the sign of the return of the bond has been correctly predicted. As to the other 
+measures, the step from the forecast model to a trading system is here kept very simple. If 
+the output is positive, we buy shares of the bond, otherwise we sell them. The potential 
+realized is the ratio of the return to the maximum possible return over the test (training) 
+set. The annualized return is the average yearly profit of the trading systems. Our approach 
+turns out to be superior: we almost doubled the annualized return from 4.5% to $.5% on 
+the test set. The figure compares the accumulated return of the two approaches on the test 
+set. The unified approach not only shows a higher profitability, but also has by far a less 
+maximal draw down. 
+approach our classical 
+hit rate 81% (96%) 66% (93%) 
+realized potential 75% (100%) 44% (96%) 
+annualized return 8.5% (11.2%) 4.5% (10.1%) 
+References 
+[1] 
+[2] 
+[3] 
+[4] 
+[5] 
+[6] 
+[7] 
+[8] 
+[9] 
+[10] 
+[11] 
+Christopher M. Bishop. Neural Networks for Pattern Recognition. Clarendon Press, 1994. 
+W. Finnoff, F. Hergert, and H. G. Zimmermann. Improving generalization performance by 
+nonconvergent model selection methods. In proc. of ICANN-92, 1992. 
+W. Finnoff, F. Hergert, and H. G. Zimmermann. Neuronale Lemverfahren mit vailabler Schritt- 
+weite. 1993. Tech. report, Siemens AG. 
+P. Herve, P. Naim, and H. G. Zimmermann. Advanced Adaptive Architectures for Asset Allo- 
+cation: A Trial Application. In ForecastingFinancial Markets, 1996. 
+S. Hochreiter and J. Schmidhuber. Flat minima. Neural Computation, 9(1 ): 1-42 1997. 
+Y. le Cun, J. S. Denker, and S. A. Solla. Optimal brain damage. NIPS*89, 1990. 
+J. E. Moody and T. S. R6gnvaldsson. Smoothing regularizers for projectlye basis function 
+networks. NIPS 9, 1997. 
+R. Neuneier and H. G. Zimmermann. How to Train Neural Networks. In Tricks of the Trade: 
+How to make algorithms really to work. Springer Verlag, Berlin, 1998. 
+B. Tang, W. Hsieh, and F. Tangang. Clearning neural networks with continuity constraints for 
+prediction of noisy time series. ICONIP '96, 1996. 
+V. Tresp, R. Neuneier, and H. G. Zimmermann. Early brain damage. NIPS 9, 1997. 
+A. S. Weigend, H. G. Zimmermann, and R. Neuneier. Cleaming. Neural Networks in Financial 
+Engineering, (NNCM95), 1995. 

@@ -1,0 +1,322 @@
+Generalization in Reinforcement 
+Learning: Successful Examples Using 
+Sparse Coarse Coding 
+Richard S. Sutton 
+University of Massachusetts 
+Amherst, MA 01003 USA 
+rchcs. =mass. edu 
+Abstract 
+On large problems, reinforcement learning systems must use parame- 
+terized function approximators such as neural networks in order to gen- 
+eralize between similar situations and actions. In these cses there are 
+no strong theoretical results on the accuracy of convergence, and com- 
+putational results have been mixed. In particular, Boyan and Moore 
+reported at last year's meeting a series of negative results in attempting 
+to apply dynamic programming together with function approximation 
+to simple control problems with continuous state spaces. In this paper, 
+we present positive results for all the control tasks they attempted, and 
+for one that is significantly larger. The most important differences are 
+that we used sparse-coarse-coded function approximators (CMACs) 
+whereas they used mostly global function approximators, and that we 
+learned online whereas they learned offiine. Boyan and Moore and 
+others have suggested that the problems they encountered could be 
+solved by using actual outcomes ("rollouts"), as in classical Monte 
+Carlo methods, and as in the TD(),) algorithm when ), = 1. However, 
+in our experiments this always resulted in substantially poorer perfor- 
+mance. We conclude that reinforcement learning can work robustly 
+in conjunction with function approximators, and that there is little 
+justification at present for avoiding the case of general ). 
+I Reinforcement Learning and Function Approximation 
+Reinforcement learning is a broad class of optimal control methods based on estimating 
+value functions from experience, simulation, or search (Barto, Bradtke & Singh, 1995; 
+Sutton, 1988; Watkins, 1989). Many of these methods, e.g., dynamic programming 
+and temporal-difference learning, build their estimates in part on the basis of other 
+Generalization in Reinforcement Learning 1039 
+estimates. This may be worrisome because, in practice, the estimates never become 
+exact; on large problems, parameteri,ed function approximators such as neural net- 
+works must be used. Because the estimates are imperfect, and because they in turn 
+are used as the targets for other estimates, it seems possible that the ultimate result 
+might be very poor estimates, or even divergence. Indeed some such methods have 
+been shown to be unstable in theory (Baird, 1995; Gordon, 1995; Tsitsiklis & Van Roy, 
+1994) and in practice (Boyan & Moore, 1995). On the other hand, other methods have 
+been proven stable in theory (Sutton, 1988; Dayan, 1992) and very effective in practice 
+(Lin, 1991; Tesauro, 1992; Zhang & Dietterich, 1995; Crites & Barto, 1996). What are 
+the key requirements of a method or task in order to obtain good performance? The 
+experiments in this paper are part of narrowing the answer to this question. 
+The reinforcement learning methods we use are variations of the sarsa algorithm (Rum- 
+mery & Niranjan, 1994; Singh & Sutton, 1996). This method is the same as the TD(),) 
+algorithm (Sutton, 1988), except applied to state-action pairs instead of states, and 
+where the predictions are used as the basis for selecting actions. The learning agent 
+estimates action-values, Q'(s,a), defined as the expected future reward starting in 
+state s, taking action a, and thereafter following policy r. These are estimated for 
+all states and actions, and for the policy currently being followed by the agent. The 
+policy is chosen dependent on the current estimates in such a way that they jointly 
+improve, ideally approaching an optimal policy and the optimal action-values. In our 
+experiments, actions were selected according to what we call the e-greedy policy. Most 
+of the time, the action selected when in state s was the action for which the estimate 
+((s, a) was the largest (with ties broken randomly). However, a small fraction, e, of the 
+time, the action was instead selected randomly uniformly from the action set (which 
+was always discrete and finite). There are two variations of the sarsa algorithm, one 
+using conventional accumulate traces and one using replace traces (Singh & Sutton, 
+1996). This and other details of the algorithm we used are given in Figure 1. 
+To apply the sarsa algorithm to tasks with a continuous state space, we combined 
+it with a sparse, coarse-coded function approximator known as the CMAC (Albus, 
+1980; Miller, Gordon & Kraft, 1990; Watkins, 1989; Lin & Kim, 1991; Dean et al., 
+1992; Tham, 1994). A CMAC uses multiple overlapping tilings of the state space to 
+produce a feature representation for a final linear mapping where all the learning takes 
+place. See Figure 2. The overall effect is much like a network with fixed radial basis 
+functions, except that it is particularly efficient computationally (in other respects one 
+would expect RBF networks and similar methods (see Sutton & Whitehead, 1993) to 
+work just as well). It is important to note that the tilings need not be simple grids. 
+For example, to avoid the "curse of dimensionality," a common trick is to ignore some 
+dimensions in some tilings, i.e., to use hyperplanar slices instead of boxes. A second 
+major trick is "hashing"--a consistent random collapsing of a large set of tiles into 
+a much smaller set. Through hashing, memory requirements are often reduced by 
+large factors with little loss of performance. This is possible because high resolution is 
+needed in only a small fraction of the state space. Hashing frees us from the curse of 
+dimensionality in the sense that memory requirements need not be exponential in the 
+number of dimensions, but need merely match the real demands of the task. 
+2 Good Convergence on Control Problems 
+We applied the sarsa and CMAC combination to the three continuous-state control 
+problems studied by Boyan and Moore (1995): 2D gridworld, puddle world, and moun- 
+tain car. Whereas they used a model of the task dynamics and applied dynamic pro- 
+gramming backups offiine to a fixed set of states, we learned online, without a model, 
+and backed up whatever states were encountered during complete trials. Unlike Boyan 
+1040 R.S. SIYION 
+1. Initially: w,(f) :- qø, e,(f) :-0, Va E Actions, Vf  EMAC-tiles. 
+2. Start of Trial: s := random-state(); 
+F := features(s); 
+a :- e-greedy-policF). 
+3. Eligibility Traces: eb(f) :-- )eb(f), ¾b, ¾ f; 
+3a. Accumulate algorithm: e,(f):-e,(f) + 1, ¾f E F. 
+3b. Replace algorithm: e,(f) := 1, eb(f) := 0, ¾f E F, ¾b  a. 
+4. Environment Step: 
+Take action a; observe resultant reward, r, and next state, s'. 
+5. Choose Next Action: 
+F' :- features(s'), unless s' is the terminal state, then F' :-- 0; 
+a' :- e-greedy-policy( F'). 
+6. Learn: wb(f) :-- wb(f) + [r + Efr' w, - Efr w]eb(f), ¾b, ¾ f . 
+7. Loop: a :- a'; s :- s'; F := F'; if s' is the terminal state, go to 2; else go to 3. 
+Figure 1: The sarsa algorithm for finite-horizon (trial based) tasks. The function e- 
+greedy-policy(F) returns, with probability e, a random action or, with probability 1 -e, 
+computes '-lr w for each action a and returns the action for which the sum is 
+largest, resolving any ties randomly. The function features(s) returns the set of CMAC 
+tiles corresponding to the state s. The number of tiles returned is the constant c. Qo, 
+a, and ) are scalar parameters. 
+Tiling #1 
+Tiling #2 
+Dimension #1 
+Figure 2: CMACs involve multiple overlapping tilings of the state space. Here we show 
+two 5 x 5 regular tilings offset and overlaid over a continuous, two-dimensional state 
+space. Any state, such as that shown by the dot, is in exactly one tile of each tiling. A 
+state's tiles are used to represent it in the sarsa algorithm described above. The tilings 
+need not be regular grids such as shown here. In particular, they are often hyperplanar 
+slices, the number of which grows sub-exponentially with dimensionality of the space. 
+CMACs have been widely used in conjunction with reinforcement learning systems 
+(e.g., Watkins, 1989; Lin & Kim, 1991; Dean, Basye & Shewchuk, 1992; Tham, 1994). 
+Generalization in Reinforcement Learning 1041 
+and Moore s we found robust good performance on all tasks. We report here results for 
+the puddle world and the mountain car, the more difficult of the tasks they considered. 
+Training consisted of a series of trials, each starting from a randomly selected non- 
+goal state and continuing until the goal region was reached. On each step a penalty 
+(negative reward) of -1 was incurred. In the puddle-world task, an additional penalty 
+was incurred when the state was within the "puddle" regions. The details are given in 
+the appendix. The 3D plots below show the estimated cost-to-goal of each state, i.e., 
+^ 
+max, Q(s, a). In the puddle-world task, the CMACs consisted of 5 tilings, each 5 x 5, 
+as in Figure 2. In the mountain-car task we used 10 tilings, each 9 x 9. 
+Puddle World Learned State Values 
+ T Gøal /// 
+/ 
+oo 
+Figure 3: The puddle task and the cost-to-goal function learned during one run. 
+Mountain 
+Car Goal 
+" / Trial 
+/ 
+/// 
+..p 
+O$tt/o  
+O $ ttlo 
+ß /// 
+46, 104 120 
+Figure 4: The mountain-car task and the cost-to-goal function learned during one run. 
+The engine is too weak to accelerate directly up the slope; to reach the goal, the car 
+must first move away from it. The first plot shows the value function learned before 
+the goal was reached even once. 
+We also experimented with a larger and more difficult task not attempted by Boyan and 
+Moore. The acrobot is a two-link under-actuated robot (Figure 5) roughly analogous 
+to a gymnast swinging on a highbar (Dejong & Spong, 1994; Spong & Vidyasagar, 
+1989). The first joint (corresponding to the gymnast's hands on the bar) cannot exert 
+1042 R.S. SUTTON 
+The object is to swing the endpoint (the feet) above the bar by an amount equal to 
+one of the links. As in the mountain-car task, there are three actions, positive torque, 
+negative torque, and no torque, and reward is -1 on all steps. (See the appendix.) 
+The Acrobot 
+Goal: Raise tip above line 
+1000 
+i Acrobot Learning Curves 
+Medran o1 
+10 Runs Typical 
+Steps/-i-ria, V ^ / /Single Run 
+(log scale) : sr, oot,.d 
+, Torque L: [].k' . i Average 
+:   here ! :: 
+', ]' tip .... 
+¾'/0 2 1 O0 200 300 400 
+' Trials 
+Figure 5: The Acrobot and its learning curves. 
+õ0o 
+3 The Effect of A 
+A key question in reinforcement learning is whether it is better to learn on the basis of 
+actual outcomes, as in Monte Carlo methods and as in TD(A) with A - 1, or to learn 
+on the basis of interim estimates, as in TD() with  < 1. Theoretically, the former has 
+asymptotic advantages when function approximators are used (Dayan, 1992; Bertsekas, 
+1995), but empirically the latter is thought to achieve better learning rates (Sutton, 
+1988). However, hitherto this question has not been put to an empirical test using 
+function approximators. Figures 6 shows the results of such a test. 
+Steps/Trial 
+Averaged over 
+first 20 trials 
+and 30 runs 
+Mountain Car 
+Puddle World 
+, \\% . 
+Replace 
+0'2 0'4 0'6 0'8 
+Cost/Trial 
+Averaged over 
+filt 40 trlRlS 
+ad 30 mas 
+Figure 6: The effects of A and a in the Mountain-Car and Puddle-World tasks. 
+Figure 7 summarizes this data, and that from two other systematic studies with differ- 
+ent tasks, to present an overall picture of the effect of A. In all cases performance is an 
+inverted-U shaped function of A, and performance degrades rapidly as A approaches 1, 
+where the worst performance is obtained. The fact that performance improves as  is 
+increased from 0 argues for the use of eligibility traces and against 1-step methods such 
+as TD(0) and 1-step Q-learning. The fact that performance improves rapidly as  is 
+reduced below I argues against the use of Monte Carlo or "rollout" methods. Despite 
+the theoretical asymptotic advantages of these methods, they are appear to be inferior 
+in practice. 
+Acknowledgments 
+The author gratefully acknowledges the assistance of Justin Boyan, Andrew Moore, Satinder 
+Singh, and Peter Dayan in evaluating these results. 
+Generalization in Reinforcement Learning 1043 
+Steps/Trial 
+Mountain Car 
+700 
+650 t 
+6o01 Accumulate. 
+550 
+Random Walk 
+Accumulate 
+Replace 
+0 0,2 0.4 0.6 0.8 
+-0.5 
+-0.4 
+Mean 
+Squared 
+ß o 3 Error 
+-0.2 
+24O 
+230-' 
+220- 
+210-' 
+Cost/Trial 200. 
+190. 
+18o 
+17o: 
+16o2 
+15o  
+Puddle World 
+Replace 
+Cart and Pole 
+Accumulate 
+0 0:2 0:4 0:6 0:8 0:2 0:4 06 0$ 
+ß 250 
+-200 
+ß 150 
+100 
+50 
+Failures per 
+100,000 steps 
+Figure 7: Performance versus ),, at best a, for four different tasks. The left panels 
+summarize data from Figure 6. The upper right panel concerns a 21-state Markov 
+chain, the objective being to predict, for each state, the probability of terminating in 
+one terminal state as opposed to the other (Singh & Sutton, 1996). The lower left 
+panel concerns the pole balancing task studied by Barto, Sutton and Anderson (1983). 
+This is previously unpublished data from an earlier study (Sutton, 1984). 
+References 
+Albus, J. S. (1981) Brain, Behavior, and Robotics, chapter 6, pages 139-179. Byte Books. 
+Baird, L. C. (1995) Residual Algorithms: Reinforcement Learning with Function Approxima- 
+tion. Proc. ML95. Morgan Kaufman, San Francisco, CA. 
+Barto, A. G., Bradtke, S. J., & Singh, S. P. (1995) Real-time learning and control using 
+asynchronous dynamic programming. Artificial Intelligence. 
+Barto, A. G., Sutton, R. S., & Anderson, C. W. (1983) Neuronlike elements that can solve 
+difficult learning control problems. Trans. IEEE SMC, 13, 835-846. 
+Bertsekas, D. P. (1995) A counterexample to temporal differences learning. Neural Computa- 
+tion, 7, 270-279. 
+Boyan, J. A. & Moore, A. W. (1995) Generalization in reinforcement learning: Safely approx- 
+imating the value function. NIPS-7. San Mateo, CA: Morgan Kaufmann. 
+Crites, R. H. & Barto, A. G. (1996) Improving elevator performance using reinforcement 
+learning. NIPS-& Cambridge, MA: MIT Press. 
+Dayan, P. (1992) The convergence of TD(,) for general ,. Machine Learning, 8, 341-362. 
+Dean, T., Basye, K. & Shewchuk, J. (1992) Reinforcement learning for planning and control. In 
+S. Minton, Machine Learning Methods for Planning and Scheduling. Morgan Kaufmann. 
+DeJong, G. & Spong, M. W. (1994) Swinging up the acrobot: An example of intelligent 
+control. In Proceedings of the American Control Conference, pages IU58-.16.. 
+Gordon, G. (1995) Stable function approximation in dynamic programming. Proc. ML95. 
+Lin, L. J. (1992) Self-improving reactive agents based on reinforcement learning, planning 
+and teaching. Machine Learning, 8(3/4), 293-321. 
+Lin, C-S. & Kim, H. (1991) CMAC-based adaptive critic self-learning control. IEEE Trans. 
+Neural Networks, ., 530-533. 
+Miller, W. T., Glanz, F. H., & Kraft, L. G. (1990) CMAC: An associative neural network 
+alternative to backpropagation. Proc. of the IEEE, 78, 1561-1567. 
+1044 R.S. SUTTON 
+Rummery, G. A. & Niranjan, M. (1994) On-line Q-learning using connectionist systems. 
+Technical Report CU]D/F-INFENG/TR 166, Cambridge University Engineering Dept. 
+Singh, S. P. & Sutton, R. S. (1996) Reinforcement learning with replacing eligibility traces. 
+Machine Learning. 
+Spong, M. W. & Vidyasagar, M. (1989) Robot D.lnamicz and Control. New York: Wiley. 
+Sutton, R. S. (1984) Temporal Credit Azzignment in Reinforcement Learning. PhD thesis, 
+University of Massachusetts, Amherst, MA. 
+Sutton, R. S. (1988) Learning to predict by the methods of temporal differences. Machine 
+Learning, 3, 9-44. 
+Sutton, R. S. & Whitehead, S. D. (1993) Online learning with random representations. Proc. 
+ML93, pages 314-321. Morgan Kaufmann. 
+Tham, C. K. (1994) Modular On-Line Function Approzimation for Scaling up Reinforcement 
+Learning. PhD thesis, Cambridge Univ., Cambridge, England. 
+Tesauro, G. J. (1992) Practical issues in temporal difference learning. Machine Learning, 
+s(3/4), 257-27z. 
+Tsitsildis, J. N. & Van Roy, B. (1994) Feature-based methods for large-scale dynamic pro- 
+gramming. Techical Report LIDS-P2277, MIT, Cambridge, MA 02139. 
+Watkins, C. J. C. H. (1989) Learning from Delayed Rewards. PhD thesis, Cambridge Univ. 
+Zhang, W. & Dietterlch, T. G., (1995) A reinforcement learning approach to job-shop schedul- 
+ing. Proc. IJCAI95. 
+Appendix: Details of the Experiments 
+In the puddle world, there were four actions, up, down, right, and left, which moved approxi- 
+mately 0.05 in these directions unless the movement would cause the agent to leave the limits 
+of the space. A random gaussian noise with standard deviation 0.01 was also added to the 
+motion along both dimensions. The costs (negative rewards) on this task were -1 for each 
+time step plus additional penalties if either or both of the two ova] "puddles" were entered. 
+These penalties were -400 times the distance into the puddle (distance to the nearest edge). 
+The puddles were 0.1 in radius and were located at center points (.1, .75) to (.45, .75) and 
+(.45, .4) to (.45, .8). The initial state of each trial was selected randomly uniformly from the 
+non-goal states. For the run in Figure 3,  -- 0.5, A -- 0.9, c -- 5, e -- 0.1, and Q0 -- 0. For 
+Figure 6, Q0 -- -20. 
+Details of the mountain-car task are given in Singh & Sutton (1996). For the run in Figure 4, 
+a -- 0.5, A -- 0.9, c = 10,  -- 0, and Q0 = 0. For Figure 6, c = 5 and Q0 -- -100. 
+In the acrobot task, the CMACs used 48 tilings. Each of the four dimensions were divided 
+into 6 intervals. 12 tilings depended in the usual way on all 4 dimensions. 12 other tilings 
+depended only on 3 dimensions (3 tilings for each of the four sets of 3 dimensions). 12 others 
+depended only on two dimensions (2 tilings for each of the 6 sets of two dimensions. And 
+finally 12 tilings depended each on only one dimension (3 tilings for each dimension). This 
+resulted in a total of 12 ß 64 + 12 ß 6 a + 12 ß 62 + 12 ß 6 = 18,648 tiles. The equations of motion 
+were: 
+where  E {+1,-1,0} was the torque apped at the second joint, d A : 0.05 was the 
+time increment. Actions were chosen after every fo of the state updates ven by the above 
+equations, coesponng to 5 Hz. The anar velocities were bonded by 0 E [-4, 4] d 
+ E [-9,9]. Finally, the reinalOng constants were ml = m2 = I (masses of the s), 
+l = la = I (lengths of s), l: = l:2 = 0.5 (lengths to center of mass of s), h = I = 1 
+(moments of inertia of s), d g = 9.8 (avity). The parameters were a = 0.2, A = 0.9, 
+c = 48, e = 0, Q0 = 0. The sttlng state on ea tal was 0 = 02 = 0. 

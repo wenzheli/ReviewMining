@@ -1,0 +1,250 @@
+The CONDENSATION algorithm 
+conditional density propagation and 
+applications to visual tracking 
+A. Blake and M. Isard* 
+Department of Engineering Science, 
+University of Oxford, 
+Oxford OX1 3P J, UK. 
+Abstract 
+The power of sampling methods in Bayesian reconstruction of noisy 
+signals is well known. The extension of sampling to temporal prob- 
+lems is discussed. Efficacy of sampling over time is demonstrated 
+with visual tracking. 
+I INTRODUCTION 
+The problem of tracking curves in dense visual clutter is a challenging one. Trackers 
+based on Kalman filters are of limited power; because they are based on Gaussian 
+densities which are unimodal they cannot represent simultaneous alternative hy- 
+potheses. Extensions to the Kalman filter to handle multiple data associations 
+(Bar-Shalom and Fortmann, 1988) work satisfactorily in the simple case of point 
+targets but do not extend naturally to continuous curves. 
+Tracking is the propagation of shape and motion estimates over time, driven by 
+a temporal stream of observations. The noisy observations that arise in realistic 
+problems demand a robust approach involving propagation of probability distribu- 
+tions over time. Modest levels of noise may be treated satisfactorily using Gaussian 
+densities, and this is achieved effectively by Kalman filtering (Gelb, 1974). More 
+pervasive noise distributions, as commonly arise in visual background clutter, de- 
+mand a more powerful, non-Gaussian approach. 
+One very effective approach is to use random sampling. The CONDENSATION al- 
+gorithm, described here, combines random sampling with learned dynamical models 
+to propagate an entire probability distribution for object position and shape, over 
+time. The result is accurate tracking of agile motion in clutter, decidedly more 
+'Web: http://www.robots.ox.ac.uk/~ab/ 
+362 A. Blake and M. lsard 
+robust than what has previously been attainable by Kalman filtering. Despite the 
+use of random sampling, the algorithm is efficient, running in near real-time when 
+applied to visual tracking. 
+SAMPLING METHODS 
+A standard problem in statistical pattern recognition is to find an object paramet- 
+erised as x with prior p(x), using data z from a single image. The posterior density 
+p(xlz ) represents all the knowledge about x that is deducible from the data. It can 
+be evaluated in principle by applying Bayes' rule (Papoulis, 1990) to obtain 
+p(xl'.) = kp(,.lx)p(x) (1) 
+where k is a normalisation constant that is independent of x. However p(z[x) may 
+become sufficiently complex that p(xlz) cannot be evaluated simply in closed form. 
+Such complexity arises typically in visual clutter, when the superfluity of observable 
+features tends to suggest multiple, competing hypotheses for x. A one-dimensional 
+illustration of the problem is illustrated in figure 1 in which multiple features give 
+Measured 
+features zl z2 z 3 z4 z5 z6 
+p(z Ix) 
+I 
+I 
+I 
+I 
+I 
+I 
+I 
+I 
+x 
+Figure 1: One-dimensional observation model. A probabilistic observation 
+model allowing for clutter and the possibility of missing the target altogether is 
+specified here as a conditional density 
+rise to a multimodal observation density function p(z]x). 
+When direct evaluation of p(x[z) is infeasible, iterative sampling techniques can be 
+used (Geman and Geman, 1984; Ripley and Sutherland, 1990; Grenander et al., 
+1991; Storvik, 1994). The factored sampling algorithm (Grenander et al., 1991). 
+generates a random variate x from a distribution iS(x) that approximates the pos- 
+terior p(xlz ). First a sample-set {s(),..., s(N)} is generated from the prior density 
+p(x) and then a sample x = xi, i  {1,..., N} is chosen with probability 
+p(zlx - s ©) 
+p(zlx -- 
+Sampling methods have proved remarkably effective for recovering static objects 
+from cluttered images. For such problems x is multi-dimensional, a set of parameters 
+for curve position and shape. In that case the sample-set {s(),..., s(N)} represents 
+The CONDENSATION Algorithm 363 
+a distribution of x-values which can be seen as a distribution of curves in the image 
+plane, as in figure 2. 
+a) b) 
+Figure 2: Sample-set representation of shape distributions for a curve with 
+parameters x, modelling the outline (a) of the head of a dancing girl. Each sample 
+s(") is shown as a curve (of varying position and shape) with a thickness proportional 
+to the weight r("). The weighted mean of the sample set (b) serves as an estimator 
+of mean shape 
+3 THE CONDENSATION ALGORITHM 
+The CONDENSATION algorithm is based on factored sampling but extended to ap- 
+ply iteratively to successive images in a sequence. Similar sampling strategies have 
+appeared elsewhere (Gordon et al., 1993; Kitigawa, 1996), presented as develop- 
+ments of Monte-Carlo methods. The methods outlined here are described in detail 
+elsewhere. Fuller descriptions and derivation of the CONDENSATION algorithm are 
+in (Isard and Blake, 1996; Blake and Isard, 1997) and details of the learning of 
+dynamical models, which is crucial to the effective operation of the algorithm are 
+in (Blake et al., 1995). 
+Given that the estimation proc6ss at each time-step is a self-contained iteration 
+of factored sampling, the output of an iteration will be a weighted, time-stamped 
+sample-set, denoted s? ), n = 1,..., N with weights r? ), representing approxim- 
+ately the conditional state-density p(xtIZt) at time t, where Zt = (z,...,zt). How 
+is this sample-set obtainrid? Clearly the process must begin with a prior density 
+and the effective prior for time-step t should be p(xt IZt-). This prior is of course 
+multi-modal in general and no functional representation of it is available. It is de- 
+from = 
+the output from the previous time-step, to which prediction must then be applied. 
+The iterative process applied to the sample-sets is depicted in figure 3. At the 
+top of the diagram, the output from time-step t - 1 is the weighted sample-set 
+{(s?__),r?__)), n = 1,...,N}. The aim is to maintain, at successive time-steps, 
+sample sets of fixed size N, so that the algorithm can be guaranteed to run within 
+a given computational resource. The first operation therefore is to sample (with 
+364 A. Blake and M. lsard 
+( g (i) 
+St-1 ' t-1 
+P(XI -lp) 
+(zl x ure 
+P(xtl Zt ) 
+s(n)- (n) 
+t,t 
+Figure 3: One time-step in the CONDENSATION algorithm. Blob centres rep- 
+resent sample values and sizes depict sample weights. 
+replacement) N times from the set {s?_)}, choosing a given element with probability 
+r_). Some elements, especially those with high weights, may be chosen several 
+times, leading to identical copies of elements in the new set. Others with relatively 
+low weights may not be chosen at all. 
+Each element chosen from the new set is now subjected to a predictive step. (The 
+dynamical model we generally use for prediction is a linear stochastic differential 
+equation (s.d.e.) learned from training sets of sample object motion (Blake et al., 
+1995).) The predictive step includes a random component, so identical elements 
+may now split as each undergoes its own independent random motion step. At this 
+stage, the sample set {s? )} for the new time-step has been generated but, as yet, 
+without its weights; it is approximately a fair random sample from the effective 
+prior density p(xt ]Zt-) for time-step t. Finally, the observation step from factored 
+sampling is applied, generating weights from the observation density p(zt]xt) to 
+obtain the sample-set representation { (s?), r?))} of state-density for time t. 
+The algorithm is specified in detail in figure 4. The process for a single time-step 
+consists of N iterations to generate the N elements of the new sample set. Each 
+iteration has three steps, detailed in the figure, and we comment below on each. 
+1. Select nth new sample s (") to be some s?_) from the old sample set, 
+sampled with replacement with probability r?_). This is achieved efficiently 
+by using cumulative weights c?_) (constructed in step 3). 
+2. Predict by sampling randomly from the conditional density for the dy- 
+namical model to generate a sample for the new sample-set. 
+3. Measure in order to generate weights r? ) for the new sample. Each weight 
+The CONDENSATION Algorithm 365 
+is evaluated from the observation density function which, being multimodal 
+in general, "infuses" multimodality into the state density. 
+Iterate 
+From the "old" sample-set {s?_), r), c?_), n - 1,..., N} at time-step t - 1, 
+construct a "new" sample-set {s?), r?), c?)},n = 1,...,N for time t. 
+Construct the n th of N new samples as follows: 
+1. Select a sample s (") as follows: 
+(a) generate a random number r e [0, 1], uniformly distributed. 
+(b) find, by binary subdivision, the smallest j for which c?_) >_ r 
+(c) set s (") = s?_) 
+2. Predict by sampling from 
+o 
+to choose each s? ) 
+Measure and weight the new position in terms of the measured fea- 
+tures zt: 
+then normalise so that , r ") = 1 and store together with cumulative 
+probability as (s?), w?), c? )) where 
+c} © = O, 
+c? ) -- c?-)+r? ) (n-- 1...N). 
+Figure 4: The CONDENSATION algorithm. 
+At any time-step, it is possible to "report" on the current state, for example by 
+evaluating some moment of the state density as 
+N 
+4 RESULTS 
+A good deal of experimentation has been performed in applying the CONDENSATION 
+algorithm to the tracking of visual motion, including moving hands and dancing 
+figures. Perhaps one of the most stringent tests was the tracking of a leaf on a bush, 
+in which the foreground leaf is effectively camouflaged against the background. 
+A 12 second (600 field) sequence shows a bush blowing in the wind, the task being 
+to track one particular leaf. A template was drawn by hand around a still of one 
+chosen leaf and allowed to undergo affine deformations during tracking. Given that 
+a clutter-free training sequence is not available, the motion model was learned by 
+means of a bootstrap procedure (Blake et al., 1995). A tracker with default dynam- 
+ics proved capable of tracking the first 150 fields of a training sequence before losing 
+366 A. Blake and M. lsard 
+the leaf, and those tracked positions allowed a first approximation to the model to 
+be learned. Installing that in a CONDENSATION tracker, the entire sequence could 
+be tracked, though with occasional misalignments. Finally a third learned model 
+was sufficient to track accurately the entire 12-second training sequence. Despite 
+occasional violent gusts of wind and temporary obscuration by another leaf, the 
+CONDENSATION algorithm successfully followed the object. In fact, tracking is ac- 
+curate enough using N = 1200 samples to separate the foreground leaf from the 
+background reliably, an effect which can otherwise only be achieved using "blue- 
+screening". Having obtained the model iteratively as above, independent test se- 
+quences could be tracked without further training. With N = 1200 samples per 
+time-step the tracker runs at 6.5 Hz on a SGI Indy SC4400 200MHz workstation. 
+Reducing this to N = 200 increases processing speed to video frame-rate (25 Hz), 
+at the cost of occasional misalignments in the mean configuration of the contour. 
+1.46seconds 
+-  ': - 
+2.66 seconds 
+5.54 seconds 
+7.30 seconds 
+Figure 5: Tracking with camouflage. Stills depict mean contour configurations, 
+with preceding tracked leaf positions plotted at JO ms intervals to indicate motion. 
+5 CONCLUSIONS 
+Tracking in clutter is hard because of the essential multi-modality of the condi- 
+tional observation density p(zlx ). In the case of curves multiple-hypothesis tracking 
+is inapplicable and a new approach is needed. The CONDENSATION algorithm is a 
+fusion of the statistical factored sampling algorithm for static, non-Gaussian prob- 
+lems with a stochastic model for object motion. The result is an algorithm for 
+tracking rigid and non-rigid motion which has been demonstrated to be far more 
+effective in clutter than comparable Kalman filters (Blake et al., 1993). 
+The CONDENSATION Algorithm 367 
+The new approach raises a number of questions. One is how densities represented 
+as sample sets can be interrogated in a more general way than simply computing 
+their moments as in (2). For example it is often desirable to locate local modes 
+in the state density, representing leading hypotheses. We are seeking therefore to 
+construct a satisfactory theory of "operators" to interrogate densities in a more 
+general fashion. 
+Secondly, it is striking that the density propagation equation in the CONDENSATION 
+algorithm is a continuous form of the propagation rule of the "forward algorithm" 
+for Hidden Markov Models (HMMs) (Rabiner and Bing-Hwang, 1993). This sug- 
+gests the use of mixed discrete/continuous states, propagating over time. Mixed 
+states would allow switching between multiple models, for instance walk-trot-canter- 
+gallop, each model represented by a stochastic differential equation, with transitions 
+governed by a discrete conditional probability matrix. 
+A cknowle dgement s 
+The authors would like to acknowledge the support of the EPSRC. They are also 
+grateful for discussions with Roger Brockett and David Reynard. 
+References 
+Bar-Shalom, Y. and Fortmann, T. (1988). Tracking and Data Association. Academic 
+Press. 
+Blake, A., Curwen, R., and Zisserman, A. (1993). A framework for spatio-temporal control 
+in the tracking of visual contours. Int. Journal o.f Computer Vision, 11(2):127-145. 
+Blake, A. and Isard, M. (1994). 3D position, attitude and shape input using video tracking 
+of hands and lips. In Proc. Sirgraph 185-192. ACM. 
+Blake, A. and Isard, M. (1997). Condensation -- conditional density propagation for visual 
+tracking. Int. Journal o.f Computer Vision, in press. 
+Blake, A., Isard, M., and Reynard, D. (1995). Learning to track the visual motion of 
+contours. A rtificial Intelligence, 78:101-134. 
+Gelb, A., editor (1974). Applied Optimal Estimation. MIT Press, Cambridge, MA. 
+Geman, S. and Geman, D. (1984). Stochastic Relaxation, Gibbs Distributions, and the 
+Bayesian Restoration of Images. IEEE Trans. Pattern Analysis and Machine Intelli- 
+gence, 6(6):721-741. 
+Gordon, N., Salmond, D., and Smith, A. (1993). Novel approach to nonlinear/non-gaussian 
+bayesian state estimation. IEE Proc. F, 140(2):107-113. 
+Grenander, U., Chow, Y., and Keenan, D. M. (1991). HANDS. A Pattern Theoretical 
+Study o.f Biological Shapes. Springer-Verlag. New York. 
+Isard, M. and Blake, A. (1996). Visual tracking by stochastic propagation of conditional 
+density. In Proc. $th European Conf. on Computer Vision 343-356, Cambridge, Eng- 
+land. 
+Kitigawa, G. (1996). Monte-carlo filter and smoother for non-Gaussian nonlinear state 
+space models. J. Computational and Graphical Statistics, 5(1):1-25. 
+Papoulis, A. (1990). Probability and Statistics. Prentice-Hall. 
+Rabiner, L. and Bing-Hwang, J. (1993). Fundamentals of speech recognition. Prentice-Hall. 
+Ripley, B. and Sutherland, A. (1990). Finding spiral structures in images of galaxies. Phil. 
+Trans. R. Soc. Lond. A., 332(1627):477-485. 
+Storvik, G. (1994). A Bayesian approach to dynamic contours through stochastic sampling 
+and simulated annealing. IEEE Trans. Pattern Analysis and Machine Intelligence, 
+16(10):9-96. 

@@ -1,0 +1,301 @@
+Pruning with generalization based 
+weight saliencies: 3'OBD, 3'OBS 
+Morten With Pedersen 
+Lars Kai Hansen 
+Jan Larsen 
+CONNECT, Electronics Institute 
+Technical University of Denmark B349 
+DK-2800 Lyngby, DENMARK 
+emails: with,lkhansen jlarsen@ei.dtu.dk 
+Abstract 
+The purpose of most architecture optimization schemes is to im- 
+prove generalization. In this presentation we suggest to estimate 
+the weight saliency as the associated change in generalization error 
+if the weight is pruned. We detail the implementation of both an 
+O(N)-storage scheme extending OBD, as well as an O(N 2) scheme 
+extending OBS. We illustrate the viability of the approach on pre- 
+diction of a chaotic time series. 
+I BACKGROUND 
+Optimization of feed-forward neural networks by pruning is a well-established tool, 
+used in many practical applications. By careful fine tuning of the network archi- 
+tecture we may improve generalization, decrease the amount of computation, and 
+facilitate interpretation. 
+The two most widely used schemes for pruning of feed-forward nets are: Optimal 
+Brain Damage (OBD) due to (LeCun et al., 90) and the Optimal Brain Surgeon 
+(OBS) (Hassibi et al., 93). Both schemes are based on weight ranking according 
+to saliency defined as the change in training error when the particular weight is 
+pruned. In OBD the saliency is estimated as the direct change in training error, 
+i.e., without retraining of the remaining weights, while the OBS scheme includes 
+retraining in a local quadratic approximation. The rationale of both methods is that 
+if the least significant weights (according to training error) are deleted, we gracefully 
+relieve the danger of overfitting. However, in both cases one clearly needs a stop 
+criterion. As both schemes aim at minimal generalization error an estimator for this 
+quantity is needed. The most obvious candidate estimate is a test error estimated 
+on a validation set. Validation sets, unfortunately, are notoriously very noisy (see, 
+522 M.W. PEDERSEN, L. K. HANSEN, J. LARSEN 
+e.g., the discussion in Weigend et al., 1990). Hence, an attractive alternative is to 
+estimate the test error by statistical means, e.g., Akaike's FPE (Akaike, 69). For 
+regression type problems such a pruning stop criterion was suggested in (Svarer et 
+al., 93). 
+However, why not let the saliency itself reflect the possible improvement in test 
+error? This is the idea that we explore in this contribution. 
+2 
+GENERALIZATION IN REGULARIZED NEURAL 
+NETWORKS 
+The basic asymptotic estimate of the generalization error was derived by Akaike 
+(Akaike, 1969); the so-called Final Prediction Error (FPE). The use of FPE-theory 
+for neural net learning has been pioneered by Moody (see e.g. (Moody, 91)), who 
+derived estimators for the average generalization error in regularized networks. 
+Our network is a feed-forward architecture with n input units, n/hidden sigmoid 
+units and a single linear output unit, appropriate for scalar function approximation. 
+The initial network is fully connected between layers and implements a non-linear 
+mapping from input space x(k) to the real axis: (k) -- Fu (x(k)), where u = 
+[w, W] is the N-dimensional weight vector and (k) is the prediction of the target 
+output y(k). The particular family of non-linear mappings considered can be written 
+as: 
+Fu (x(k)): y. Wj tanh wjixi(k) + wjo + Wo, (1) 
+j--1 
+Wj are the hidden-to-output weights while Wij connect the input and hidden units. 
+We use the sum of squared errors to measure the network performance 
+p 
+Etrain __ 1  [y(k)- Fu(x(k))] e (2) 
+P k-1 
+where p is the number of training examples. To ensure numerical stability and to 
+assist the pruning procedure we augment the cost function with a regularization 
+term. 1 The resulting cost function reads 
+E -- Etrain 4- -uTRu (3) 
+The main source of uncertainty in learning is the shortage of training data. Fitting 
+the network from a finite set of noisy examples means that the noise in these parti- 
+cular examples will be fitted as well and when presented with a new test example the 
+network will make an error which is larger than the error of the "optimal network" 
+trained on an infinite training set. By careful control of the fitting capabilities, e.g., 
+by pruning, such overfitting my be reduced. 
+The generalization error is defined as the average squared error on an example from 
+the example distribution function P(x, y). The examples are modeled by a teacher 
+network with weights u*, degraded by additive noise: y(k) - Fu* (x(k))4-y(k). The 
+noise samples y(k) are independent identically distributed variables with finite, but 
+unknown variance er e . Further, we assume that the noise terms are independent of 
+the corresponding inputs. The quantity of interest for model optimization is the 
+training set average of the generalization error, viz., the average over an ensemble 
+R will be a positive definite diagonal matrix. 
+Pruning with Generalization Based Weight Saliencies: 3BD, 3BS 523 
+of networks in which each network is provided with its individual training set. This 
+averaged generalization error is estimated by 
+ttest : (l + Ne) er2 +O ((1/p)2) , (4) 
+with the effective number of parameters being Neff = tr(HJ-1HJ -1) (Larsen and 
+Hansen, 94). The Hessian, H, is the second derivative matrix of the training error 
+with respect to the weights and thresholds, while J is the regularized Hessian: 
+J = H + R. An asymptotically unbiased estimator of the noise level is provided by: 
+0'2 -- Etrain/(1- Neff/p). Inserting, we get 
+Etest - p -{- Neff Etrain  i -{- -- Etrain. (5) 
+p - Neff 
+While OBD and OBS are based on estimates of the change in 'train we see that in 
+order to obtain saliencies that estimate the change in generalization we must gener- 
+ally take the prefactor into account. We note that if the network is not regularized 
+Neff = tr(HJ- 1H J-l) __ tr(1) = N, in which case the prefactor is only a function 
+of the total number of weights. In this case ranking according to training error 
+saliency is equivalent to ranking according to generalization error. 
+However, in the generic case ofa regularized network this is no more true (Neet < N), 
+and we need to evaluate the change in the prefactor, i.e., in the effective number of 
+parameters, associated with pruning a weight. Denoting the generalization based 
+saliency of weight ul as Etest,/, we find 
+5test,/  5train,/ -- 
+2 (Neff -- Neff,l) train (6) 
+p 
+Where the number of parameters after pruning of weight I is Neff,l, and SEtrain,/ is 
+the training error based saliency. 
+To proceed we outline two implementations, the major difference being the computa- 
+tional complexity involved. In the first, which is an elaboration on the OBD scheme, 
+the storage complexity is proportional to the number of weights and thresholds (N), 
+while in the second scheme the complexity scales with N 2, and is a generalization of 
+the OBS. To emphasize that we use the generalization error for ranking of weights 
+we use the prefix 7: 7OBD and 7OBS. 
+3 ?OBD: AN O(N) IMPLEMENTATION 
+Our O(N) simulator is based on batch mode, second order pseudo-Gauss Newton 
+optimization which is described in (Svarer et al., 93). The scheme, being based on 
+the diagonal approximation for the Hessian, requires storage of a number of variables 
+scaling linearly with the number of parameters N. As in (Le Cun et al., 90) we 
+approximate the second derivative matrix by the positive semi-definite expression: 
+02Etrain 2 - (OFu(x(k)) ) 2 
+k--1 
+(7) 
+In the diagonal approximation we find 
+Neff= /p ' 
+(8) 
+524 M.W. PEDERSEN, L. K. HANSEN, J. LARSEN 
+where hj = 02Ztrain/0U. Further, oj/p are the weight decay parameters (diagonal 
+elements of the regularization matrix R). 
+The OBD method proposed by (Le Cun et al., 90) was successfully applied to reduce 
+large networks for recognition of handwritten digits. The basic idea is to estimate 
+the increase in the training error when deleting weights. Expanding the training 
+error to second order in the pruned weight magnitude it is found that 
+( 1 02Etrain) 
+(5'train'/ -- q- U U. 
+(9) 
+This estimate takes into account that the weight decay terms force the weights 
+to depart from the minimum of the training set error. The first derivative of the 
+training error is non-zero, hence, the first term in (9). Computationally, we note 
+that the diagonal Hessian terms are reused from the pseudo Gauss-Newton training 
+scheme. 
+Using (6) and the diagonal form of Neff, we find the following approximative ex- 
+pression for generalization saliency (70BD): 
+5Etest,l  5Etrain,l-  hl q-oq/p Etrain (10) 
+From this expression we learn that of two weights inducing similar changes in train- 
+ing error we should delete the one which has the largest ratio of training error 
+curvature (A) to weight decay, i.e., the weight which has been least influenced by 
+weight decay. However, from a computational point of view we also want to reduce 
+the number of parameters as far as possible; so we might in fact accept to delete- 
+weights with small positive generalization saliency (in particular considering the 
+amount of approximation involved in the estimates). 
+4 ?OBS: AN O(N 2) IMPLEMENTATION 
+In the Optimal Brain Surgeon (Hassibi et al., 92) the increase in training error is 
+estimated including the effects of quadratic retraining. This allows for pruning of 
+more general degrees of freedom, e.g., situations where the training error induces 
+linear constraints among two or more weights. The price to be paid is that we need 
+to operate with the full N x N Hessian matrix of second derivatives. The O(N 2) 
+simulator, hence, is based on full Gauss Newton optimization. When eliminating 
+the/'th weight retraining is determined by 
+Ul 
+5ul ---- j-1 
+(j-i). el (11) 
+where el is the/'th unit vector. We need to modify the OBS saliencies when working 
+from a weight decay regularized cost function. The modified saliencies were given 
+in (Hansen and With, 94) 2 
+5Etrain,l:  (J-l)// q- -- -- (12) 
+P k (j-l)// 2 ((j-I)//)2 
+Whether using the generalization based 7OBS or standard OBS, we want to point to 
+an important aspect of OBS that seems not to be generally appreciated, namely the 
+2The expression is for the case of all weight decays being equal, see (Hansen and With, 
+94) for the general expression. 
+Pruning with Generalization Based Weight Saliencies: 3BD, 3BS 525 
+problem of "nuisance" parameters (White, 89), (Larsen, 93). When eliminating an 
+output weight Uo, all the weights to the corresponding hidden unit are in effect also 
+pruned away. Such a situation is well-known in the statistics literature on model 
+selection where such "ghost" input weights are known as nuisance parameters. It is 
+important to remove these parameters from the network function before estimating 
+the saliency 5Etrain,o and the resulting effective number of parameters Neff, as they 
+would otherwise give "spurious" contributions to these estimates. Applying OBS 
+without taking this fact into consideration often results in sudden jumps in the level 
+of the network error due to pruning of an important weight based on a corrupted 
+saliency estimate. Removing the superfluous weights from the weight vector u and 
+the corresponding rows and columns in J to form the reduced (regularized) Hessian 
+J1 is straightforward, but it is computationally expensive to invert each of the 
+resulting (sub-)matrices J for use in (11) and (12). This cost can be considerably 
+reduced by rearranging the rows and columns of J as 
+J= Ja J4  J- = (j_l)a (j_1)4 (13) 
+where J2, Ja and J4 are the rows and columns corresponding to the nuisance pa- 
+rameters. Using a standard lemma for partitioned matrices, we obtain 
+(J1) -1 - (J-1)l - (J-1)2[(J-1)4]-l(j-1)3 (14) 
+which only calls for inversion of the (small)submatrix (J-1)4. In (Hassibi et al., 93) 
+it was argued that one might save on computation by using an iterative scheme for 
+calculation of the inverse Hessian j-1. However, since standard matrix inversion is 
+an O(N 3) operation while the iterative scheme scales as O(pN2), a detailed count 
+shows that that it is only beneficial to use the iterative scheme in the atypical case 
+N > p/2. 
+5 EXPERIMENT 
+We will illustrate the viability of the proposed methods on a standard problem 
+of nonlinear dynamics viz. the Mackey-Glass chaotic time series. The series is 
+generated by integration of the differential equation 
+dz(t) -bz(t)+a (15).. 
+dt - l+z(t-r) ø 
+where the constants are a = 0.2, b -- 0.1 and r = 17. The series is resampled 
+with sampling period i according to standard practice. The network configuration 
+is n = 6, nH= 10 and we train to implement a six step ahead prediction. That 
+is, x(k) = [z(k-6),z(k- 12),...,z(k-6n)] and y(k) = z(k). In Fig. 1 we show 
+pruning scenarios based on the two different implementations. The training errors, 
+test errors and FPE errors are plotted for a training set size of 250 examples, the 
+test set comprises 8500 examples. In the left panel we show the results of pruning 
+according to 7OBD and similarly in the right panel we show the results of pruning 
+as it occurred using 7OBS. In this example we do not find significant improvement 
+in performance by use of 7OBS. 
+To illustrate the ability of the estimators for predicting the effects of pruning on 
+the test error we plot in figure 2 the estimated test errors versus the actual test 
+errors after pruning. In the OBD case this means the test error resulting from 
+pruning the parameters without retraining, while in the OBS case it means the 
+test error following pruning and retraining in the quadratic approximation. We 
+note that the 7OBD estimates of the test error approximately equal the actual 
+526 M.W. PEDERSEN, L. K. HANSEN, J. LARSEN 
+OBD 
+I -- TRAIN 
+TEST 
+-- FPE 
+10 20 30 40 50 60 70 80 90 
+NUMBER OF PARAMETERS 
+-- TRAIN 
+TEST 
+, -- FPE 
+0 10 20 30 40 50 60 70 80 90 
+NUMBER OF PARAMETERS 
+Figure 1: The evolution of training and test errors during pruning for the Mackey- 
+Glass time series for a training set of size 250. In the left panel is shown pruning 
+by 7OBD, while in the right we show pruning by ?OBS. The vertical solid line 
+indicates the network for which the estimated test error is minimal. 
+test error, offset by a constant corresponding to the FPE-offset in the left panel of 
+figure 1. The most important feature of this plot is that ranking according to the 
+estimated test error is consistent with ranking according to the actual test error. 
+In the right panel of figure 2, however, we see that 7OBS highly underestimates 
+the actual errors resulting from the quadratic retraining. It is not clear how the 
+ranking inconsistencies affect the overall performance of 7OBS. The weight selected 
+for pruning (indicated by a circle) is clearly not the optimal according to the actual 
+test error. However, as depicted in the figure, after full Gauss-Newton retraining 
+for 20 epochs the measured actual test error is comparable to the estimated value 
+(retraining is indicated by the arrow). Hence, one may say that 7OBS "recovers" 
+after retraining, while the initial estimate based on quadratic retraining is rather 
+poor. 
+104 
+10 
+10  
+10 -3 10 -:z 10 - 10 0 10  10 z 
+ACTUAL TEST ERROR 
+. 3BS 
+10 - 10 -3 10 -2 10 -* 10 o 101 102 
+ACTUAL TEST ERROR 
+Figure 2: Left panel: Estimated test errors for fully connected network using ?OBD 
+and the actual test errors computed by actual deletion of the weight and computing 
+the test error on the 8500 members test set. Right panel: Errors for fully connected 
+network using 7OBS. The weight selected for pruning is indicated by a circle, the 
+result of further retraining is indicated by an arrow. 
+Pruning with Generalization Based Weight Saliencies: ]3BD, ]3BS 527 
+6 CONCLUSION 
+Since a main objective of pruning algorithms is to improve generalization we sug- 
+gest that weight saliencies are estimated from the test error rather than the training 
+error. We have shown how this might be carried out for scalar function approxima- 
+tion, in which case we have a rather simple test error estimate (based on Akaike's 
+FPE). We provided implementation details for a scheme of linear complexity, 7OBD, 
+which is the generalization of OBD and a scheme of quadratic complexity 7OBS 
+which is the generalization of OBS. Furthermore, we provided a way to significantly 
+reduce the computational overhead involved in the handling of nuisance parameters. 
+An application within time series prediction showed the viability of the suggested 
+approach. 
+Acknowledgements 
+We thank Peter Magnus N0rgaard for valuable discussions. This research is sup- 
+ported by the Danish Natural Science and Technical Research Councils through the 
+Computational Neural Network Center (CONNECT). JL acknowledge the Radioparts 
+Foundation for financial support. 
+References 
+H. Akaike: Fitting Autoregressive Models for Prediction. Ann. Inst. Stat. Mat. 21, 
+24a-247, (1969). 
+Y. Le Cun, J.S. Denker, and S.A. Solla: Optimal Brain Damage. In Advances in Neural 
+Information Processing Systems 2, Morgan Kaufman, 598-605, (1990). 
+L.K. Hansen and M. With Petersen: Controlled Growth of Cascade Correlation Nets. 
+Proceedings of ICANN'94 International Conference on Neural Networks, Sorrento, Italy, 
+1994. Eds. M. Marinaro and P.G. Morasso, 797-800, (1994). 
+B. Hassibi, D. G. Stork, and G. J. Wolff: Optimal Brain Surgeon and General Network 
+Pruning, in Proceedings of the 1993 IEEE International Conference on Neural Networks, 
+San Francisco (Eds. E.H. Ruspini et al. ) 293-299, (1993). 
+J. Larsen: Design of Neural Network Filters. Ph.D. Thesis, Electronics Institute, Technical 
+University of Denmark, (1993). 
+J. Larsen and L.K. Hansen: Generalization Performance of Regularized Neural Network 
+Models. "Neural Networks for Signal Processing IV" Proceedings of the IEEE Workshop, 
+Eds. J. Vlontzos et al., IEEE Service Center, Piscataway N J, 42-51, (1994). 
+J.E. Moody: Note on Generalization, Regularization and Architecture Selection in Nonlin- 
+ear Systems. In Neural Networks For Signal Processing; Proceedings of the 1991 IEEE-SP 
+Workshop, (Eds. B.H. Juang, S.Y. Kung, and C. Kamm), IEEE Service Center, 1-10, 
+(1991). 
+C. Svarer, L.K. Hansen, and J. Larsen: On Design and Evaluation of Tapped Delay Line 
+Networks, In Proceedings of the 1993 IEEE International Conference on Neural Networks, 
+San Francisco, (Eds. E.H. Ruspini et al. ) 46-51, (1993). 
+A.S. Weigend, B.A. Huberman, and D.E. Rumelhart: Prediction the future: A Connec- 
+tionist Approach. Int. J. of Neural Systems 3, 193-209, (1990). 
+H. White: Learning in Artificial Neural Networks: A Statistical Perspective. Neural Com- 
+putation 1,425-464, (1989). 

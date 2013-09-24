@@ -1,0 +1,364 @@
+4O 
+EFFICIENT PARALLEL LEARNING 
+ALGORITHMS FOR NEURAL NETWORKS 
+Alan H. Kramer and A. Sangiovanni-Vincentelli 
+Department of EECS 
+U.C. Berkeley 
+Berkeley, CA 94720 
+ABSTRACT 
+Parallelizable optimization techniques are applied to the problem of 
+learning in feedforward neural networks. In addition to having supe- 
+rior convergence properties, optimization techniques such as the Polak- 
+Ribiere method are also significantly more efficient than the Back- 
+propagation algorithm. These results are based on experiments per- 
+formed on small boolean learning problems and the noisy real-valued 
+learning problem of hand-written character recognition. 
+INTRODUCTION 
+The problem of learning in feedforward neural networks has received a great deal 
+of attention recently because of the ability of these networks to represent seemingly 
+complex mappings in an efficient parallel architecture. This learning problem can 
+be characterized as an optimization problem, but it is unique in several respects. 
+Function evaluation is very expensive. However, because the underlying network is 
+parallel in nature, this evaluation is easily parallelizable. In this paper, we describe 
+the network learning problem in a numerical framework and investigate parallel 
+algorithms for its solution. Specifically, we compare the performance of several 
+parallelizable optimization techniques to the standard Back-propagation algorithm. 
+Experimental results show the clear superiority of the numerical techniques. 
+2 NEURAL NETWORKS 
+A neural network is characterized by its architecture, its node functions, and its 
+interconnection weights. In a learning problem, the first two of these are fixed, so 
+that the weight values are the only free parameters in the system. when we talk 
+about "weight space" we refer to the parameter space defined by the weights in a 
+network, thus a "weight vector" w is a vector or a point in weightspace which defines 
+the values of each weight in the network. We will usually index the components of 
+a weight vector as wij, meaning the weight value on the connection from unit i to 
+unit j. Thus N(w, r), a network function with n output units, is an n-dimensional 
+vector-valued function defined for any weight vector w and any input vector r: 
+N(w, r)--[o(w,r),o2(w,r),...,o,(w,r)] T 
+Efficient Parallel Learning Algorithms 
+where oi is the ith output unit of the network. Any node j in the network has input 
+ii(w,r) = ,Efanin o,(w,r)w, and output o(w,r) - f(i(w,r)), where f0 is 
+the node function. The evaluation of N() is inherently parallel and the time to 
+evaluate N() on a single input vector is O(#layers). If pipelining is used, multiple 
+input vectors can be evaluated in constant time. 
+3 LEARNING 
+The "learning" problem for a neural network refers to the problem of finding a 
+network function which approximates some desired "target" function T0, defined 
+over the same set of input vectors as the network function. The problem is simplified 
+by asking that the network function match the target function on only a finite set of 
+input vectors, the "training set" R. This is usually done with an error measure. The 
+most common measure is sum-squared error, which we use to define the "instance 
+error" between N(w, r) and T(r) at weight vector w and input vector r: 
+eN,T(w,r) -  « (T/(r) - øi(w,r)) 2- «liT(r)- N(w,r)ll 2. 
+iEoutputs 
+We can now define the "error function" between N 0 and T() over R as a function 
+of w: 
+EN,T,R(w) =  eN,T(w,r)' 
+r6R 
+The learning problem is thus reduced to finding a w for which EN,T,R(w) is min- 
+imized. If this minimum value is zero then the network function approximates the 
+target function exactly on all input vectors in the training set. Henceforth, for no- 
+tational simplicity we will write e 0 and E 0 rather than eN,T0 and. EN,T,s0. 
+4 OPTIMIZATION TECHNIQUES 
+As we have framed it here, the learning problem is a classic problem in optimization. 
+More specifically, network learning is a problem of function approximation, where 
+the approximating function is a finite parameter-based system. The goal is to find 
+a set of parameter values which minimizes a cost function, which in this case, is a 
+measure of the error between the target function and the approximating function. 
+Among the optimization algorithms that can be used to solve this type of problem, 
+gradient-based algorithms have proven to be effective in a variety of applications 
+{Avriel, 1976}. These algorithms are iterative in nature, thus wk is the weight 
+vector at the kh iteration. Each iteration is characterized by a search direction 
+and a step c. The weight vector is updated by taking a step in the search direction 
+as below: 
+for(k=o; evaluate(w) != CONVERGED; ++k) { 
+d = determine_search_direction(); 
+k = deermine_sep(); 
+Wk+ 1 = W k + Otkd k; 
+} 
+42 Kramer and Sangiovanni-Vincentelli 
+If d is a direction of descent, such as the negative of the gradient, a sufficiently 
+small step will reduce the value of E0. Optimization algorithms vary in the way 
+they determine c and d, but otherwise they are structured as above. 
+5 CONVERGENCE CRITERION 
+The choice of convergence criterion is important. An algorithm must terminate 
+when E 0 has been sufficiently minimized. This may be done with a threshold on 
+the value of E(), but this alone is not sufficient. In the case where the error surface 
+contains "bad" local minirod, it is possible that the error threshold will be unattain- 
+able, and in this case the algorithm will never terminate. Some researchers have 
+proposed the use of an iteration limit to guarantee termination despite an unattain- 
+able error threshold {Fahlman, 1989}. Unfortunately, for practical problems where 
+this limit is not known a priori, this approach is inapplicable. 
+A necessary condition for w* to be a minimum, either local or global, is that the 
+gradient g(w*) = VE(w*) = 0. Hence, the most usual convergence criterion for 
+optimization algorithms is [[g(w)[ I < e where e is a sufficiently small gradient 
+threshold. The downside of using this as a convergence test is that, for successful 
+trials, learning times will be longer than they would be in the case of an error thresh- 
+old. Error tolerances are usually specified in terms of an acceptable bit error, and 
+a threshold on the mazimum bit error (MBE) is a more appropriate representation 
+of this criterion than is a simple error threshold. For this reason we have chosen 
+a convergence criterion consisting of a gradient threshold and an MBE threshold 
+(r), terminating when ][g(w)][ < e or MBE(w) _< r, where MBE() is defined as: 
+MBE(w) =max ( max («(Ti(r) -oi(w,r)))) . 
+rcR k,i½outputs 
+6 STEEPEST DESCENT 
+Steepest Descent is the most classical gradient-based optimization algorithm. In 
+this algorithm the search direction dk is always the negative of the gradient - the 
+direction of steepest descent. For network learning problems the computation of 
+g(w), the gradient of E(w), is straightforward: 
+where 
+where for output units 
+while for all other units 
+g(w) = rE(w) 
+w(w,) 
+0e(w,r) 
+Owij 
+51(w, r) 
+6j(w, r) 
+d (w,) =  W(w,), 
+= 
+rER 
+_ [O(w, r) O(w, ) O(w, ) T 
+ , ,o'', ß 
+Ow Ow2 Ow.m 
+-- oi(w,r)Sj(w,r), 
+/j(i(w,,))(o(w, ,)- 3 (r)), 
+yj(i(w,,))  (w,,)w}. 
+k E fanout 
+Efficient Parallel Learning Algorithms 43 
+The evaluation of g is thus almost dual to the evaluation of N; while the latter feeds 
+forward through the net, the former feeds back. Both computations are inherently 
+parallelizable and of the same complexity. 
+The method of Steepest Descent determines the step (: by inexact linesearch, mean- 
+ing that it minimizes E(w - (dk). There are many ways to perform this com- 
+putation, but they are all iterative in nature and thus involve the evaluation of 
+E(w - ( d) for several values of (. As each evaluation requires a pass through 
+the entire training set, this is expensive. Curve fitting techniques are employed to 
+reduce the number of iterations needed to terminate a linesearch. Again, there are 
+many ways to curve fit . We have employed the method of false position and used 
+the Wolfe Test to terminate a linesearch {Luenberger, 1986). In practice we find 
+that the typical linesearch in a network learning problem terminates in 2 or 3 iter- 
+ations. 
+7 PARTIAL CONJUGATE GRADIENT METHODS 
+Because linesearch guarantees that E(w+) < E(w), the Steepest Descent algo- 
+rithm can be proven to converge for a large class of problems {Luenberger, 1986). 
+Unfortunately, its convergence rate is only linear and it suffers from the problem 
+of "cross-stitching" {Luenberger, 1986), so it may require a large number of iter- 
+ations. One way to guarantee a faster convergence rate is to make use of higher 
+order derivatives. Others have investigated the performance of algorithms of this 
+class on network learning tasks, with mixed results {Becker, 1989). We are not 
+interested in such techniques because they are less parallelizable than the methods 
+we have pursued and because they are more expensive, both computationally and 
+in terms of storage requirements. Because we are implementing our algorithms on 
+the Connection Machine, where memory is extremely limited, this last concern is 
+of special importance. We thus confine our investigation to algorithms that require 
+explicit evaluation only of g, the first derivative. 
+Conjugate gradient techniques take advantage of second order information to avoid 
+the problem of cross-stitching without requiring the estimation and storage of the 
+Hessian (matrix of second-order partials). The search direction is a combination of 
+the current gradient and the previous search direction: 
+dk+ -- -g+ + fid. 
+There are various rules for determining/?; we have had the most success with the 
+Polak-Ribiere rule, where/? is determined from g+ and g according to 
+(g+l -- gk) T ß g+i 
+As in the Steepest Descent algorithm, a is determined by linesearch. With a sim- 
+ple reinitialization procedure partial conjugate gradient techniques are as robust as 
+the method of Steepest Descent {Powell, 1977); in practice we find that the Polak- 
+Ribiere method requires far fewer iterations than Steepest Descent. 
+44 Kramer and Sangiovanni-Vincentelli 
+8 BACKPROPAGATION 
+The Btch Back-propagation algorithm {Rumelhart, 1986} can be described in 
+terms of our optimization framework. Without momentum, the algorithm is very 
+similar to the method of Steepest Descent in that dk = -gk. Rather than being 
+determined by a linesearch, c, the "learning rate", is a fixed user-supplied constant. 
+With momentum, the algorithm is similar to a partial conjugate gradient method, 
+as d}+ - -g+ +/?}d}, though again , the "momentum term", is fixed. On-line 
+Back-propagation is a variation which makes a change to the weight vector following 
+the presentation of each input vector: d} = V'e(wk, rk). 
+Though very simple, we can see that this algorithm is numerically unsound for sev- 
+eral reasons. Because /5 is fixed, dk may not be a descent direction, and in this 
+case any e will increase E(). Even if d} is a direction of descent (as is the case 
+for Batch Back-propagation without momentum), e may be large enough to move 
+from one wall of a "valley" to the opposite wall, again resulting in an increase in 
+E(). Because the algorithm can not guarantee that E 0 is reduced by successive 
+iterations, it cannot be proven to converge. In practice, finding a value for e which 
+results in fast progress and stable behavior is a black art, at best. 
+9 WEIGHT DECAY 
+One of the problems of performing gradient descent on the "error surface" is that 
+minima may be at infinity. (In fact, for boolean learning problems all minima 
+are at infinity.) Thus an algorithm may have to travel a great distance through 
+weightspace before it converges. Many researchers have found that weight decay is 
+useful for reducing learning times {Hinton, 1986}. This technique can be viewed as 
+adding a term corresponding to the length of the weight vector to the cost function; 
+this modifies the cost surface in a way that bounds all the minima. Rather than 
+minimizing on the error surface, minimization is performed on the surface with cost 
+function 
+C(w) = E(w)+ 
+where 7, the relative weight cost, is a problem-specific parameter. The gradient for 
+this cost function is g(w) = V'C(w) = VE(w) + 7w, and for any step c, the effect 
+of 7 is to "decay" the weight vector by a factor of (1 - 
+w+l -- wk -- -- w(1 - - ckVE(w). 
+10 PARALLEL IMPLEMENTATION ISSUES 
+We have emphasized the parallelism inherent in the evaluation of E() and g(). To 
+be efficient, any learning algorithm must exploit this parallelism. Without momen- 
+tum, the Back-propagation algorithm is the simplest gradient descent technique, as 
+it requires the storage of only a single vector, g. Momentum requires the storage of 
+only one additional vector, d_. The Steepest Descent algorithm also requires the 
+storage of only a single vector more than Back-propagation without momentum: 
+Efficient Parallel Learning Algorithms 45 
+d, which is needed for linesearch. In addition to d, the Polak-Ribiere method 
+requires the storage of two additional vectors: d_  and g_ . The additional stor- 
+age requirements of the optimization techniques are thus minimal. The additional 
+computational requirements are essentially those needed for linesearch - a single dot 
+product and a single broadcast per iteration. These operations are parallelizable 
+(log time on the Connection Machine) so the additional computation required by 
+these algorithms is also minimal, especially since computation time is dominated 
+by the evaluation of E 0 and g0. Both the Steepest Descent and Polak-Ribiere 
+algorithms are easily parallelizable. We have implemented these algorithms, as well 
+as Back-propagation, on a Connection Machine {Hillis, 1986). 
+11 EXPERIMENTAL RESULTS - BOOLEAN LEARNING 
+We have compared the performance of the Polak-Ribiere (P-R), Steepest Descent 
+(S-D), and Batch Back-propagation (B-B) algorithms on small boolean learning 
+problems. In all cases we have found the Polak-Ribiere algorithm to be significantly 
+more efficient than the others. All the problems we looked at were based on three- 
+layer networks (1 hidden layer) using the logistic function for all node functions. 
+Initial weight vectors were generated by randomly choosing each component from 
+(+r,-r). 7 is the relative weight cost, and e and 7' define the convergence test. 
+Learning times are measured in terms of epochs (sweeps through the training set). 
+The encoder problem is easily scaled and has no bad local minima (assuming suf- 
+ficient hidden units: log(#inputs)). All Back-propagation trials used a = 1 and 
+/5 = 0; these values were found to work about as well as any others. Table 1 sum- 
+marizes the results. Standard deviations for all data were insignificant (< 25%). 
+TABLE 1. Encoder Results 
+Encoder hum Parameter Values Average Epochs to Convergence 
+Problem trials r I 7 [ 7' [ e P-R I S-D[ B-B 
+10-5-1 "0 100 1.0 le-4 le-1 le-8 63.71 109'.06 196.93 
+10-5-10 100 1.0 le'4 2e-2 le-8 71.27 14:.31 299.55 
+10-5-10 100 1.0 le-4 7e-4 le-8 104.70 431.4'3 3286.20 ' 
+10-5-10 100' 1.0 le-4 0.0" le-4 279.52 1490.00 13117.00 
+10-5-10 100 1.0 1'e-4 0.0 le-6 353.30 2265.00 2'1910.00 
+10-5'-10 i00 1.0 le-4 0'.0" le-8 417.90 2863.00 "35260.'06' 
+4-2-4 100 1.0 le-4 0.1 le-8 36.92 56.90 179'.95 
+8'3-8 100 1.0 le-4 0.1 le-8 67.63 194.80 ' 594176 
+16-4-16 100 1.0 le-4 0.1 ' le-8 121.30 572'.80 990.33 
+32-5-32 25 1.0 le-4 0.1 ' '1-8 208.60 1379.40 1826.15 
+64-6-64 25 1.0 le-4 0.1 le-8 405.60 4187130 > 10000 
+46 ' Kramer and Sangiovanni-Vincentelli 
+The parity problem is interesting because it is also easily scaled and its weightspace 
+is known to contain bad local minima To report learning times for problems with 
+bad local minima, we use expected epochs to solution, EES. This measure makes 
+sense especially if one considers an algorithm with a restart procedure: if the algo- 
+rithm terminates in a bad local rninima it can restart from a new random weight 
+vector. EES can be estimated from a set of independent learning trials as the 
+ratio of total epochs to successful trials. The results of the parity experiments are 
+summarized in table 2. Again, the optimization techniques were more efficient than 
+Back-propagation. This fact is most evident in the case of bad trials. All trials used 
+r = 1, 7 = le -- 4, r = 0.1 and e = le - 8. Back-propagation used e = I and f] -- 0. 
+TABLE 2. Parity Results 
+I1 Parity l alg l trials avg, (s.d.) aVgun, (s.d.) EES II 
+2-2-1 P-R 100 72% 73 (43) 232 (54) 163 
+S-D 100 80% 95 (115) 3077 (339) 864 
+B-B 100 78% 684 (1460) 47915 (5505) 14197 
+4-4-1 P:R 100 61%"' 352 (122) 453 (117) 641 
+s-D 100 99% 2052 (1753) 18512 (-) 2324 
+B-B 100 71% 8704 (8339) 95345 (11930) 48430 
+8-8-1 P-R 16 50% 1716 (748) 953 (355) 2669 
+S-D 6 >10000 >10000 >10000 
+B:B 2 >100000 >100000 >100000 
+12 LETTER RECOGNITION 
+One criticism of batch-based gradient descent techniques is that for large real-world, 
+real-valued learning problems, they will be be less efficient than On-line Back- 
+propagation. The task of characterizing hand drawn examples of the 26 capital 
+letters was chosen as a good problem to test this, partly because others have used 
+this problem to demonstrate that On-line Back-propagation is more efficient than 
+Batch Back-propagation {Le Cun, 1986}. The experimental setup was as follows: 
+Characters were hand-entered in a 80 x 120 pixel window with a 5 pixel-wide brush 
+(mouse controlled). Because the objective was to have many noisy examples of the 
+same input pattern, not to learn scale and orientation invariance, all characters were 
+roughly centered and roughly the full size of the window. Following character entry, 
+the input window was symbolically gridded to define 100 8 x 12 pixel regions. Each 
+of these regions was an input and the percentage of "on" pixels in the region was 
+its value. There were thus 100 inputs, each of which could have any of 96 (8 x 12) 
+distinct values. 26 outputs were used to represent a one-hot encoding of the 26 
+letters, and a network with a single hidden layer containing 10 units was chosen. 
+The network thus had a 100-10-26 architecture; all nodes used the logistic function. 
+Efficient Parallel Learning Algorithms 47 
+A training set consisting of 64 distinct sets of the 26 upper case letters was created 
+by hand in the manner described. 25 "A" vectors are shown in figure 1. This 
+large training set was recursively split in half to define a series of 6 successively 
+larger training sets; Ro to Ra, where Ro is the smallest training set consisting 
+of 1 of each letter and Ri contains /?4- and 2 i-1 new letter sets. A testing set 
+consisting of 10 more sets of hand-entered characters was also created to measure 
+network performance. For each /t4, we compared naive learning to incremehtal 
+learning, where naive learning means initializing W(o i) randomly and incremental 
+(i-) (the solution weight vector to the learning 
+learning means setting w(0 i) to w, 
+problem based on Ri-l). The incremental epoch count for the problem based on 
+Ri was normalized to the number of epochs needed starting from w(, i- 1) plus  the 
+number of epochs taken by the problem based on Ri- (since ]Ri-i] = «]Ri[). This 
+normalized count thus reflects the total number of relative epochs needed to get 
+from a naive network to a solution incrementally. 
+Both Polak-Ribiere and On-line Back-propagation were tried on all problems. Table 
+3 contains only results for the Polak-Ribiere method because no combination of 
+weight-decay and learning rate were found for which Back-propagation could find a 
+solution after 1000 times the number of iterations taken by Polak-Ribiere, although 
+values of 7 from 0.0 to 0.001 and values for a from 1.0 to 0.001 were tried. All 
+problems had r -- 1, 7 - 0.01, 7' - le - 8 and e = 0.1. Only a single trial was done 
+for each problerm Performance on the test set is shown in the last column. 
+FIGURE 1. 25 "A"s 
+TABLE 3. Letter Recognition 
+prob Learning Time (epochs) Test 
+ß I I % 
+R0 95 95 95 53.5 
+R1 83 130 85 69.2 
+R2 63 128 271 80.4 
+R3 14 78 388 83.4 
+R4 191 230 1129 92.3 
+R5 153 268 1323 98.1 
+R6 46 180 657 99.6 
+The incremental learning paradigm was very effective at reducing learning times. 
+Even non-incrementally, the Polak-Ribiere method was more efficient than on-line 
+Back-propagation on this problem. The network with only 10 hidden units was 
+sufficient, indicating that these letters can be encoded by a compact set of features. 
+13 CONCLUSIONS 
+Describing the computational task of learning in feedforward neural networks as 
+an optimization problem allows exploitation of the wealth of mathematical pro- 
+gramming algorithms that have been developed over the years. We have found 
+48 Kramer and Sang/ovanni-Vincentelli 
+that the Polak-Ribiere algorithm offers superior convergence properties and signif- 
+icant speedup over the Back-propagation algorithm. In addition, this algorithm is 
+well-suited to parallel implementation on massively parallel computers such as the 
+Connection Machine. Finally, incremental learning is a way to increase the efficiency 
+of optimization techniques when applied to large real-world learning problems such 
+as that of handwritten character recognition. 
+Acknowledgments 
+The authors would like to thank Greg Sotkin for helpful discussions. This work was 
+supported by the Joint Services Educational Program grant #482427-25304. 
+References 
+{Avriel, 1976) Mordecai Avriel. Nonlinear Programming, Analysis and Methods. 
+Prentice-Hall, Inc., Englewood Cliffs, New Jersey, 1976. 
+{Becker, 1989) Sue Becker and Yan Le Cun. Improving the Convergence of Back- 
+Propagation Learning with Second Order Methods. In Proceedings of the 1988 
+Connectionist Models Summer School, pages 29-37, Morgan Kaufmann, San 
+Mateo Calif., 1989. 
+{Fahlman, 1989) Scott E. Fahlman. Faster Learning Variations on Back-Propagation: 
+An Empirical Study. In Proceedings of the 1988 Connectionist Models Sum- 
+mer School, pages 38-51, Morgan Kaufmann, San Mateo Calif., 1989. 
+{Hillis, 1986) William D. Hillis. The Connection Machine. MIT Press, Cambridge, 
+Mass, 1986. 
+{Hinton, 1986) G. E. Hinton. Learning Distributed Representations of Concepts. 
+In Proceedings of the Cognitive Science Society, pages 1-12, Erlbaum, 1986. 
+(Kramer, 1989) Alan H. Kramer. Optimization Techniques for Neural Networks. 
+Technical Memo # UCB-ERL-M89-1, U.C. Berkeley Electronics Research L ab- 
+oratory, Berkeley Calif., Jan. 1989. 
+{Le Cun, 1986} Yan Le Cun. HLM: A Multilayer Learning Network. In Pro- 
+ceedings of the 1986 Connectionist Models Summer School, pages 169-177, 
+Carnegie-Mellon University, Pittsburgh, Penn., 1986. 
+{Luenberger, 1986) David G. Luenberger. Linear and Nonlinear Programming. 
+Addison-Wesley Co., Reading, Mass, 1986. 
+(Powell, 1977) M. J. D. Powell. "Restart Procedures for the Conjugate Gradient 
+Method", Mathematical Programming 12 (1977) 241-254 
+{Rumelhart, 1986) David E Rumelhart, Geoffrey E. Hinton, and R. J. Williams. 
+Learning Internal Representations by Error Propagation. In Parallel Dis- 
+tributed Processing: Ezplorations in the Microstructure. of Cognition. Vol 1: 
+Foundations, pages 318-362, MIT Press, Cambridge, Mass., 1986 

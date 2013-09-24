@@ -1,0 +1,321 @@
+2O 
+ASSOCIATIVE LEARNING 
+VIA INHIBITORY SEARCH 
+David H. Ackley 
+Bell Communications Research 
+Cognitive Science Research Group 
+ABSTRACT 
+ALVIS is a reinforcement-based connectionist architecture that 
+learns associative maps in continuous multidimensional environ- 
+ments. The discovered locations of positive and negative rein- 
+forcements are recorded in "do be" and "don't be" subnetworks, 
+respectively. The outputs of the subnetworks relevant to the cur- 
+rent goal are combined and compared with the current location to 
+produce an error vector. This vector is backpropagated through 
+a motor-perceptual mapping network to produce an action vec- 
+tor that leads the system towards do-be locations and away from 
+don't-be locations. ALVIS is demonstrated with a simulated robot 
+posed a target-seeking task. 
+INTRODUCTION 
+The "backpropagatlon algorithm" or generalized delta rule (Rumelhart, Hinton, & 
+Williams, 1986) is sometimes criticized on the grounds that it is a "supervised" 
+learning algorithm, which requires a "teacher" to provide correct outputs, and 
+apparently leaves open the question of how the teacher learned the right answers. 
+However, work by Rumelhart (personal communication, 1987) and Miyata (1988) 
+has shown how the environment that a system is embedded in can serve as the 
+"teacher." If, as in this paper, a backpropagation network is posed the task of 
+mapping from a vector t of robot arm joint angles to the resulting vector X of 
+arm coordinates in space (the 'forward kinematics problem"), then input-output 
+training data can be obtained by supplying sets of joint angles to the arm and 
+observing the resulting configurations. 
+Although this "environment as teacher" strategy shows how a "teacher" can come to 
+possess useful information without an infinite regress learning it, it is not a complete 
+solution. There are problems for which the "laws of physics" of an environment 
+do not suffice to determine the solution. Suppose, for example, that a robot is 
+posed the problem of learning to reach for different positions in space depending 
+on which of a set of signals is currently presented, and that the only feedback 
+available from the environment is success or failure information about the current 
+arm configuration. 
+Associative Learning via Inhibitory Search 21 
+c b 
+d a 
+Figure 1. A "trunk" robot. 
+What is needed in such a case is a mechanism to search through the space of possi- 
+ble arm configurations, recording the successful configurations associated with the 
+various inputs. AœVIS  Associative Learning Via Inhibitory Search -- provides 
+one such mechanism. The next section applies backpropagation to the t? -- X map- 
+ping and shows how the resulting network can sometimes be used to solve X -- t 
+problems. The third section, "Self-supervision and inhibitory search," integrates 
+that network into the overall AœVIS algorithm. The final section contains some 
+discussion and conclusions. An expanded version of this paper may be found in 
+Acldey (1988). 
+FORWARD AND INVERSE KINEMATICS 
+The inverse kinematics problem in controlling an arm is the problem of determining 
+what joint angles are needed to produce a specific position and orientation of a hand. 
+In the general case it is a difficult problem. An itch on your back suggests the kinds 
+of questions that arise. Which hand should you use? Should you go up from around 
+your waist, or down from over your shoulders? Can you be sure you know what 
+will work without actually trying it? 
+From a computational standpoint, forward kinematics  deciding where your limbs 
+will end up given a set of joint angles -- is an easier problem. 
+Figure 1 depicts the planar "robot" that was used in this work. I call it the "trunk" 
+robot. (The work discussed in Ackley (1988) also used a two-handed "pincer" 
+robot.) Of course, the trunk is a far cry from a real robot, and the only significant 
+constraint is that the possible joint angles are limited, but this suffices to pose 
+non-trivial kinematics problems. The trunk has five joints, and each joint angle is 
+limited to a range of 4 ø to 176 ø with respect to the previous limb. 
+I simulated a backpropagation network with five real-valued input units (the joint 
+angles), sixty hidden units in a single layer, and twelve linear output units (the 
+Cartesian joint positions). Joint angles were expressed in radians, so the range of 
+input unit values was from about 0.07 to about 3.07. The configuration vector X 
+was represented by twelve output units corresponding to six pairs of (,//) coordi- 
+22 Ackley 
+Figure 2. A "logarithmic strobe" display of the trunk's asymptotic convergence on 
+a specified position and orientation. The arm position is displayed after iterations 
+1,2,4, 8,... ,256. 
+nates, one pair for each joint a through f. With the trunk robot (though not with 
+the "pincer") f and fy have constant values, since they end up being part of the 
+"anchor." The state of an output unit equals the sum of its inputs, and the error 
+propagated out of an output unit equals the error propagated into it. 
+Errors were defined by the difference between the predicted configuration and the 
+actual configuration, and after extensive training on the trunk robot forward kine- 
+matics problem, the network achieved high accuracy over most of the joint ranges. 
+In typical backpropagation applications, once the desired mapping has been learned, 
+the backward "error channels" in the network are no longer used. However, suppose 
+some other error computation, different from that used to train the weights, was 
+then incorporated. Those errors can be propagated from the outputs of the trained 
+network all the way back to the inputs. The goal is no longer to change weights 
+in the network -- since they already represent a useful mapping -- but to use the 
+trained network to translate output-space errors, however defined, into errors at 
+the inputs to the network. 
+Figure 2 illustrates one use of this process, showing how a trained forward kine- 
+matics network can be used to perform a cheap kind of inverse kinematics. The 
+figure shows superimposed outputs of the trained network under the influence of 
+a task-specific error computation; in this case the trunk is trying to reduce the 
+distances between the front and back of a "target arrow" and the front and back 
+of its first arm section. The target arrow is defined by a head (h, hy) and a tail 
+(t,ty). The errors for output units a and % are defined by e(a) = h-a and 
+e(%) = by-%, the errors for output units b and by are defined by e(b) = t-b 
+and e(by) -- ty - by, and the errors at all other outputs are set to zero. 
+The algorithm used to generate this behavior has the following steps: 
+1. Compute errors for one or more output units based on the current positions 
+of the joints and the desired positioning and orienting information. If "close 
+Associative Learning via Inhibitory Search 23 
+Figure 3. The trunk kinking itself. 
+enough" to the target, exit, otherwise, store these errors on the selected 
+output units, and set the other error terms to zero. 
+2. Backpropagate the errors all the way through the network to the input 
+units. This produces an error term e(i) for each joint angle t i. Produce 
+new joint angles: t; - t i -- ke(ti) where k is a scaing constant. Clip the 
+joint angles against their minimum and maximum values. 
+3. Forward propagate through the network bosed on the new joint angles, to 
+produce new current positions for the joints. Go to step 1. 
+Whereos the training phose has forward propagation of activations (states) followed 
+by back propagation of errors, this usage reverses the order. Backpropagation of 
+errors is followed by changes in inputs followed by forward propagation of activa- 
+tions. This is a general gradient descent technique usable when a backpropagation 
+network can learn to map from a control space t to an error or evaJuation space X. 
+Figure 3 illustrates how gradient descent's familiar limitation can manifest itself: 
+The tazget is reachable but the robot fails to reach it. The initiaJ configuration 
+was such that while approaching the target, the trunk kinked itself too short to 
+reach. If the robot had "thought"to open t3 instead of closing it, it could have 
+succeeded. In that sense, the problem arises because the error computation only 
+specified errors for the tip of the trunk, and not for the rest of the arm. If, instead, 
+there were indications where a//of the joints were to be placed, failures due to local 
+minima could be greatly reduced. 
+SELF-SUPERVISION AND INHIBITORY SEARCH 
+The feedback control network of the previous section locally minimizes joint position 
+errors -- however they are generated -- by translating them into joint angle space 
+and moving downhill. AœVI$ uses the feedback control network for arm control; 
+this section shows how AœVI$ learns to generate appropriate joint position space 
+errors given only a reinforcement signal. There are two key points. The first is 
+this: Once an action producing a positive reinforcement hos somehow been found, 
+24 Ackley 
+the problem reduces to associative mapping between the input and the discovered 
+correct output. In ALVI$, "do-be units" are used to record such successes. The 
+second point is this: When negative reinforcement occurs, the current configuration 
+can be associated with the input in a behavior-reversed fashion -- as a place to 
+avoid in the future. In ALVI$, "don't-be units" are used to record such failures. 
+The overall idea, then, is to perform inhibitory search by remembering failures as 
+they occur and avoiding them in the future, and to perform associative learning 
+by remembering successful configurations as the search process uncovers them and 
+recreating them in the future. In effect, ALVIS constructs input-dependent "attrac- 
+tors"at arm configurations associated with success and "repellots" at configurations 
+associated with failure. Figure 4 summarizes the algorithm. A few points to note 
+are these: 
+The do-be and don't-be units use the spherical non-linear function explored by 
+Burr & Hanson (1987). The response of a spherical unit is may..imal and equal to 
+one when the input vector and the weight vector are identical. The response of 
+the unit decreases monotonically with the Euclidean distance between the two 
+vectors, and the roAius r governs the rate of decay. 
+The don't-be units of each subnetwork (i.e., relevant to one goal) are in a com- 
+petitive network (see, e.g., Feldman 1982). The don't-be unit with the largest 
+activation value (which is a function of both the distance from the current posi- 
+tion and the radius) is the only don't-be unit that has effects on the rest of the 
+system. In the simulations reported here, I used rn - 4 don't-be units per goal. 
+In addition to the parameters associated with spherical units, each do-be and 
+don't-be unit has a strength parameter s that specifies how much influence the 
+unit has over the behavior of the arm. Do-be strength (st + ) grows logarithmi- 
+cally with positive reinforcement and shrinks linearly with negative; don't-be 
+strength (s) grows logarithmically with negative reinforcement and shrinks lin- 
+early with positive. 
+Figure 5 illustrates a situation from early in a run of the system. From left to right, 
+the three displays show the state of the relevant do-be unit, the relevant don't-be 
+subnetwork, and the current configuration of the arm. Since this particular goal 
+has never been achieved before, the do-be map provides no useful information -- 
+its weight vector contains small random values (as it happens, the origin is below 
+and right of the display) and its strength is zero. The display of the don't-be map 
+shows the positions of all four relevant don't-be units, with the currently selected 
+don't-be (unit number 3) drawn somewhat darker. The don't-be units are spread 
+around configuration space, creating "hills" that push away the arm if it comes 
+too close. As the arm moves about without reaching the target, different don't-be 
+units win the competition and take control. Negative reinforcement accrues, and 
+the winning don't-be consequently moves toward the various current configurations 
+and gets stronger, until the arm is pushed elsewhere. 
+Figure 6 illustrates the behavior of the system after more extensive learning. The 
+Associative Learning via Inhibitory Search 25 
+Figure 4. AœVIS 
+O. (Initialize) Given: a space X of h dimensions, a backpropagation network 
+trained on 0 --* X, a set O of goals and a mapping from O to regions of 
+space. Create an AœVIS network with n = IOl goal units 91,-.-, g,, n do- 
+be/don't-be subnetworks consisting of one do-be unit df and m don't-be 
+units d,...,d-m, and h current position units Zl,...zh. Create modi- 
+fiable connections wi from z's to d's, wi from d's to z's, and a modi- 
+fiable strength s for each d. Set all do-be strengths st + and all don't-be 
+strengths st'  to zero. Set all weights wzi and wiz to small random values. 
+Set 0 to a random legal vector and produce a current configuration X. 
+1. (New stimulus) Choose t at random from 1... 
+2. (Do's/Don'ts) Compute activations for do-he's and don't-he's using the 
+spherical function: d = 1/ 1 + /-i=l(zi - we:i) 2 . In subnetwork t, 
+let d/. be the unit with the largest activation. 
+3. (Errors) Let w. + denote the weights from dt+ and w:- denote the weights 
+from d,, and similarly for strengths s + and st' . Compute errors for each 
+component of X: e() = s+(w+ - z) + s?.( - w). 
+4. (Move) Backpropagate to produce e(0). Generate angle changes: A0 i = 
+min(q,max(-q,k,.e(Oi))), with parameters q and k,.. Generate new an- 
+gles respecting the maximum v/+ and minimum v- possible joint angles: 
+O = min(vi+,max(v-,Oi + AOi) ). Forward propagate to produce a new 
+configuration X'. 
+5. (Positive reint'orcement) Determine whether X' satisfies goal t. If it does 
+not, go to step 6. Otherwise, 
++ ' and 
+5.1 Fori-1,...,h, letw =:i we:- 
+5.2 Let s+'= rain (5, s + + p+/(1 + s+)), for positive reinf p+ > O. 
+5.3 Let '+ = :o/max(.1, s+'), with parameter :o. 
+-' max(O, -p+),and- ko/max(.X,-' 
+-- -- - ' $ti )' 
+5.4 For i 1, ..., m, let sti sti 
+5.5 Go to step 1. 
+6. (Negative reinforcement) Perform the following: 
+_ _ _, _ +(+ 
+6.1 For i - 1,...,h, let wi' - Wie: + r(z- w) and wi - we: * 
+r(z' i - w+i) with parameter r, where  is a uniform random variable 
+between +0.01. 
+6.2 Let s-'- min (5, s- + p-/(1 + s-)), for negative reinf p-  0. 
+6.$ Let q- = o/max(.1, -'). 
+.a Uet +'= m(0, +-p-), ad + = o/m(0., ?'). 
+6.5 Go to step 2. 
+26 Ackley 
+Do Be: 0.000000 
+Don't B: 3 1.294703 Be 
+Figure 5. A display of the internal state of the trunk robot in the process of 
+learning to sociate a set of twelve arbitrary stimuli with specified positions in 
+space. The current signal (though the system h not discovered this yet) means 
+"touch 5" 
+Do Be: .998667 
+Don't Be: 3 0.007976 Be 
+Figure 6. A display of the internal state of the same trunk robot later in the 
+learning process. The previous goal w "touch *" and the current goal is "touch 
+3.  
+do-be map now contains an accurate image of a successful configuration for the 
+"touch 3  goal, and its strength is high. The strength of the selected don't-be 
+unit is low. The current configuration map in Figure 6 shows each iteration of the 
+algorithm between the time it achieved its previous goal and the time it achieved 
+the current goal. 
+Finally, Figure 7 displays the average time-per-goal  a function of the number of 
+goals achieved. For 75 repetitions, the trunk network w initialized and run until 
+500 goals had been achieved, and the resulting time-per-goal data w averaged to 
+produce the graph. 
+The average time-per-goal declines rapidly as goals are presented, then seems to 
+rise slightly, and then stabilizes around an average value of about $00. To have 
+some kind of standard of comparison, albeit unsophisticated, if the joint angles are 
+simply changed by uniform random values between q and -q (see Figure 4) on each 
+iteration, the average time-per-goal is observed to be about 490. 
+Associative Learning via Inhibitory Search 27 
+2700 
+2400 
+2100 
+1800 
+1500 
+1200 
+900 
+600 
+300 
+0 
+0 I100 EO0 00 I00 500 
+Figure 7. A graph of the average time taken per goM as a function of the number 
+of goals achieved. The horizontM line shows the average performance of random 
+joint changes. 
+DISCUSSION 
+ALVIS is a preliminary, exploratory system. Of course, the ALVIS environment 
+is but a pole shadow of the real world, but even granting the limited scope of the 
+problem formulation, several pects of ALVIS are incompletely satisfying and in 
+need of improvement. 
+To my eye, the biggest drawback of the current implementation is the loc goal 
+representation -- which essentially requires that the set of go,xls be enumerable at 
+network definition time. Related problems include the inability to share information 
+between one goal and another and the inability to pursue more than one goal 
+simultaneously. To determine behavior, the constraints of goals must be integrated 
+with the possibilities of the current situation. In ALVIS this is done  a strictly 
+two-step process: the gooJ selects a subnetwork, and the current situation selects 
+units within the subnetwork. Work such  Jordan (1986) and Miyata (1988) shows 
+how goal information and context information can be integrated by supplying both 
+as inputs to a single network. 
+A LVI$ is a pure feedback control model, and can suffer from the traditional problem 
+of that approach: when the errors are small, the resulting joint angle changes are 
+small, and the arm converges only slowly. If the gin at the joints is increded 
+to speed convergence, overshoot and oscillation become more likely. However, in 
+ALVI$ oscillations gradually die out, as don't-be units shift positions under the 
+negative reinforcement, and sometimes such temporary oscillations actually help 
+with the search, causing the tip of the arm to explore a variety of different points. 
+28 Ackley 
+The aspect of ALVIS behavior that I find most irritating reveals something about 
+the approach in general. In some cases -- usually on more "peripheral"targets 
+ ALVIS learns to hit the very edge of the target region. While approaching 
+such targets, ALVIS experiences negative reinforcement, and the don't-be units, 
+consequently, gain a little strength. The resulting interference occasionally causes 
+a very long search for a goal that had previously been rapidly achieved. ALVIS 
+has a representation only for its own body; a better system would also be able to 
+represent other objects in the world, and useful relations on the expanded set. The 
+"mostly motor"emphasis evident in the present system needs to be balanced by 
+more sophistication on the perceptual side. 
+Though limited in scope, ALVIS demonstrates three ideas I think worth highlight- 
+ing: 
+ß The reuse of the error channel of a backpropagation network, after training, for 
+translating arbitrary output-space gradients into input-space gradients. 
+ß The recording of previous actual outputs to be used as future desired outputs. 
+ß The use of "repellots"(don't-be units) as well as attractors in defining errors, and 
+the resulting process of search-by-inhibition generated by negative reinforcement. 
+Characterizing the behavior of a machine in terms of attractor dynamics is a familiar 
+notion, but "repellot dynamics"seems to be largely unknown territory. Indeed, in 
+ALVIS there is an ephemeral quality to the don't-be units: When all answers have 
+been discovered, all strength accrues to the do-be's, good performances become 
+routine, and ALVIS behavior is essentially attractor-based. In watching such a 
+"grown-up" ALVIS, it is easy to forget how it was in the beginning, when the world 
+was big and answers were scarce, and ALVIS was doing well just to discover a new 
+mistake. 
+References 
+Acldey, D.H. (1988). Associative learning via inhibitory search. Technical memorandum TM 
+AHH-012509, Morristown, N J: Bell Communications Hesearch. 
+Burr, D.J., & Hanson, S.J. (1987). Knowledge representation in connection/st networks. Technical 
+memorandum TM-AHH-008733, Morristown, N J: Bell Communications Hesearch. 
+Feldman, J.A. (1982). Dynamic connections in neural networks. Biological Cybernetics, 36, 193- 
+202. 
+Jordan, M.I. (1986). Serial order: A parallel, distributed processing approach. Technical report 
+ICS-8604. La Jolla, CA: University of California, Institute for Cognitive Science. 
+Miyata, Y. (1988). The learning and planning of actions. Unpublished doctoral dissertation in 
+psychology, University of California San Diego. 
+Rumelhart, D.E., Hinton, G.E., & Williams, Rl. (1986). Learning representations by back- 
+propgatlng errors. Nature, 323, 533-536. 
+Humelhart, D.E. (personal commun/catlon, 1987). Also cited as personal communication/n Miy- 
+ata (lSS). 

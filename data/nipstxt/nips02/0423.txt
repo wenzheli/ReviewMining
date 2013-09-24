@@ -1,0 +1,536 @@
+A Neural Network to Detect 
+Homologies in Proteins 
+Yoshua Bengio 
+School of Computer Science 
+McGill University 
+Montreal, Canada H3A 2A7 
+Samy Bengio 
+Departement d'Informatique 
+Universite de Montreal 
+Yannick Pouliot 
+Department of Biology 
+McGill University 
+Montreal Neurological Institute 
+Patrick Agin 
+Departement d'Informatique 
+Universite de Montreal 
+ABSTRACT 
+In order to detect the presence and location of immunoglobu- 
+lin (Ig) domains from amino acid sequences we built a system 
+based on a neural network with one hidden layer trained with 
+back propagation. The program was designed to efficiently 
+identify proteins exhibiting such domains, characterized by a 
+few localized conserved regions and a low overall homology. 
+When the National Biomedical Research Foundation (NBRF) 
+NEW protein sequence database was scanned to evaluate the 
+program's performance, we obtained very low rates of false 
+negatives coupled with a moderate rate of false positives. 
+1 INTRODUCTION 
+Two amino acid sequences from proteins are homologous if they can be 
+aligned so that many corresponding amino acids are identical or have similar 
+chemical properties. Such subsequences (domains) often exhibit similar three 
+dimensional structure. Furthemore, sequence similarity often results from 
+common ancestors. Immunoglobulin (Ig) domains are sets of/-sheets bound 
+424 Bengio, Bengio, Pouliot and Agin 
+by cysteine bonds and with a characteristic tertiary structure. Such domains 
+are found in many proteins involved in immune, cell adhesion and receptor 
+functions. These proteins collectively form the immunoglobulin superfamily 
+(for review, see Williams and Barclay, 1987). Members of the superfamily 
+often possess several Ig domains. These domains are characterized by well- 
+conserved groups of amino acids localized to specific subregions. Other resi- 
+dues outside of these regions are often poorly conserved, such that there is 
+low overall homology between Ig domains, even though they are clearly 
+members of the same superfamily. 
+Current search programs incorporating algorithms such as the Wilbur-Lipman 
+algorithm (1983) or the Needleman-Wunsch algorithm (1970) and its modifica- 
+tion by Smith and Waterman (1981) are ill-designed for detecting such 
+domains because they implicitly consider each amino acid to be equally im- 
+portant. This is not the case for residues within domains such as the Ig 
+domain, since only some amino acids are well conserved, while most are vari- 
+able. One solution to this problem are search algorithms based upon the sta- 
+tistical occurrence of a residue at a particular position (Wang et al., 1989; 
+Gribskov et al., 1987). The Profile Analysis set of programs published by the 
+University of Wisconsin Genetics Computer Group (Devereux et al., 1984) 
+rely upon such an algorithm. Although Profile Analysis can be applied to 
+search for domains (c.f. Blaschuk, Pouliot & Holland 1990), the output from 
+these programs often suffers from a high rate of false negatives and positives. 
+Variations in domain length are handled using the traditional method of penal- 
+ties proportional to the number of gaps introduced, their length and their po- 
+sition. This approach entails a significant amount of spurious recognition if 
+there is considerable variation in domain length to be accounted for. 
+We have chosen to address these problems by training a neural network to 
+recognize accepted Ig domains. Perceptrons and various types of neural net- 
+works have been used previously in biological research with various degrees of 
+success (cf. Stormo et al., 1982; Qian and Sejnowski, 1988). Our results sug- 
+gest that they are well suited for detecting relatively cryptic sequence patterns 
+such as those which characterize Ig domains. Because the design and training 
+procedure described below is relatively simple, network-based search pro- 
+grams constitute a valid solution to problems such as searching for proteins 
+assembled from the duplication of a domain. 
+2 ALGORITHM, NETWORK DESIGN AND TRAINING 
+The network capitalizes upon data concerning the existence and localization 
+of highly conserved groups of amino acids characteristic of the Ig domain. Its 
+design is similar in several respects to neural networks we have used in the 
+study of speech recognition (Bengio et al., 1989). Four conserved subregions 
+(designated P1-P4) of the Ig domain homology were identified. These roughly 
+correspond to /-strands B, C, E and F, respectively, of the Ig domain (see 
+also Williams and Barclay, 1988). Amino acids in these four groups are not 
+necessarily all conserved, but for each subregion they show a distribution very 
+different from the distribution generally observed elsewhere in these proteins. 
+Hence the first and most important stage of the system learns about these 
+joint distributions. The program scans proteins using a window of 5 residues. 
+A Neural Network to Detect Homologies in Proteins 425 
+The first stage of the system consists of a 2-layer feedforward neural network 
+(5 X 20 inputs - 8 hidden - 4 outputs; see Figure 1) trained with back propaga- 
+tion (Rumelhart et al., 1986). Better results were obtained for the recognition 
+of these conserved regions with this architecture than without hidden layer 
+(similar to a perceptron). The second stage evaluates, based upon the stream 
+of outputs generated by the first stage, whether and where a region similar to 
+the Ig domain has been detected. This stage currently uses a simple dynamic 
+programming algorithm, in which constraints about order of subregions and 
+distance between them are explicitly programmed. We force the recognizer to 
+detect a sequence of high values (above a threshold) for the four conserved 
+regions, in the correct order and such that the sum of the values obtained at 
+the four recognized regions is greater than a certain threshold. Weak penalties 
+are applied for violations of distance constraints between conserved subre- 
+gions (e.g., distance between P1 and P2, P2 and P3, etc) based upon simple 
+rules derived from our analysis of Ig domains. These rules have little impact if 
+strong homologies are detected, such that the program easily handles the large 
+variation in domain size exhibited by Ig domains. It was necessary to explicit- 
+ly formMate these constraints given the low number of training examples as 
+well as the assumption that the distance between groups is not a critical 
+discriminating factor. We have assumed that inter-region subsequences prob- 
+ably do not significantly influence discrimination. 
+o o 
+4 output units 
+representing 
+4 features of 
+the Ig domain 
+0 0 0 0 0 
+8 hidden 
+units 
+window scanning 5 consecutive residues 
+20 
+possible 
+amino 
+adds 
+Figure 1: Structure of the neural network 
+426 Bengio, Bengio, Pouliot and Agin 
+filename : AZZ771.NEW 
+input sequence name : Ig epsilon chain C region - Human 
+HOMOLOGY starting at 24 
+VTLGCLATGYFPEPVMVTWDTGSLNGI-rMTLPAI-fLTLSGHYATISLLTVSGAWAKQMFTC 
+P1 P2 P3 P4 
+Ending at 84. Score : 3.581 
+HOMOLOGY starting at 130 
+IQLLCLVSGYTPGTINITWLEDGQVMDVDLSTAS1TQEGELASTQSELTLSQKHWLSDRTYTC 
+P1 P2 P3 P4 
+Ending at 192. Score : 3.825 
+HOMOLOGY starting at 234 
+PTITCLWDLAPSKGTVNLTWSRASGKPVNHSTRKEEKQRNGTLTVTSTLPVGTRDWIEGETYQC 
+P1 P2 P3 P4 
+Ending at 298. Score : 3.351 
+HOMOLOGY starting at 340 
+RTLACLIQNFMPEDISVQWLHNEVQLPDARHSTTQPRKTKGSGFFVFSRLEVTRAEWEQKDEFIC 
+P1 P2 P3 P4 
+Ending at 404. Score = 3.402 
+Figure 2: Sample output from a search of NEW. Ig domains 
+present within the constant region of an epsilon Ig chain 
+(NBRF file number A22771) are listed with the position of 
+P1-P4 (see text). The overall score for each domain is also list- 
+ed. 
+As a training set we used a group of 30 proteins comprising bona fide Ig 
+domains (Williams and Barclay, 1987). In order to increase the size of the 
+training set, additional sequences were stochastically generated by substituting 
+residues which are not in critical positions of the domain. These substitutions 
+were designed not to affect the local distribution of residues to minimize 
+changes in the overall chemical character of the region. 
+The program was evaluated and optimized by scanning the NBRF protein da- 
+tabases (PROTEIN and NEW) version 19. Results presented below are based 
+upon searches of the NEW database (except where otherwise noted) and were 
+generated with a cutoff value of 3.0. Only complete sequences from ver- 
+tebrates, insects (including Drosophila melanogaster) and eukaryotic viruses 
+were scanned. This corresponds to 2422 sequences out of the 4718 present in 
+the NEW database. Trial runs with the program indicated that a cutoff thres- 
+hold of between 2.7 and 3.0 eliminates the vast majority of false positives with 
+little effect upon the rate of false negatives. A sample output is listed in Fig- 
+ure 2. 
+3 RESULTS 
+When the NEW protein sequence database of NBRF was searched as 
+described above, 191 proteins were identified to possess at least one Ig 
+domain. A scan of the 4718 proteins comprising the NEW database required 
+an average of 20 hours of CPU time on a VAX 11/780. This is comparable to 
+other computationally intensive programs (e.g., Profile Analysis). When run 
+on a SUN 4 computer, similar searches required 1.3 hours of CPU time. This 
+is sufficiently fast to allow the user to alter the cutoff threshold repeatedly 
+when searching for proteins with low homology. 
+A Neural Network to Detect Homologies in Proteins 427 
+Table 1: Output from a search of the NEW protein sequence database. 
+Domains are sorted according to overall score. 
+3.0081 Class II hlstocompeclb. antlgen. HI.A-DR beta- I chain precursor (REM) - Human 3.4295 Ig kappa chain V region - Mouse H 37-80 
+3.0148 Nonspecif cross.reacting anti,on pecursor - Human 3.4295 Ig kappa chain V region - Mouse H37-84 
+3.OI 61 Platelet-derived growth factor receptor precursor - Mouse 
+3.OI64 Tie class I hlstocompatlb. antlgen. TI 3-c alpha chain - Mouse 
+3.OI 64 Tie class I histocompatib. antigen. T3. b alpha cham- Mouse 
+3.0223 Vlttonactln receptor alpha chain precursor ß Human 
+3.0226 T-cell surface glycopr otem L¾-3 precursor - Mouse 
+3.0244 Klnase-related transforming protern (src) (EC 2.7. i..) ß Arian sarcoma wrus 
+3.O350 kj alpha. I chain C region - Human 
+3.O350 kj alpha- I chain C region - Human 
+3.0350 kJ alpha- ;) chain C region. A2m(I) allotype ß Human 
+3.0409 Granulocyte-macrophage colony-stimulating factor I precursor - Mouse 
+3.0481 HLA class I hlstocompatib. antlgen. alpha chain precursor - Human 
+3.0492 NAOH-ubk:luinone oxldoreductase (EC 1.6. S.3), chain 5 - Fruit fly (Drosophlla) 
+3.0508 NAOH-ubk:lulnone oxlcloreductase (œC 1.6.5.3), chain I - Fruit fly (Drosophlla) 
+3.0518 HLA class U histocompaslb. antlgen. DP beta chain precursor - clone 
+3.051B HLA class # hlstocoenpatlb. antlgefi. DP4 beta chain precursor - Human 
+3.0518 HLA class U hlstocompatlb. antlgefi, DPw4 beta- I chain precursor - Human 
+3.0520 Class II hlstocompatlb. antlgen. HLA-DQ beta chain precursor (REM) - Human 
+3.0561 Protetn-tytosioe kinase (EC 2.7.1.112), Iymphocyte - Mouse 
+3.0669 H-2 class II hlstocompatlb. antlgen, A-beta-2 chain precursor - Mouse 
+3.072.3 T-cell taceltor gatrata chain precursor V region (MHGa) - Mouse 
+3.0723 T-cell raceSXor 9arrwna chain precursor V region IRACI I) - Mouse 
+3.0723 T-cell receptor gatrata chain precursor V region IRAC4) - Mouse 
+3.0723 T-cell receptor 9arrwna chain precursor V region (RAG42) ß Mouse 
+3.0723 T-cell receptor 9arrwna chain precursor V region (RAGSO) ß Mouse 
+3.O750 T-cell receptor beta chain V region (C_F6) - Mouse 
+3.0760 Ig beay chain V region - MOUSe 251.3 
+3.O781 T-Cell recelxot beta chain V region (SUP-TI) - Human 
+3.0787 H-2 class I hlstocotnpatib. antlgen. Q7 alpha chain precursor - Mouse 
+3.0787 H-2 class I hlstocompatlb. antlgen. Q8 alpha chain Ixecursor - Mouse 
+3.0982 Myel#t-assocJated 91ycopr otein 18236 long form precursor - Rat 
+3.0982 Myelllt-lssoclated glycoprotein IB236 short form precursor - Rat 
+3.0982 Myellff-lssocioted giyCoproteln precursor. brain - Rat 
+3.0982 Mye#ff-lssocioted (urge 91ycoprotain precursor - Rat 
+3.O998 Class I hlstocornpatlb. antlgen. IoLA alpha chain precursor (BL3.6) - Iovlne 
+3.O998 Class I blstocompatlb. antigert. IoLA alpha chain precursor (BL3-7) - BOvine 
+3.1048 H-2 ClaSs I hlstocompatJb. antl9en. K-k alpha cham precursor ß Mouse 
+3.1086 Ig helvy chain precursor V region - Mouse VCAM3 
+3.1128 T-cell recexor alpha chain precursor ¾ regan (MOI3) - Mouse 
+3.1129 T-cell receptor delta chain V region (DN-4) - Mouse 
+3.1192 T-cell receSxor beta chain precursor V region IVAK) - Mouse 
+3.1265 T-cell receptor 9artrata chain precursor V region IK20) - Human 
+3.1347 T-cell receptor alpha chain precursor V region (HAPOS) - Human 
+3.1623 T-cell surface glycoprotem CD8 precursor - Human 
+3.1623 T-cell surface glycoprotem CO8 g)otem precursor - Human 
+3.1776 19 93 chain C reg:on. C, 3m(b) allotype Human 
+3.1931 Hypothetical protein HQLF2 - CytomegalovBrus (strom ADI69) 
+3.2.O41 Sodium channel protein II Rat 
+3.2044 Ig heavy chain V region African clawed frog 
+3.2147 SURF- I protein - Mouse 
+3.2207 T-cell receptor alpha cha:n pre<ursor v reggon (ttAPtOl - Human 
+3.2300 Beta-2-rnicroglobuhn precursor Hurt. an 
+3.2300 8eta-2-mcroglobuhn. rnoaded 
+3.2306Pregnancy-speclfic beta i gly½oprotem œ precursor Human 
+3.2344 Igœ Fc receptor alpha cham pre<ursor uran 
+3.2420 T-cell surfacegt¾coprotem CO2 ecursor Pat 
+3.2422 H-2 class II hlstocompatJb antgen I A NOD) beta cham precursor - Mouse 
+3.2552 HLA class II hlstocompatib antgen. DPw4 alha I chain precursor - Human 
+3.2552 HL class II histocompatJb antlgen $8 alpha chain precursor ß Human 
+3.2co54T.cell surfaceg¾coprotem CD& :K chain pe(ursor - Rat 
+3.:)726 Myelin IPO protern - BOwne 
+3.:)814 19 elpha-I cham C region Human 
+3.2814 Ig alpha- I chain C region 
+3.282OThY'J membfaneglycoprotem precursor ouse 
+3.2840 Smh class II hlstocompatb antJgen precursor œhrenberg s mole-rat 
+3.3039 X-lioked chronic granuiomatous ellsease protern Iluman 
+3.3083 pregna.ncy-specdlc beta I gh,coproteln C precursor Human 
+3.3083 pregnacy-specdic beta-t g,colfotem O Irecursor - Human 
+3.3084T-cell receptor beta chain precursor V re, lion 16) Human 
+3.3251 19 gamla-I/kj garnma-2b Fc receptor precursor Mouse 
+3.3414 Hypothecate( hybrid I/T-ceJl receptor precursor V region (SUP-TI) - Human 
+3.341419 heavy chain precursor V II region Human 
+3.341419 heavy chaJn precursor VIi region Human ?l 4 
+3.3417 Netira( cell edhesion protern precursor Mouse 
+3.3511 19epslionchmnC region Hurrah 
+3.3511 Ig epsilon cham C region - Hurrah 
+3.3522 T-call receptor alpha chain V region (aDFL apha I) Mouse 
+3.3605 BIliory glycoprotem I ß Human 
+3.3838 T-cell receptor ganvna-I chain C region IMNC, I ancl MNG7) - Mouse 
+3.3838 T-cell receptor gamma I chain C region Mouse 
+3.3861 T-ceil garryrio chain precursor V regan (V:r) Mouse 
+3.4024 19 epsilon chain C region - Human 
+3.4024 19 upsilon chain C region - Human 
+3.41 IO Ig heavy chain V region ß Mouse 
+3.4133 Ig heavy chain V region - Mouse 1437.60 
+3.415 :) Ig heavy cham V region - Mouse HI&S415 
+3.4 S5 Ig kappa chain V region - Mouse HP9 
+3.4i 78 Ig heavy cham V region - Mouse 
+3.4i98 Ig kapi chain V region ß Mouse HICS 4DI 
+3.4199 Ig heavy cham V region - Mouse 30 IO 
+3.4199 19 heavy chain V region ß Mouse II CR  I i 
+3.4211 Ig heavy chain V region - Mouse HP22 and HP27 
+3.4213 prenancy-speclf'c beta. i glycoprotem C precursor - Human 
+3.4213 Pregnancy-specdc beta- g,coprotem D precursor ß Human 
+3 421aT-ceil receptor beta cham Irecursor ¾ f e91on (4C3) - Mouse 
+3.4218T-ceil receptor beta chain precursor / region (810) Mouse 
+3 4282. Sodium channel protein II Rat 
+3 4295 Ig kappa cham V tog:on H2&A2) Mouse 
+3 4295 Ig kapoa cham V region - Mouse H 158 $9H4 
+3.4295 Ig kapoa cham V tog:on Mouse H 3 ? 31 J 
+3.4295 Ig kappa chain V region ß Mouse H37 40 
+3.4295 Ig kapoa cham V region Mouse H 3 ? 4 1 
+3 4295 Ig kappa cham V tog:on Mouse H37 45 
+3.4295 19 kappa chain V regions - Mouse H35-C6 and H220-25 
+3.4338 T-cell receptor alpha chain precursor V region IP71) - Mouse 
+3 4572 T.ceil surface glycoprotein CD3 epsilon chain - Human 
+3.4594 T-cell suitace glycoprotein CD8 precursor ß Mouse 
+3.4594 T.cell surface glycoproteln Lyt-2 precursor - Mouse 
+3.4595 T-cell receptor alpha chain precursor V region (HAPOa) - Human 
+3.4606 T-cell receptor gem,nil-2 chain C region (MNG8 and MNG9) - Mouse 
+3.4614 T-cell receptor gamma chain C region (PEER) - Human 
+3.4614 T-cell receptor gamma-I cham C region - Human 
+3.4614 T-ceil receptor gamma-2 cham C region - Human 
+3.4620 19 heavy chain V region - Mouse H 146-2483 
+3.4620 19 heavy chain V region - Mouse H I S6-89H4 
+3.4620 19 heavy chain V region - Mouse H35-C6 
+3.4620 Ig heavy chain precursor V region - Mouse MAY, 33 
+3.4690 T-cell receptor beta- I chain C region - Human 
+3.4690 T-cell receptor beta- I chain C region - Mouse 
+3.4690 T-cell receptor beta-2 chain C region - Human 
+3.4690 T-cell receptor beta-2 chain C region - Human 
+3.4769 19 gamma- 3 chain C region. G3m(b) allotype - Human 
+3.479819 kappa chain V region - Mouse H 146-2483 
+3.4798 19 kappa chain V region - Mouse H36-2 
+3.4798 19 kappa chain V region - Mouse H37-co2 
+3.4798 19 kappa chain V region - Mouse H37-82 
+3.4810 19 kappa chain V-I region - Human Wd(I) 
+3.4840 Peoxldase (œC I.I I.I.7) precursor - Human 
+3.4888 Platejar-derived growth factor receptor precursor - Mouse 
+3.4965 Notch proton ß Fruit fly 
+3.4965 Notch protein ß Fruit fly 
+3.4983 T-cell tacefxot beta chain precursor V region (MT I- I) - Human 
+3.4983 T-cell receflor beta-2 chetn precursor V regtofi MOLT-4 - Huma 
+3.4998 Ig kappa chain precursor V region - Mouse Ser-a 
+3.5035 Jdka#ne phosphataso (EC 3.1.3.1 ) precursor - Human 
+3.5061 Ig heavy chain V region - Mouse H 37-82 
+3.5082 C$ li hlstocompatilk Ifitk HI.A-DR beta-2 chain precursor (REM) - Human 
+3. SO82 H-2 class I hlstocotnpltlb. antkjen, E-a/k beta-2 cham precursor - Mouse 
+3.SO82 H-2 class II hlstocotnpaclb. antl9en. EnJ beta-2 chain precursor - Mouse 
+3.SO82 HLA class II hlstocompatib. antl9en, DR I beta chain (clone 69) - Human 
+3.SO82 HLA class # hlstocotnpaslb. arttigon. DR beta chain precursor 
+3.SO82 HLA class II hlstocompatJb. Ifitl9en. DR beta chain precursor AS) - Human 
+3.5082 HLA class II hlstocompatlb. antl9en. DR- I beta chain precursor - Human 
+3.5082 HLA class II hlstocod'npltlb. antkje, DR-4 beta chain - Human 
+3.SO82 HLA class II hlstocotnpatlb. antkjen. DR-S beta chain precursor - Human 
+3.5094 Ig larnbcia-5 chain C region - Mouse 
+3.S 144 Ig alpha-2 chain C region. A2m(I) allotype - Human 
+3.5150 Ig heavy chein V region - Mouse H26-A2 
+3.SI80 IRIIlary glycoptotein I - Human 
+3.SI93 Ig heavy chain V region - Mouse H37-45 
+3 SI93 19 heavy chain V regions - Mouse H37-80 and H37-43 
+3 S21 I Ig lambda chain precursor V region ß Rat 
+3 S264 Ig heavy chain V region - Mouse H37-co2 
+] S31Colg heavy chain V region - Mouse H37-311 
+3 S334 19 heavy chain V region - Mouse H37-40 
+3 S372 T-ceil receptor beta cham precursor V region (ATLI 2-2) - Human 
+3 S435 Ig heavy chain V region - Mouse HiCS-4OI 
+3 SS79 Ig heavy chain V region - Mouse H37-84 
+3 5:)O3 Ig lambda-2 chain C region - Rat 
+3.Sco6 19 heavy chain V region - Mouse B I. 8 (tentative sequence) 
+3 S709 IRllary glycoproteln I - Human 
+3 5748 Nonspecfic cross-reacting antlgen precursor - Human 
+3 S815 Ig epsfioo chain C region - Human 
+3.5815 Ig epsilon chain C region - Human 
+.a.5894 Neural cell edheion protein precursor - Mouse 
+3.5912 Ig kappa chain V region - Mouse H37-60 
+3 5971 Ig kappa chain precursor V region - Rat IR2 
+3 6020 Ig kappa chain V region - Mouse IF6 
+3 6020 Ig kappa chain V region - Mouse 3DIO 
+3 6027 T-ceil receptor beta chain V region (KO-ATL) - Human 
+3 6071 Ig heavy chain V region - Mouse HP20 
+3 6071 Ig heavy chain V region - Mouse HP25 
+3.&120 T-cell receptor alpha chain V region (5CC7) - Mouse 
+3 &120 T-cell receptor alpha chain V tog(on (C.F6) - Mouse 
+3.&120 T-cell receptor alpha chain precursor V region (2B4) - Mouse 
+3.6120 T-cell receptor alpha chain precursor V region (4.C3) - Mouse 
+3 6120 T-ceil receptor alpha chain precursor V reqlon (BIO) - Mouse 
+3.6302 HLA class II hlstocompatlb. antlgen OX alpha chain precursor - Human 
+3 6302 HLA class II hlstocompatlb. antgen. DQ alpha chain precursor - Human 
+3 6461 T-cell receptor alpha chain precursor V region (HAPSa) - Human 
+3 6465 Ig kappa chain precursor V chain - Mouse Ser-b 
+3 6539 Neural cell edheion protein precursor - Mouse 
+3.6636 Ig heavy chain V region - Mouse B i-&VI/V2 (tentative sequence 
+3 6778 Ig kappa chain precursor V-IU region - Human SU-DHL-6 
+3 6798 Ig kappa chain V region - Mouse H I &-S415 
+3 6803 Myeiln-assoclated glycoprotein I B236 long form precursor - Rat 
+3.6803 Mvelin-aSsocioted glycoprotein I B23& short form precursor - Rat 
+3.6803 Myelln-assoclated glycoprotein precursor, brain - Rat 
+3.6803 Mvelln-assOclated large glycoptotem precursor - Rat 
+3.7102 Ig kappa chain V-Ill region - Human Gec 
+3.7170 Ig kappa chain V-I regan - Human Wd(2) 
+3 7341 Ig lambda chain C zegion - Chicken 
+3 7505 Ig kappa chain precursor V-I region - Human Nalm-6 
+3 7535 Ig heavy chain precursor V regan - Mouse 129 
+3 7600 Ig lambda-5 chain C region - Mouse 
+3.7779 Ig heavy chain V region - Mouse HPI2 
+3 7907 Ig kappa chain V region 3OS precursor - Human 
+3 7907 Ig kappa chain precursor V-Ill - Human Nalrn-6 
+3 7909 Ig heavy chain V region - Mouse HP21 
+3 8087 Heurai cell adhesion protern precursor - Mouse 
+3 8180 Ig mu chain C region, b aJlele - Mouse 
+3 8247 Ig epsilon chain C region - Human 
+3 8247 Ig epsfion chain C region - Human 
+3 8440 Ig kappa chain precursor V region - Mouse MA33 
+3 8678 Ig kappa chain precursor V region - Rat IR 162 
+428 Bengio, Bengio, Pouliot and Agin 
+Table 2: Efficiency of detection for some Ig superfamily pro- 
+teins present in NEW. Mean scores of recognized Ig domains 
+for each protein type are listed. Recognition efficiency is cal- 
+culated by dividing the number of proteins correctly identified 
+(i.e., bearing at least one Ig domain) by the total number of 
+proteins identified by their file description as containing an Ig 
+domain, multiplied by 100. Numbers in parentheses indicate 
+the number of complete protein sequences of each type for 
+each species. All complete sequences for light and heavy im- 
+munoglobulin chains of human and mouse origin were 
+scanned. The threshold was set at 3.0. ND: not done. 
+Protein 
+Immunoglobulins, 
+mouse, 
+all forms 
+Mean score of 
+detected domains 
+(max 4.00) 
+3.50 
+Recognition efficiency for 
+Ig-bearing proteins 
+(see legend) 
+98.2 % (55) 
+Immunoglobulins, 
+human, 
+all forms 
+3.48 93.8 % (16) 
+H-2 class II, 
+all forms 
+3.33 ND 
+HLA class II, 
+all forms 
+3.36 ND 
+T-cell receptor 
+chains, 
+mouse, 
+all forms 
+3.32 ND 
+T-cell receptor 
+chains, 
+human, 
+all forms 
+3.41 ND 
+The vast majority of proteins which scored above 3.0 were of human, mouse, 
+rat or rabbit origin. A few viral and insect proteins also scored above the 
+threshold. All proteins in the training set and present in either the NEW or 
+PROTEIN databases were detected. Proteins detected in the NEW database 
+are listed in Table I and sorted according to score. Even though only human 
+MHC class I and II were included in the training set, both mouse H-2 class I 
+and II were detected. Bovine and rat transplantation antigens were also 
+detected. These proteins are homologs of human MHC's. For proteins which 
+include more than one Ig domain contiguously arranged (e.g., carcinoem- 
+bryonic antigen), all domains were detected if they were sufficiently well con- 
+served. However, domains lacking a feature or possessing a degenerate 
+feature scored much lower (usually below 3.0) such that they are not recog- 
+nized when using a threshold value of 3. Recognition of human and mouse im- 
+munoglobulin sequences was used to measure recognition efficiency. The rate 
+of false negatives for immunoglobulins was very low for both species (Table 
+II). Table III lists the 13 proteins categorized as false positives detected when 
+searching with a threshold of 3.0. Relative to the total number of domains 
+detected, this corresponds to a false positive rate of 6.8%. In the strict sense 
+some of these proteins are not false positives because they do exhibit the ex- 
+pected features of the Ig domain in the correct order. However, inter-feature 
+A Neural Network to Detect Homologies in Proteins 429 
+distances for these pseudo-domains are very different from those observed in 
+bona fide Ig domains. Proteins which are rich in/-sheets, such as rat sodium 
+channel II and fruit-fly NADH-ubiquinone oxidoreductase chain 1 are also 
+abundant among the set of false positives. This is not surprising since the Ig 
+domain is composed of/-strands. One solution to this problem lies in the use 
+of a larger training set as well as the addition of a more intelligent second 
+stage designed to evaluate inter-feature distances so as to increase the specifi- 
+city of detection. 
+Table 3: False positives obtained when searching NEW with a threshold of 
+3.0. Proteins categorized as false positives are listed. See text for details. 
+3.0244 Kinase-related transforming protein (src) (EC 2.7.1.-) 
+3.0409 Granulocyte-macrophage colony-stimulating 
+3.0492 NADH-ubiquinone oxidoreductase (EC 1.6.5.3), chain 5 
+3.0508 NADH-ubiquinone oxidoreductase (EC 1.6.5.3), chain 1 
+3.0561 
+3.1931 
+3.2041 
+3.2147 
+3.3039 
+3.4840 
+3.4965 
+3.4965 
+3.5035 
+Protein-tyrosine kinas e (EC 2.7.1.112), lymphocyte - Mouse 
+Hypothetical protein HQLF2 -Cytomegalovirus (strain AD169) 
+Sodium channel protein II - Rat 
+SURF-1 protein - Mouse 
+X-linked chronic granulomatous disease protein - Human 
+Peroxidase (EC 1.11.1.7) precursor - Human 
+Notch protein - Fruit fly 
+Notch protein - Fruit fly 
+Alkaline phosphatase (EC 3.1.3.1) precursor -Human 
+5 DISCUSSION 
+The detection of specific protein domains is becoming increasingly important 
+since many proteins are constituted of a succession of domains. Unfortunate- 
+ly, domains (Ig or otherwise) are often only weakly homologous with each 
+other. We have designed a neural network to detect proteins which comprise 
+Ig domains to evaluate this approach in helping to solve this problem. Alter- 
+natives to neural network-based search programs exist. Search programs can 
+be designed to recognize the flanking Cys-termini regions to the exclusion of 
+other domain features since these flanks are the best conserved features of Ig 
+domains (cf. Wang et al., 1989). However, even Cys-termini can exhibit poor 
+overall homology and therefore generate statistically insignificant homology 
+scores when analyzed with the ALIGN program (NBRF) (cf. Williams and 
+Barclay, 1987). Other search programs (such as Profile Analysis) cannot effi- 
+ciently handle the large variations in domain size exhibited by the Ig domain 
+(mostly comprised between 45 and 70 residues). Search results become cor- 
+rupted by high rates of false positives and negatives. Since the size of the 
+NBRF protein databases increases considerably each year, the problem of 
+false positives promises to become crippling if these rates are not substantially 
+decreased. In view of these problems we have found the application of a 
+neural network to the detection of Ig domains to be an advantageous solution. 
+As the state of biological knowledge advances, new Ig domains can be added 
+to the training set and training resumed. They can learn the statistical features 
+430 Bengio, Bengio, Pouliot and Agin 
+of the conserved subregions that permit detection of an Ig domain and gen- 
+eralize to new examples of this domain that have a similar distribution. Previ- 
+ously unrecognized and possibly degenerate homologous sequences are there- 
+fore likely to be detected. 
+Acknowledgments 
+This research was supported by a grant from the Canadian Natural Sciences 
+and Engineering Research Council to Y.B. We thank CISTI for graciously al- 
+lowing us access to their experimental BIOMOLE'system. 
+References 
+Bengio Y., Cardin R., De Mori R., Merlo E. (1989) Programmable execution 
+of multi-layered networks for automatic speech recognition, Communications 
+of the Association for Computing Machinery, 32 (2). 
+Bengio Y., Cardin R., De Mori R., (1990), Speaker independent speech 
+recognition with neural networks and speech knowledge, in D.S. Touretzky 
+(ed.), Advances in Neural Networks Information Processing Systems 2 
+Blaschuk O.W., Pouliot Y., Holland P.C., (1990). Identification of a con- 
+served region common to cadherins and influenza strain A hemagglutinins. J. 
+Molec. Biology, 1990, in press. 
+Devereux, J., Haeberli, P. and Smithies, O. (1984) A comprehensive set of 
+sequence analysis programs for the VAX. Nucl. Acids Res. 12, 387-395. 
+Gribskov, M., McLachlan, M., and Eisenber, D. (1987) Profile analysis: 
+Detection of distantly related proteins. Proc. Natl. Acad. Sci. USA, 
+84:4355-4358. 
+Needleman, S. B. and Wunsch, C. D. (1970) A general method applicable to 
+the search for similarities in the amino acid sequence of two proteins. J. Mol. 
+Biol. 48, 443-453. 
+Qian, N. and Sejnowski, T. J. (1988) Predicting the secondary structure of 
+globular proteins using neural network models. J. Mol. Biol. 202, 865-884. 
+Rumelhart D.E., Hinton G.E. & Williams R.J. (1986) Learning internal 
+representation by error propagation. Parallel Distributed Processing, Vol. 1, 
+MIT Press, Cambridge, pp. 318-362. 
+Smith, T. F. and Waterman, W. S. (1981). Identification of common molecu- 
+lar subsequences. J. Mol. Biol. 147,195-197. 
+Stormo, G. D., Schneider, T. D., Gold, L. and Ehrenfeucht, A. Use of the 
+"perceptron" algorithm to distinguish translational initiation sites in E. coli. 
+Nucl. Acids Res. 10,2997-3010. 
+Wang, H., Wu, J. and Tang, P. (1989) Superfamily expands. Nature, 337, 514. 
+Wilbur, W. J. and Lipman, D. J. (1983). Rapid similarity searches of nucleic 
+acids and protein data banks. Proc. Natl. Acad. Sci. USA 80, 726-730. 
+Williams, A. F. and Barclay, N. A. (1988) The immunoglobulin superfamily- 
+domains for cell surface recognition. Ann. Rev. Immunol., 6, 381-405. 

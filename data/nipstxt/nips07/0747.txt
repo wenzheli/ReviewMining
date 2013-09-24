@@ -1,0 +1,302 @@
+The Nil OO0: High Speed Parallel VLSI 
+for Implementing Multilayer Perceptrons 
+Michael P. Perrone 
+Thomas J. Watson Research Center 
+P.O. Box 704 
+Yorktown Heights, NY 10598 
+mppatson. ibm. com 
+Leon N Cooper 
+Institute for Brain nd Neural Systems 
+Brown University 
+Providence, Ri 02912 
+lnccns. brown. edu 
+Abstract 
+In this paper we present a new version of the standard multilayer 
+perceptton (MLP) algorithm for the state-of-the-art in neural net- 
+work VLSI implementations: the Intel Nil000. This new version of 
+the MLP uses a fundamental property of high dimensional spaces 
+which allows the /2-norm to be accurately approximated by the 
+/x-norm. This approach enables the standard MLP to utilize the 
+parallel architecture of the Nil000 to achieve on the order of 40000, 
+256-dimensional classifications per second. 
+1 The Intel Nil000 VLSI Chip 
+The Nestor/Intel radial basis function neural chip (Nil000) contains the equivalent 
+of 1024 256-dimensional artificial digital neurons nd can perform at least 40000 
+classifications per second [Sullivan, 1993]. To attain this great speed, the Nil000 
+was designed to calculate "city block" distances (i.e. the /-norm) nd thus to 
+avoid the large number of multiplication units that would be required to calculate 
+Euclidean dot products in parallel. Each neuron calculates the city block distance 
+between its stored weights nd the current input: 
+neuron activity =  Iw- x] (1) 
+i 
+where w is the neuron's stored weight for the ith input nd x is the ith input. 
+Thus the Nil000 is ideally suited to perform both the RCE [Reilly et al., 1982] and 
+748 Michael P. Perrone, Leon N. Cooper 
+PRCE [Scofield et al., 1987] algorithms or any of the other commonly used radial 
+basis function (R. BF) algorithms. However, dot products are central in the calcula- 
+tions performed by most neural network algorithms (e.g. MLP, Cascade Correlation, 
+etc.). Furthermore, for high dimensional data, the dot product becomes the compu- 
+tation bottleneck (i.e. most of the network's time is spent calculating dot products). 
+If the dot product can not be performed in parallel there will be little advantage 
+using the Nil000 for such algorithms. In this paper, we address this problem by 
+showing that we can extend the Nil000 to many of the standard neural network 
+algorithms by representing the Euclidean dot product as a function of Euclidean 
+norms and by then using a city block norm approximation to the Euclidean norm. 
+Section 2, introduces the approximate dot product; Section 3 describes the City 
+Block MLP which uses the approximate dot product; and Section 4 presents ex- 
+periments which demonstrate that the City Block MLP performs well on the NIST 
+OCR. data and on human face recognition data. 
+2 Approximate Dot Product 
+Consider the following approximation [Pertone, 1993]: 
+1 
+IIz-'11  l (2) 
+where ' is some n-dimensional vector, II. II is the Euclidean length (i.e. the h- 
+norm) and I' I is the City Block length (i.e. the/-norm). This approximation is 
+motivated by the fact that in high dimensional spaces it is accurate for a majority 
+of the points in the space. In Figure 1, we suggest an intuitive interpretation of why 
+this approximation is reasonable. It is clear from Figure 1 that the approximation 
+is reasonable for about 20% of the points on the arc in 2 dimensions. 1 As the 
+dimensionality of the data space increases, the tangent region in Figure 1 expands 
+asymptotically to fill the entire space and thus the approximation becomes more 
+valid. Below we examine how accurate this approximation is and how we can use 
+it with the Nil000, particularly in the MLP context. Given a set of vectors, V, all 
+with equal city block length, we measure the accuracy of the approximation by the 
+ratio of the variance of the Euclidean lengths in V to the squared mean Euclidean 
+lengths in V. If the ratio is low, then the approximation is good and all we must 
+do is scale the city block length to the mean Euclidean length to get a good fit? In 
+particular, it can be shown that assuming all the vectors of the space are equally 
+likely, the following equation holds [Pertone, 1993]: 
+rrr < o(n q- 1) 1 ower, (3) 
+where n is the dimension of the space; p. is the average Euclidean length of the 
+' is the variance about the average 
+set of vectors with fixed city block length S; 
+Euclidean length; Plower is the lower bound for p,, and is given by Plower --: 
+In fact, approximately 20% of the points are within 1% of each other and 40% of the 
+points are within 5% of each other. 
+2Note that in Equation 2 we scale by 1/V/-d. For high dimensional spaces this is a good 
+approximation to the ratio of the mean Euclidean length to the City Block length. 
+VLSl for Implementing Multilayer Perceptrons 749 
+Figure 1: Two dimensional interpretation of the city block approximation. The 
+circle corresponds to all of the vectors with the same Euclidean length. The inner 
+square corresponds to all of the vectors with city block length equal the Euclidean 
+length of the vectors in the circle. The outer square (tangent to the circle) corre- 
+sponds to the set of vectors over which we will be making our approximation. In 
+order to scale the outer square to the inner square, we multiple by 1/V where 
+n is the dimensionality of the space. The outer square approximates the circle in 
+the regions near the tangent points. In high dimensional spaces, these tangent re- 
+gions approximate a large portion of the total hypersphere and thus the city block 
+distance is a good approximation along most of the hypersphere. 
+and an is defined by 
+an -- 1 + + --. (4) 
+n + 1 2'(n- 1) n + 1 
+' to Po,er in the large n limit is 
+From this equation we see that the ratio of a n 
+bounded above by 0.4. This bound is not very tight due to the complexity of the 
+calculations required; however Figure 3 suggests that a much tighter bound must 
+exist. A better bound exists if we are willing to add a minor constraint to our 
+high dimensional space [Pertone, 1993]. In the case in which each dimension of the 
+vector is constrained such that the entire vector cannot lie along a single axis, a we 
+can show that 
++ - 1 ,ower (S) 
+where S is the city block length of the vector in question. Thus in this ce, the ratio 
+2 to 2 decre,es at let  ft as 1/n since n/S will be some fixed constant 
+of fin 1ower 
+independent of n. 4 This dependency on n and S is shown in Figure 2. This result 
+suggests that the approximation will be very accurate for many real-world pattern 
+aFor example, when the axes are constrained to be in the range [0, 1] and the city block 
+length of the vector is greater than 1. Note that this is true for the majority of the points 
+in a n dimensional unit hypercube. 
+*Thus the accuracy improves as S increases towards its maximum value. 
+750 Michael P. Perrone, Leon N. Cooper 
+recognition tasks such as speech nd high resolution image recognition which can 
+typically have thousand or even tens of thousands of dimensions. 
+I I  \ S/n -- 0.025 
+I  \ S/n -- O.OS ...... 
+/  \ S/n = 0.1 ....... 
+0.8 I- !  S/n = 0.2 - - - 
+li\ S/n -- 0.3 ....... 
+0.4 
+0 100 200 300 400 500 
+Figure 2: Plot of O'/Plower VS.  for constrained vectors with varying values of S/. 
+As S grows the ratio shrinks and consequently, accuracy improves. If we ssume 
+that all of the vectors are uniformly distributed in an n-dimensional unit hypercube, 
+it is easy to show that the average city block length is n/2 and the variance of the 
+city block length is n/12. Since S/n will generally be within one standard deviation 
+of the mean, we find that typically 0.2 < S/ < 0.8. We can use the same analysis 
+on binary valued vectors to derive similar results. 
+We explore this phenomenon further by considering the following Monte Carlo simu- 
+lation. We sampled 200000 points from a uniform distribution over an n-dimensional 
+cube. The Euclidean distance of each of these points to a fixed corner of the cube 
+was calculated and all the lengths were normalized by the largest possible length, 
+v. Histograms of the resulting lengths are shown in Figure 3 for four different val- 
+ues of . Note that as the dimension increases the variance about the mean drops. 
+From Figure 3 we see that for s few as 100 dimensions, the standard deviation is 
+approximately 5% of the mean length. 
+3 The City Block MLP 
+In this section we describe how the approximation explained in Section 2 can be 
+used by the Nil000 to implement MLPs in parallel. Consider the following formula 
+for the dot product 
+37-- + I1'- z711 (6) 
+VLSI for Implementing Multilayer Perceptrons 751 
+0 
+0.4 
+0 
+0. 
+0 
+0 .1 
+0.1 
+0.0 
+0 
+0. 
+Figure 3: Probability distributions for randomly draw lengths. Note that as the 
+dimension increases the variance about the mean length drops. 
+where I1' II is the Euclidean length (i.e. h-norm).  Using Equation 2, we can 
+approximation Equation 6 by 
+where n is the dimension of the vectors and [. ] is the city block length. The 
+advantage to the approximation in Equation 7 is that it can be implemented in 
+parallel on the Nil000 while still behaving like a dot product. Thus we can use this 
+approximation to implement MLP's on an Nil000. The standard functional form 
+for MLP's is given by [Rumelhart et al., 1986] 
+JV d 
+(; =,)= (o + Z (o + 
+j=l i=1 
+(8) 
+were rr is a fixed ridge function chosen to be a(a) - (1 + e-)-l; N is the number 
+of hidden units; k is the class label; d is the dimensionality of the data space; and c 
+and/3 are adjustable parameters. The alternative which we propose, the City Block 
+MLP, is given by [Pertone, 1993] 
+N d d 
+1( 1( 
+(; ,) = (o +  (o +  Z I, + ,1) '-  Z I,- , I)')) 
+j=l i=1 i=1 
+(9) 
+or 
+SNote also that depending on the information available to us, we could use either 
+.  -- (11 q- 12 - I1112 -I11 ) 
+752 Michael P. Perrone, Leon N. Cooper 
+DATA SET HIDDEN STANDARD CITYBLOCK ENSEMBLE 
+UNITS % CORRECT % CORRECT CITYBLOCK 
+Faces 12 94.6+ 1.4 92.2+ 1.9 96.3 
+Numbers 10 98.4-t-0.17 97.3-t-0.26 98.3 
+Lowercase 20 88.9+0.31 84.0ñ0.48 88.6 
+Uppercase 20 90.5+0.39 85.6+0.89 90.7 
+Table 1: Comparison of MLPs classification performance with and with out the 
+city block approximation to the dot product. The final column shows the effect of 
+function space averaging. 
+where the two city block calculation would be performed by neurons on the Nil000 
+chip. 6 The City Block MLP learns in the standard way by minimizing the mean 
+square error (MSE), 
+MSE= - (10) 
+ik 
+where tii is the value of the data at xi for a class k. The MSE is minimir. ed using 
+the backpropagation stochastic gradient descent learning rule [Werbos, 1974]: For 
+a fixed stepsir. e r/and each k, randomly choose a data point zi and change 7 by the 
+mount 
+c(MSE,) (11) 
+A 7 = -r/ 7 ' 
+where 7 is either a or/3 and MSEi is the contribution to the MSE of the ith data 
+point. Note that although we have motivated the City Block MLP above as an 
+approximation to the standard MLP, the City Block MLP can also be thought of 
+as special case of radial basis function network. 
+4 Experimental Results 
+This section describes experiments using the City Block MLP on a 120-dimensional 
+representation of the NIST Handwritten Optical Character Recognition database 
+and on a 2294-dimensional grayscale human face image database. The results in- 
+dicate that the performance of networks using the approximation is as good as 
+networks using the exact dot product [Pertone, 1993]. 
+In order to test the performance of the City Block MLP, we simulated the behav- 
+ior of the Nil000 on a SPARC station in serial We used the approximation only 
+on the first layer of weights (i.e. those connecting the inputs to the hidden units) 
+where the dimensionality is highest and the approximation is most accurate. The 
+approximation was not used in the second layer of weights (i.e. those connecting 
+the hidden units to the output units were calculated in serial) since the number of 
+hidden units was low and therefore do not correspond to a major computational 
+bottleneck. It should be noted that for a 2 layer MLP in which the number of 
+hidden units and output units are much lower than the input dimensionality, the 
+6The dot product between the hidden and the output layers may also be approximated 
+in the same way but it is not shown here. In fact, the Nil000 could be used to perform all 
+of the functions required by the network. 
+VLSI for Implementing Multilayer Perceptrons 753 
+DATA SET HIDDEN STANDARD CITYBLOCK ENSEMBLE 
+UNITS FOM FOM CITYBLOCK 
+Numbers 10 92.14-0.57 87.44-0.83 92.5 
+Lowercase 20 59.74-1.7 44.4+ 2.0 62.7 
+Uppercase 20 60.04-1.8 44.64-4.5 66.4 
+Table 2: Comparison of MLPs FOM. The FOM is defined as the 100 minus the 
+number rejected minus 10 time the number incorrect. 
+majority of the computation is in the calculation of the dot products in the first 
+weight layer. So even using the approximation only in the first layer will signifi- 
+cantly accelerate the calculation. Also, the Nil000 on-chip math coprocessor can 
+perform a low-dimensional, second layer dot product while the high-dimensional, 
+first layer dot product is being approximated in parallel by the city block units. In 
+practice, if the number of hidden units is large, the approximation to the dot prod- 
+uct may also be used in the second weight layer. In the simulations, the networks 
+used the approximation when calculating the dot product only in the feedforward 
+phase of the algorithm. For the feedbackward phase (i.e. the error backpropagation 
+phase), the algorithm was identical to the original backward propagation algorithm. 
+In other words the approximation was used to calculate the network activity but 
+the stochastic gradient term was calculated as if the network activity was generated 
+with the real dot product. This simplification does not slow the calculation because 
+all the terms needed for the backpropagation phase are calculated in the forward 
+propagation phase In addition, it allows us to avoid altering the backpropagation 
+algorithm to incorporate the derivative of the city block approximation. We are 
+currently working on simulations which use city block calculations in both the for- 
+ward and backward passes. Since these simulations will use the correct derivative 
+for the functional form of the City Block MLP, we expect that they wi]] have better 
+performance. In practice, the price we pay for making the approximation is reduced 
+performance. We can avoid this problem by increasing the number of hidden units 
+and thereby allow more flexibility in the network. This increase in size will not 
+significantly slow the algorithm since the hidden unit activities are calculated in 
+parallel. In Table i and Table 2, we compare the performance of a standard MLP 
+without the city block approximation to a MLP using the city block approximation 
+to calculate network activity. In all cases, a population of 10 neural networks were 
+trained from random initial weight configurations and the means and standard de- 
+viations were listed. The number of hidden units was chosen to give a reasonable 
+size network while at the same time reasonably quick training. Training was halted 
+by cross-validating on an independent hold-out set. From these results, one can 
+see that the relative performances with and with out the approximation are simi- 
+lar although the City Block is slightly lower. We also perform ensemble averaging 
+[Pertone, 1993, Pertone and Cooper, 1993] to further improve the performance of 
+the approximate networks. These results are given in the last column of the table. 
+From these data we see that by combining the city block approximation with the 
+averaging method, we can generate networks which have comparable and sometimes 
+better performance than the standard MLPs. In addition, because the Nil000 is 
+running in parallel, there is minimal additional computational overhead for using 
+754 Michael P. Perrone, Leon N. Cooper 
+the averaging. 7 
+5 Discussion 
+We have described a new radial basis function network architecture which can be 
+used in high dimensional spaces to approximate the learning characteristics of a 
+standard MLP without using dot products. The absence of dot products allows us 
+to implement this new architecture efficiently in parallel on an Nil000; thus enabling 
+us to take advantage of the Ni1000's extremely fast classification rates. We have 
+also presented experimental results on real-world data which indicate that these 
+high classifications rates can be achieved while maintaining or improving classifica- 
+tion accuracy. These results illustrate that it is possible to use the inherent high 
+dimensionality of real-world problems to our advantage. 
+References 
+[Pertone, 1993] Pertone, M.P. (1993). Improving Regression Estimation: Averaging 
+Methods for Variance Reduction with Eztensions to General Convez Measure 
+Optimization. PhD thesis, Brown University, Institute for Brain and Neural 
+Systems; Dr. Leon N Cooper, Thesis Supervisor. 
+[Pertone and Cooper, 1993] Pertone, M.P. and Cooper, L. N. (1993). When net- 
+works disagree: Ensemble method for neural networks. In Mummone, R. J., 
+editor, Artificial Neural Networks for Speech and Vision. Chapman-Hall. Chap- 
+ter 10. 
+[Reilly et al., 1982] Reilly, D. L., Cooper, L. N., and Elbanm, C. (1982). A neural 
+model for category learning. Biological Cybernetics, 45:35-41. 
+[Rumelhart et al., 1986] Rumelhart, D. E., McClelland, J. L., and the PDP Re- 
+search Group (1986). Parallel Distributed Processing, Volume 1: Foundations. 
+MIT Press. 
+[Scofield et al., 1987] Scofield, C. L., Reilly, D. L., Elbaum, C., and Cooper, L. N. 
+(1987). Pattern class degeneracy in an unrestricted storage density memory. 
+In Anderson, D. Z., editor, Neural Information Processing Systems. American 
+Institute of Physics. 
+[Sullivan, 1993] Sullivan, M. (1993). Intel and Nestor deliver second-generation 
+neural network chip to DARPA: Companies launch beta site program. Intel 
+Corporation News Release. Feb. 12. 
+[Werbos, 1974] Werbos, P. (1974). Beyond Regression: New Tools for Prediction 
+and Analysis in the Behavioral Sciences. PhD thesis, Harvard University. 
+?The averaging can also be applied to the standard MLPs with a corresponding im- 
+provement in performance. However, for serial machines averaging slows calculations by a 
+factor equal to the number of averaging nets. 

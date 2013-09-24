@@ -1,0 +1,348 @@
+A Variational Bayesian Framework for 
+Graphical Models 
+Hagai Attias 
+hagai@gatsby. ucl.ac.uk 
+Gatsby Unit, University College London 
+17 Queen Square 
+London WCIN 3AR, U.K. 
+Abstract 
+This paper presents a novel practical framework for Bayesian model 
+averaging and model selection in probabilistic graphical models. 
+Our approach approximates full posterior distributions over model 
+parameters and structures, as well as latent variables, in an analyt- 
+ical manner. These posteriors fall out of a free-form optimization 
+procedure, which naturally incorporates conjugate priors. Unlike 
+in large sample approximations, the posteriors are generally non- 
+Gaussian and no Hessian needs to be computed. Predictive quanti- 
+ties are obtained analytically. The resulting algorithm generalizes 
+the standard Expectation Maximization algorithm, and its conver- 
+gence is guaranteed. We demonstrate that this approach can be 
+applied to a large class of models in several domains, including 
+mixture models and source separation. 
+I Introduction 
+A standard method to learn a graphical model 1 from data is maximum likelihood 
+(ML). Given a training dataset, ML estimates a single optimal value for the model 
+parameters within a fixed graph structure. However, NIL is well known for its ten- 
+dency to overfit the data. Overfitting becomes more severe for complex models 
+involving high-dimensional real-world data such as images, speech, and text. An- 
+other problem is that NIL prefers complex models, since they have more parameters 
+and fit the data better. Hence, NIL cannot optimize model structure. 
+The Bayesian framework provides, in principle, a solution to these problems. Rather 
+than focusing on a single model, a Bayesian considers a whole (finite or infinite) class 
+of models. For each model, its posterior probability given the dataset is computed. 
+Predictions for test data are made by averaging the predictions of all the individ- 
+ual models, weighted by their posteriors. Thus, the Bayesian framework avoids 
+overfitting by integrating out the parameters. In addition, complex models are 
+automatically penalized by being assigned a lower posterior probability, therefore 
+optimal structures can be identified. 
+Unfortunately, computations in the Bayesian framework are intractable even for 
+We use the term 'model' to refer collectively to parameters and structure. 
+210 H. Attias 
+very simple cases (e.g. factor analysis; see [2]). Most existing approximation meth- 
+ods fall into two classes [3]: Markov chain Monte Carlo methods and large sample 
+methods (e.g., Laplace approximation). MCMC methods attempt to achieve exact 
+results but typically require vast computational resources, and become impractical 
+for complex models in high data dimensions. Large sample methods are tractable, 
+but typically make a drastic approximation by modeling the 'posteriors over all 
+parameters as Normal, even for parameters that are not positive definite (e.g., co- 
+variance matrices). In addition, they require the computation of the Hessian, which 
+may become quite intensive. 
+In this paper I present Variational Bayes (VB), a practical framework for Bayesian 
+computations in graphical models. VB draws together variational ideas from in- 
+tractable latent variables models [8] and from Bayesian inference [4,5,9], which, in 
+turn, draw on the work of [6]. This framework facilitates analytical calculations of 
+posterior distributions over the hidden variables, parameters and structures. The 
+posteriors fall out of a free-form optimization procedure which naturally incorpo- 
+rates conjugate priors, and emerge in standard forms, only one of which is Normal. 
+They are computed via an iterative algorithm that is closely related to Expectation 
+Maximization (EM) and whose convergence is guaranteed. No Hessian needs to 
+be computed. In addition, averaging over models to compute predictive quantities 
+can be performed analytically. Model selection is done using the posterior over 
+structure; in particular, the BIC/MDL criteria emerge as a limiting case. 
+2 General Framework 
+We restrict our attention in this paper to directed acyclic graphs (DAGs, a.k.a. 
+Bayesian networks). Let Y = {Yl, ..., yv) denote the visible (data) nodes, where 
+n - 1,...,N runs over the data instances, and let X = {xx,...,xv) denote the 
+hidden nodes. Let O denote the parameters, which are simply additional hidden 
+nodes with their own distributions. A model with a fixed structure m is fully defined 
+by the joint distribution p(Y, X, 0 Im). In a DAG, this joint factorizes over the 
+nodes, i.e. p(Y,X I O,m) = IiP(Ui I pai,Oi,m), where ui  Y U X, Pai is the set 
+of parents of ui, and Oi  0 parametrize the edges directed toward ui. In addition, 
+we usually assume independent instances, p(Y, X l O, m ) = InP(yn,xn I O, m). 
+We shall also consider a set of structures m & M, where m controls the number 
+of hidden nodes and the functional forms of the dependencies p(ui I Pai,0i,m), 
+including the range of values assumed by each node (e.g., the number of components 
+in a mixture model). Associated with the set of structures is a structure prior p(m). 
+Marginal likelihood and posterior over parameters. For a fixed structure m, 
+we are interested in two quantities. The first is the parameter posterior distribution 
+p(O I Y, m). The second is the marginal likelihood p(Y Im), also known as the 
+evidence assigned to structure m by the data. In the following, the reference to m is 
+usually omitted but is always implied. Both quantities are obtained from the joint 
+p(Y, X, 0 [m). For models with no hidden nodes the required computations can 
+often be performed analytically. However, in the presence of hidden nodes, these 
+quantities become computationally intractable. We shall approximate them using 
+a variational approach as follows. 
+Consider the joint posterior p(X, 0 [ Y) over hidden nodes and parameters. Since 
+it is intractable, consider a variational posterior q(X, 0 [ Y), which is restricted to 
+the factorized form 
+q(X, O[ Y) = q(XlY)q(O IF), (1) 
+where given the data, the parameters and hidden nodes are independent. This 
+A Variational BaysJan Framework for Graphical Models 211 
+restriction is the key: It makes q approximate but tractable. Notice that we do 
+not require complete factorization, as the parameters and hidden nodes may still 
+be correlated amongst themselves. 
+We compute q by optimizing a cost function rm[q] defined by 
+.T'm[q] = / dO q(X)q(O) log 
+p(Y,X, O) 
+q(X)q(O) 
+_ logp(Y I m) , 
+(2) 
+Penalizing complex models. To see that the VB objective function r, penalizes 
+complexity, it is useful to rewrite it as 
+.T', = {logP(Y'X l O))x,o - KL[q(O) II p(O)] 
+q(X) 
+where the average in the first term on the r.h.s. is taken w.r.t. 
+term corresponds to the (averaged) likelihood. The second term is the KL distance 
+between the prior and posterior over the parameters. As the number of parameters 
+increases, the KL distance follows and consequently reduces r,. 
+This penalized likelihood interpretation becomes transparent in the large sample 
+limit N - oe, where the parameter posterior is sharply peaked about the most 
+probable value O = O0. It can then be shown that the KL penalty reduces to 
+(I 0 I/2) log N, which is linear in the number of parameters I 0 I of structure m. 
+rm then corresponds precisely the Bayesian information criterion (BIC) and the 
+minimum description length criterion (MDL) (see [3]). Thus, these popular model 
+selection criteria follow as a limiting case of the VB framework. 
+Free-form optimization and an EM-like algorithm. Rather than assuming a 
+specific parametric form for the posteriors, we let them fall out of free-form opti- 
+mization of the VB objective function. This results in an iterative algorithm directly 
+analogous to ordinary EM. In the E-step, we compute the posterior over the hidden 
+nodes by solving 5.T'm/Sq(X ) = 0 to get 
+q(X) or ½(1ogp(Y, XIO))o , (4) 
+where the average is taken w.r.t. q(O). 
+In the M-step, rather than the 'optimal' parameters, we compute the posterior 
+distribution over the parameters by solving 6m/6q(O) - 0 to get 
+q(O) or e(løgp(Y'Xlø))Xp(O) , 
+(5) 
+where the average is taken w.r.t. q(X). 
+This is where the concept of conjugate priors becomes useful. Denoting the expo- 
+nential term on the r.h.s. of (5) by f(O), we choose the prior p(O) from a family of 
+distributions such that q(O) c f (O)p(O) belongs to that same family. p(O) is then 
+said to be conjugate to f(O). This procedure allows us to select a prior from a fairly 
+large family of distributions (which includes non-informative ones as limiting cases) 
+(3) 
+q(X, 0). The first 
+where the inequality holds for an arbitrary q and follows from Jensen's inequality 
+(see [6]); it becomes an equality when q is the true posterior. Note that q is always 
+understood to include conditioning on Y as in (1). Since r is bounded from above 
+by the marginal likelihood, we can obtain the optimal posteriors by maximizing it 
+w.r.t.q. This can be shown to be equivalent to minimizing the KL distance between 
+q and the true posterior. Thus, optimizing m produces the best approximation to 
+the true posterior within the space of distributions satisfying (1), as well as the 
+tightest lower bound on the true marginal likelihood. 
+212 H. Attias 
+and thus not compromise generality, while facilitating mathematical simplicity and 
+elegance. In particular, learning in the VB framework simply amounts to updat- 
+ing the hyperparameters, i.e., transforming the prior parameters to the posterior 
+parameters. We point out that, while the use of conjugate priors is widespread in 
+statistics, so far they could only be applied to models where all nodes were visible. 
+Structure posterior. To compute q(m) we exploit Jensen's inequal- 
+ity once again to define a more general objective function, r[q] = 
+meMq(m)['m +1ogp(m)/q(m)] _< logp(Y), where now q = q(X [ m,Y)q(O I 
+m, Y)q(m I Y). After computing r, for each m  M, the structure posterior is 
+obtained by free-form optimization of r: 
+q(m) cr e"p(m) . (6) 
+Hence, prior assumptions about the likelihood of different structures, encoded by 
+the prior p(m), affect the selection of optimal model structures performed according 
+to q(m), as they should. 
+Predictive quantities. The ultimate goal of Bayesian inference is to estimate 
+predictive quantities, such as a density or regression function. Generally, these 
+quantities are computed by averaging over all models, weighting each model by 
+its posterior. In the VB framework, exact model averaging is approximated by 
+replacing the true posterior p(O I Y) by the variational q(O I Y). In density 
+estimation, for example, the density assigned to a new data point y is given by 
+p(ylY) = fdO p(y[ O) q(OlY). 
+In some situations (e.g. source separation), an estimate of hidden node values x 
+from new data y may be required. The relevant quantity here is the conditional 
+p(x I y, Y), from which the most likely value of hidden nodes is extracted. VB 
+approximates it by p(x [y,Y) cr fdO p(y,x I ©) q(OIY ). 
+3 Variational Bayes Mixture Models 
+Mixture models have been investigated and analyzed extensively over many years. 
+However, the well known problems of regularizing against likelihood divergences and 
+of determining the required number of mixture components are still open. Whereas 
+in theory the Bayesian approach provides a solution, no satisfactory practical al- 
+gorithm has emerged from the application of involved sampling techniques (e.g., 
+[7]) and approximation methods [3] to this problem. We now present the solution 
+provided by VB. 
+We consider models of the form 
+m 
+P(Yn I O, m) = -P(Yn I Sn = S, O)p(Sn = S 
+$--1 
+(7) 
+where y, denotes the nth observed data vector, and s, denotes the hidden compo- 
+nent that generated it. The components are labeled by s = 1, ..., m, with the struc- 
+ture parameter m denoting the number of components. Whereas our approach can 
+be applied to arbitrary models, for simplicity we consider here Normal component 
+distributions, P(Yn I Sn = S, O) = JV'(ls, rs), where/s is the mean and rs the pre- 
+cision (inverse covariance) matrix. The mixing proportions are p(s = s [ O) = rs. 
+In hindsight, we use conjugate priors on the parameters 13 = {rs, t s, rs}. The 
+mixing proportions are jointly Dirichlet, p({rs}) = D(Aø), the means (conditioned 
+on the precisions) are Normal, p(l s I rs) = and the precisions are 
+Wishart, p(rs) = W(v ø, ,I,0). We find that the parameter posterior for a fixed m 
+A Variational Baysian Framework for Graphical Models 213 
+factorizes into q(O) = q({'s})I-is q(8, rs). The posteriors are obtained by the 
+following iterative algorithm, termed VB-MOG. 
+E-step. Compute the responsibilities for instance n using (4): 
+7 ---- q(Sn -- S [ Yn) 0C {s 1/2 e-(y.-p,)Tf',(y.-p,)/2 e-d/2B (8) 
+--8 ' 
+noting that here X = S and q(S) = rI, q(s,). This expression resembles the re- 
+sponsibilities in ordinary ML; the differences stem from integrating out the param- 
+eters. The special quantities in (8) are logs -- (logrs) = P(As)- P(Y]8' As,), 
+log's = (log [ r8 }) a 
+-- Ei=i )((b's 2r' 1- i)/2)- log I 'I'8 I +dlog2, and 
+f'8 -- {r,) = u8,I,2 , where p(x) = dlogF(x)/dx is the digaroma function, and 
+the averages {-} are taken w.r.t. q(O). The other parameters are described below. 
+M-step. Compute the parameter posterior in two stages. First, compute the 
+quantities 
+N N N 
+1 n 1  Es = 7 Cs , 
+=- 78 y., v8 (0) 
+28 N 78 , 8 = 5r 8 ,-- 
+where C = (y, - 8)(Y- - 8) T and 8 = NSs. This stage is identical to the 
+M-step in ordinary EM where it produces the new parameters. In VB, however, the 
+quantities in (9) only help characterize the new parameter posteriors. These posteri- 
+ors are functionally identical to the priors but have different parameter values. The 
+mixing proportions are jointly Dirichlet, q({rs}) = D({8}), the means are Normal, 
+q(tq IFs) - A/'(ps,/8F8), and the precisions are Wishart, p(Fs) = W(v8, 'bs). The 
+posterior parameters are updated in the second stage, using the simple rules 
+a8 = V8 + ao, p = ( + opo)/( +o),  = & +o, (0) 
+. =  +.o,  = % + o( _ po)(& _ po)r/( + o) + o. 
+The final values of the posterior parameters form the output of the VB-MOG. We 
+remark that (a) Whereas no specific assumptions have been made about them, the 
+parameter posteriors emerge in suitable, non-trivial (and generally non-Normal) 
+functional forms. (b) The computational overhead of the VB-MOG compared to 
+EM is minimal. (c) The coverlance of the parameter posterior is O(1/N), and VB- 
+MOG reduces to EM (regularized by the priors) as N -4 c. (d) VB-MOG has no 
+divergence problems. (e) Stability is guaranteed by the existence of an objective 
+function. (f) Finally, the approximate marginal likelihood rm, required to optimize 
+the number of components via (6), can also be obtained in closed form (omitted). 
+Predictive Density. Using our posteriors, we can integrate out the parameters 
+and show that the density assigned by the model to a new data vector y is a mixture 
+of Student-t distributions, 
+m 
+p(y I Y) = Est,(ylps,As), (11) 
+where component s has cos = 8 + i - d d.o.f., mean P8, covariance As = ((8 + 
+1)//8co8)I'8, and proportion 8 - As/Y]8' A,,. (11) reduces to 
+Nonlinear Regression. We may divide each data vector into input and out- 
+put parts, y - (yi, yO), and use the model to estimate the regression function 
+o = f(yi) and error spheres. These may be extracted from the conditional 
+p(yø l y*,Y ) = E m ! ! ß 
+8= w, t,,(y ø [ ps, A8), whmh also turns out to be a mixture 
+of Student-t distributions, with means P'8 being linear, and covariances A[ and mix- 
+ing proportions w8 nonlinear, in y*, and given in terms of the posterior parameters. 
+214 H. Attias 
+Buffalo post office digits 
+Misclassification rate histogram 
+1 
+0.8 
+0.6 
+0.4 
+0.2 
+0 
+0 
+0.05 
+0.1 
+Figure 1: VB-MOG applied to handwritten digit recognition. 
+VB-MOG was applied to the Boston housing dataset (UCI machine learning repos- 
+itory), where 13 inputs are used to predict the single output, a house's price. 100 
+random divisions of the N = 506 dataset into 481 training and 25 test points were 
+used, resulting in an average MSE of 11.9. Whereas ours is not a discriminative 
+method, it was nevertheless competitive with Breiman's (1994) bagging technique 
+using regression trees (MSE=11.7). For comparison, EM achieved MSE=14.6. 
+Classification. Here, a separate parameter posterior is computed for each class c 
+from a training dataset yc. Test data vector y is then classified according to the 
+conditional p(c ] y, {yc)), which has a form identical to (11) (with c-dependent 
+parameters) multiplied by the relative size of yc. 
+VB-MOG was applied to the Buffalo post office dataset, which contains 1100 exam- 
+ples for each digit 0 - 9. Each digit is a gray-level 8 x 8 pixel array (see examples 
+in Fig. 1 (left)). We used 10 random 500-digit batches for training, and a separate 
+batch of 200 for testing. An average misclassification rate of .018 was obtained 
+using m = 30 components; EM achieved .025. The misclassification histograms 
+(VB-solid, EM-dashed) are shown in Fig. 1 (right). 
+4 VB and Intractable Models: a Blind Separation Example 
+The discussion so far assumed that a free-form optimization of the VB objective 
+function is feasible. Unfortunately, for many interesting models, in particular mod- 
+els where ordinary ML is intractable, this is not the case. For such models, we 
+modify the VB procedure as follows: (a) Specify a parametric functional form for 
+the posterior over the hidden nodes q(X), and optimize w.r.t. its parameters, in the 
+spirit of [8]. (b) Let the parameter posterior q()) fall out of free-form optimization, 
+as before. 
+We illustrate this approach in the context of the blind source separation (BSS) 
+problem (see, e.g., [1]). This problem is described by Yn - Hxn + Un, where Xn is 
+an unobserved m-dim source vector at instance n, H is an unknown mixing matrix, 
+and the noise un is Normally distributed with an unknown precision hi. The task is 
+to construct a source estimate in from the observed d-dim data y. The sources are 
+independent and non-Normally distributed. Here we assume the high-kurtosis dis- 
+tribution p(x?) oc cosh-2(x/2), which is appropriate for modeling speech sources. 
+One important but heretofore unresolved problem in BSS is determining the num- 
+ber rn of sources from data. Another is to avoid overfitting the mixing matrix. Both 
+problems, typical to ML algorithms, can be remedied using VB. 
+It is the non-Normal nature of the sources that renders the source posterior p(X [ Y) 
+intractable even before a Bayesian treatment. We use a Normal variational posterior 
+q(X) - IInA/'(Xn I pn,rn) with instance-dependent mean and precision. The 
+mixing matrix posterior q(H) then emerges as Normal. For simplicity, ,k is optimized 
+rather than integrated out. The resulting VB-BSS algorithm runs as follows: 
+4 Variational BaysJan Framework for Graphical Models 215 
+o 
+-lOOO 
+-2000 
+-3000 
+-4000 
+log Pr(m) 
+source reconstruCtion error 
+-1 
+-15 
+-20 
+2 4 6 8 10 12 0 5 10 
+m SNR(dB) 
+Figure 2: Application of VB to blind source separation algorithm (see text). 
+E-step. Optimize the variational mean Pn by iterating to convergence, for each n, 
+the fixed-point equation AfIT(yn --fIPn ) --tanhPn/2 -- C-Pn, where C is the 
+source covariance conditioned on the data. The variational precision matrix turns 
+out to be n-independent: I', = ,TA. q- I/2 q- C -1. 
+M-step. Update the mean and precision of the posterior q(H) (rules omitted). 
+This algorithm was applied to 11-dim data generated by linearly mixing 5 100msec- 
+long speech and music signals obtained from commercial CDs. Gaussian noise were 
+added at different SNR levels. A uniform structure prior p(m) = 1/K for m _ K 
+was used. The resulting posterior over the number of sources (Fig. 2 (left)) is 
+peaked at the correct value m -- 5. The sources were then reconstructed from test 
+data via p(x I Y, Y). The log reconstruction error is plotted vs. SNR in Fig. 2 
+(right, solid). The ML error (which includes no model averaging) is also shown 
+(dashed) and is larger, reflecting overfitting. 
+5 Conclusion 
+The VB framework is applicable to a large class of graphical models. In fact, it may 
+be integrated with the junction tree algorithm to produce general inference engines 
+with minimal overhead compared to ML ones. Dirichlet, Normal and Wishart 
+posteriors are not special to models treated here but emerge as a general feature. 
+Current research efforts include applications to multinomial models and to learning 
+the structure of complex dynamic probabilistic networks. 
+Acknowledgements 
+I thank Matt Beal, Peter Dayan, David Mackay, Carl Rasmussen, and especially Zoubin 
+Ghahramani, for important discussions. 
+References 
+[1] Attias, H. (1999). Independent Factor Analysis. Neural Computation 11, 803-851. 
+[2] Bishop, C.M. (1999). Variational Principal Component Analysis. Proc. 9th ICANN. 
+[3] Chickering, D.M.  Heckerman, D. (1997). Efficient approximations for the marginal 
+likelihood of Bayesian networks with hidden variables. Machine Learning 29, 181-212. 
+[4] Hinton, G.E. & Van Camp, D. (1993). Keeping neural networks simple by minimizing 
+the description length of the weights. Proc. 6th COLT, 5-13. 
+[5] Jaakkola, T. & Jordan, M.I. (1997). Bayesian logistic regression: A variational ap- 
+proach. Statistics and Artificial Intelligence 6 (Smyth, P. & Madigan, D., Eds). 
+[6] Neal, R.M. & Hinton, G.E. (1998). A view of the EM algorithm that justifies incre- 
+mental, sparse, and other variants. Learning in Graphical Models, 355-368 (Jordan, M.I., 
+Ed). Kluwer Academic Press, Norwell, MA. 
+[7] Richardson, S. & Green, P.J. (1997). On Bayesian analysis of mixtures with an un- 
+known number of components. Journal of the Royal Statistical Society B, 59, 731-792. 
+[8] Saul, L.K., Jaakkola, T., & Jordan, M.I. (1996). Mean field theory of sigmoid belief 
+networks. Journal of Artificial Intelligence Research 4, 61-76. 
+[9] Waterhouse, S., Mackay, D., & Robinson, T. (1996). Bayesian methods for mixture of 
+experts. NIPS-8 (Touretzky, D.S. et al, Eds). MIT Press. 

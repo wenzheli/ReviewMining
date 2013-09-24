@@ -1,0 +1,311 @@
+On-Line Estimation of the Optimal Value 
+Function: HJB-Estimators 
+James K. Peterson 
+Department of Mathematica] Sciences 
+Martin Hall Box 341907 
+Clemson University 
+Clemson, SC 29634-1907 
+email: peterson,math. clemson. edu 
+Abstract 
+In this paper, we discuss on-line estimation strategies that model 
+the optimal value function of a typical optimal control problem. 
+We present a general strategy that uses local corridor solutions 
+obtained via dynamic programming to provide local optimal con- 
+trol sequence training data for a neural architecture model of the 
+optimal value function. 
+I ON-LINE ESTIMATORS 
+In this paper, the problems of adaptive control using neural architectures are ex- 
+plored in the setting of general on-line cstimators. We will try to pay close attention 
+to the underlying mathematical structure that arises in the on-line estimation pro- 
+cess. 
+The complete effect of a control action u at a given time step t is clouded by 
+the fact that the state history depends on the control actions taken after time 
+step t. So the effect of a control action over all future time must be monitored. 
+Hence, choice of control must inevitably involve knowledge of the future history 
+of the state trajectory. In other words, the optimal control sequence can not be 
+determined until after the fact. Of course, standard optimal control theory supplies 
+an optimal control sequence to this problem for a variety of performance criteria. 
+Roughly, there are two approaches of interest: solving the two-point boundary value 
+319 
+320 Peterson 
+problem arising from the solution of Pontryagin's maximum or minimum principle or 
+solving the Hamilton-Jacobi-Bellman (HJB) partial differential equation. However, 
+the computational burdens associated with these schemes may be too high for real- 
+time use. Is it possible to essentially use on-line estimation to build a solution 
+to either of these two classical techniques at a lower cost? In other words, if r/ 
+samples are taken of the system from some initial point under some initial sequence 
+of control actions, can this time series be use to obtain information about the true 
+optimal sequence of controls that should be used in the next r/time steps? 
+We will focus here on algorithm designs for on-line estimation of the optimal con- 
+trol law that are implementable in a control step time of 20 milliseconds or less. 
+¾Ve will use local learning methods such as CMAC (Cerebellar Model Articulated 
+Controllers) architectures (Albus, 1 and W. Miller, 7), and estimators for character- 
+izations of the optimal value function via solutions of the Hamilton-Jacobi-Bellman 
+equation, (adaptive critic type methods), (Barto, 2; Werbos, 12). 
+2 CLASSICAL CONTROL STRATEGIES 
+In order to discuss on-line estimation schemes based on the Hamilton- Jacobi- 
+Bellman equation, we now introduce a common sample problem: 
+min J(x,u,t) 
+where 
+Ot t! 
+(x,u,t) = dist(y(ts),r)+ L(y(s),u(s),s)ds 
+(2) 
+Subject to: 
+y'(s) - f(y(s),u(s),s), t_< s _<rS (3) 
+y(t) -- x (4) 
+y(8) e y(8) _c R N,  _<  _<  (5) 
+u() e v(s) _ RM, t _ s 5 t (6) 
+Here y and u are the state vector and control vector of the system, respectively; L/is 
+the space of functions that the control must be chosen from during the minimization 
+process and (4) - (6) give the initialization and constraint conditions that the 
+state and control must satisfy. The set F represents a target constraint set and 
+dist(y(t), F) indicates the distance from the final state y(t) to the constraint set 
+F. The optimal value of this problem for the initial state x and time t will be 
+denoted by J(x, t) where 
+J(x,t) = minJ(x,u,t). 
+On-Line Estimation of the Optimal Value Function: HJB-Estimators 321 
+It is well known that the optimal value function J(x, t) satisfies a generalized partial 
+differential equation known as the Hamilton-Jacobi-Bellman (HJB) equation. 
+Ot - mn L(x, 
+J(x,ts)- dist(x,r) 
+u,t)+ 
+0s(x,) } 
+Ox fix, u,t) 
+In the case that J is indeed differentiable with respect to both the state and time 
+arguments, this equation is interpreted in the usual way. However, there are many 
+problems where the optimal value function is not differentiable, even though it 
+is bounded and continuous. In these cases, the optimal value function J can be 
+interpreted as a viscosity solution of the HJB equation and the partial derivatives 
+of J are replaced by the sub and superdifferentials of J (CrandM1, 5). In general, 
+once the HJB equation is solved, the optimal control from state x and time t is then 
+given by the minimum condition 
+u e argmin L(x u t)+ f(x,u,t 
+tt ' ' C X 
+If the underlying state and time space are discretized using a state mesh of resolution 
+r and a time mesh of resolution s, the HJB equation can be rewritten into the form 
+of the standard Bellman Principle of Optimality (BPO): 
+Jrs(xi,tj) - minL(xi,u, tj)(tj+l - tj) - Jrs((gci,tl),tj-]_l)) 
+where x(xi, u) indicates the new state achieved by using control u over time interval 
+[tj,tj+l] from initial state xi. In practice, this equation is solved by successive 
+iterations of the form: 
+Js+l(xi,tj) - min{L(xi, u,tj)(tj+l - tj)-t- Js(x(xi, u),tj+x)} 
+where r denotes the iteration cycle and the process is started by initializing 
+Jøs(x, tj) in a suitable manner. Generally, the iterations continue until the values 
+Jfs+l(xi,tj) and Jfs+l(xi,tj) differ by negligible amounts. This iterative process is 
+usually referred to as dynamic programming (DP). Once this iterative process con- 
+T r s 
+verges, let Jrs(x,tj)  lim-.oo Js, and consider lim(,)-.(0,0) Js(i,tj), where 
+(x,t) indicates that the discrete grid points depend on the resolution (r,s). In 
+many situations, this limit gives the viscosity solution J(x, t) to the HJB equation. 
+Now consider the problem of finding J(x, 0). The Pontrya.gin mininmm principle 
+gives first order necessary conditions that the optimal state x and costate iv variables 
+must satisfy. Letting H(x, u,p,t) - L(x, u,t) - pY f(x, u,t) and defining 
+322 Peterson 
+H(x,p,t) = min'(x,u,p,t), (7) 
+the optimal state and costate then must satisfy the following two-point boundary 
+value problem (TPBVP): 
+and the optimal control is obtained from (7) once the optimal state and costate 
+are determined. Note that (7) can not necessarily be solved for the control u in 
+terms of x and p, i.e. a feedback law may not be possible. If the TPBVP can 
+not be solved, then we set J(x, 0) - cw. In conclusion, in this problem, we are led 
+inevitably to an optimal value function that can be poorly behaved; hence, we can 
+easily imagine that at many (x, t) 0J is not available and hence J will not satisfy 
+the HJB equation in the usual sense. So if we estimate J directly using some form 
+of on-line estimation, how can we hope to back out the control law if 0J is not 
+available? 
+3 HJB ESTIMATORS 
+A potential on-line estimation technique can be based on approximations of the 
+optimal value function. Since the optimal value function should satisfy the HJB 
+equation, these methods will be grouped under the broad classification HJB esti- 
+mators. 
+Assume that there is a given initial state x0 with start time 0. Consider a local 
+patch, or local corridor, of the state space around the initial state x0, denoted by 
+](x0). The exact size of ](x0) will depend on the nature of the state dynamics and 
+the starting state. If ](x0) is then discretized using a coarse grid of resolution r 
+and the time domain is discretized using resolution s, an approximate dynamic pro- 
+gramming problem can be formulated and solved using the BPO equations. Since 
+the new states obtained via integration of the plant dynamics will in general not 
+land on coarse grid lines, some sort of interpolation must be used to sign the 
+integrated new state value an appropriate coarse grid value. This can be done using 
+the coarse encoding implied by the grid resolution r of ](x0). In addition, multiple 
+grid resolutions may be used with coarse and fine grid approximations interacting 
+with one another as in multigrid schemes (Briggs, 3). The optimal value function 
+so obtained will be denoted by Jrs(zi,tj) for any discrete grid point zi  ](x0) and 
+time point tj. This approximate solution also supplies an estimate of the optimal 
+control sequence (u*)i -1 -- (u*)y-(zi,tj). Some papers on approximate dynamic 
+programming are (Peterson, 8; (Sutton, 10; Luus, 6). It is also possible to obtain 
+estimates of the optimal control sequences, states and costates using an ? step look- 
+ahead and the Pontryagin minimum principle. The associated two point boundary 
+value problem is solved and the controls computed via ui  arg minu (x', u, p?, ti) 
+where (x*)0" and (p*) are the calculated optimal state and costate sequences re- 
+spectively. This approach is developed in (Peterson, 9) and implementated for 
+On-Line Estimation of the Optimal Value Function: HJB-Estimators 323 
+vibration suppression in a large space structure, by (Carlson, Rothermel and Lee, 
+4) 
+For any zi  9(xo), let (/)F 1 -- Og)-l(zi,j) be a control sequence used from 
+initial state zi and time point tj. Thus uij is the control used on time interval 
+[]j, ]j+l] from start point zi. Define Z j+l 
+ij  z(zi, uij,tj), the state obtained by 
+integrating the plant dynamics one time step using control uij and initial state zi. 
+Then ui,j+ is the control used on time interval [tj+l,tj+2] from start point z j+ 
+ij 
+j+2  Z( j+l 
+nd the new state is z - z ,u,+,I+); in general, u,+ is the control 
+used on time interval [t+,t++l] from start point z + and the new state is 
+Z( j+k 
+Z k+l  xZij , i,j+k,tj+k), where zi  zi. 
+Let's now assume that. optimal control information tlij (we will dispense with the 
+superscript ß labeling for expositional cleanness) is available at each of the discrete 
+grid points (zi,tj)  (xo). Let Ors(zi,tj) denote the value of a neural architecture 
+(CMAC, feedforward, associative etc.) which is trained as follows using this optimal 
+information for 0 _< k < r/- j - I (the equation below holds for the converged 
+value of the network's parameters and the actual dependence of the network on 
+those parameters is notationally suppressed): 
+where 0 
+.. 
+< , ( _< 1 and we define a typical reinforcement function 3 by 
+(9) 
+3( z j + 
+ ij ,Ui,j+k,tj+k,tj+k+): 
+L(zj+l  
+, ij , ui,j+,ti+)(tj++ - tj+) 
+Z(zj -1, ti,r/-1, ]/-1)(tr/ - 
++dist z" ( r) 
+ifj <_ k < p-j- 1 
+ifk=-I 
+(10) 
+(11) 
+For notational convenience, we will now drop the notational dependence on the time 
+grid points and simply refer to the reinforcement by 3(z j+ 
+ij , Ui,j+ k) 
+Then applying (9) repeatedly, for any 0 _ p _< ?- i, 
+p-1 
+= + ( 
+, ,~ij , ui,j+) (12) 
+k=O 
+Thus, the function q, can be defined by 
+IItrs(Zi, tj,, C) 
+324 Peterson 
+where the term uj.will be interpreted as 
+It follows then that since uij is optimal, 
+ß ,(zi,tj, 1, 1) = J(zi,tj) 
+Clearly, the function r.(zi,tj) = r.(zi,tj, 1, 1) estimates the optimal value 
+Js(Zi,tj) itself. (See, Q-Learning (Watkins, 11)). 
+An alternate approach that does not model J indirectly, as is done above, is to 
+train a neural model (I)s(zi,tj) directly on the data J(zi,tj) that is computed in 
+each local corridor calculation. In either case, the above observations lead to the 
+following algorithm: 
+Initialization: 
+Here, the iteration count is r - 0. For given starting state x0 and local look 
+ahead of r/time steps, form the local corridor f(x0) and solve the associated 
+approximate BPO equation for Js (zi, tj). Compute the associated optimal 
+control sequences for each (zi,tj) pair, (u*)j -1 _= (u*)y-(zi,tj). Initialize 
+the neural architecture for the optimal value estimate using øs(zi , t j) -- 
+Estimate of New Optimal Control Sequence: 
+For the next t! time steps, an estimate must be made of the next optimal 
+control action in time interval [t.+, t.++]. The initial state is any zi in 
+f(x.) (x. is one such choice) and the initial time is t.. For the time interval 
+[t.,t.+x], if the model øs(zi,tj) is differentiable, the new control can be 
+estimated by 
+{ L(% - } 
++ :SP t.) 
+a r g rn n 
+- 
+For ease of notation, let z.+ denote the new state obtained using the 
+control U.+l on the interval It., t.+l]. Then choose the next control via 
++2  
+{ L (2'r/"k I ' ?' tr/'}'l) (tr/-k2 -- tr/+ 1 ) } 
+arg mn øø 
+f(Z.+l, U,/:rt+l)(/:.+2 --/¾1+1) 
+Clearly, if z.+ denote the new state obtained using the control u.+i_ on 
+the interval [t.+i, t.+i+], the next control is chosen to satisfy 
+{ } 
++ ) 
+arg mn o 
+f(Zrl+k, '1, r+k ) (:r/+k+l -- :r/+k) 
+On-Line Estimation of the Optimal Value Function: HJB-Estimators 
+Alternately, if the neural architecture is not differentiable (that is øø" is 
+not available), the new control action can be computed via 
+325 
+,+k 
+argmn ( - 
+(u), + ) )' 
+Update of the Neural Estimator: 
+The new starting point for the dynamics is now x and there is a new 
+associated local corridor ](x.). The neural estimator is then updated using 
+either the HJB or the BPO equations over the local corridor ](x.). Using 
+the BPO equations, for all zi  (x.) the updates are: 
+(I)rXs(zi,tnj) - min{L(zi, u, tnj)(tnj+x - tnj ) + 
+where ()-1 indicates the optimal control estimates obtained in the pre- 
+vious algorithm step. Finally, using the HJB equation, for all zi 
+the updates are: 
+(I)rls ( Zi , .+j ) 
+o 
+ß  (zi, t.++) + 
+Z(zi, u,tn+j)(tn+j+l - t,,+j) } 
+O ø 
++ 
+f( zi, u, t.+ )(t.+ +1 -- t.+j ) 
+Comparison to BPO optimal control sequence: 
+Now solve the associated approximate BPO equation for each zi in the local 
+corridor ](x.) for Js(zi,t.+j). Compute the new approximate optimal 
+2-1  ,2-1 
+control sequences for each (zi,t.+) pair, (u*)n+j -- [u j.+i [zi,t.+) and 
+/ ^ x2- 1 
+compare them to the estimated sequences )+ . If the discrepancy is 
+out of tolerance (this is a design decision) initialize the neural architecture 
+for the optimal value estimate using rs(zi,t.+i) = Js(zi,t.j). If the 
+discrepancy is acceptable, terminate the BPO approximation calculations 
+for M future iterations and use the neural architectures alone for on-line 
+estimation. 
+The determination of the stability and convergence properties of any on-line approx- 
+imation procedure of this sort is intimately connected with the the optimal value 
+function which solves the generalized HJB equation. We conjecture the following 
+limit converges to a viscosity solution of the HJB equation for the given optimal 
+control problem: 
+lim(r,.)_(o,o)lim_oos(x.,tj) = J(x,t) 
+Further, there are stability questions and there are interesting issues relating to the 
+use of multiple state resolutions r and r and the corresponding different approx- 
+imations to J, leading to the use of multigrid like methods on the HJB equation 
+(see, for example, Briggs, 3). Also note that there is an advantage to using CMAC 
+326 Peterson 
+architectures for the approximation of the optimal value function J; since J need 
+not be smooth, the CMAC's lack of differentiability with respect to its inputs is not 
+a problem and in fact is a virtue. 
+Acknowledgements 
+We acknowledge the partial support of NASA grant NAG 3-1311 from the Lewis 
+Research Center. 
+References 
+1. Albus, J. 1975. "A New Approach to Manipulator Control: The Cerebellar 
+Model Articulation Controller (CMAC)." J. Dynamic Systems, Measure- 
+ment and Control, 220- 227. 
+2. Barto, A., R. Sutton, C. Anderson. 1983 "Neuronlike Adaptive Elements 
+That Can Solve Difficult Learning Control Problems." IEEE Trans. Sys- 
+tems, Man Cybernetics, Vol. SMC-13, No. 5, September/October, 834- 
+846. 
+3. Briggs, W. 1987. A Multlgrld Tutorial, SIAM, Philadelphia, PA. 
+4. Carlson, R., C. Lee and K. Rothermel. 1992. "Real Time Neural Control 
+of an Active Structure", Artificial Neural Networks in Engineering 
+2, 623 - 628. 
+5. Crandall, M. and P. Lions. 1983. "Viscosity solutions of Hamilton-Jacobi 
+Equations." Trans. American Math. Soc., Vol. 277, No. 1, 1 - 42. 
+6. Luus, R. 1990. "Optimal Control by Dynamic Programming Using System- 
+atic Reduction of Grid Size", Int. J. Control, Vol. 51, No. 5, 995- 1013. 
+7. Miller, W. 1987. "Sensor-Based Control of Robotic Manipulators Using as 
+General Learning Algorithm." IEEE J. Robot. Automat., Vol RA-3, No. 2, 
+157- 165 
+8. Peterson, J. 1992. "Neural Network Approaches to Estimating Directional 
+Cost Information and Path Planning in Analog Valued Obstacle Fields", 
+HEURISTICS: The Journal of Knowledge Engineering, Special Issue on 
+Artificial Neural Networks, Vol. 5, No. 2, Summer, 50 - 61. 
+9. Peterson, J. 1992. "On-Line Estimation of Optimal Control Sequences: 
+Pontryagin Estimators", Artificial Neural Networks in Engineering 
+2, ed. Dagli et. al., 579 - 584. 
+10. Sutton, R. 1991. "Planning by Incremental Dynamic Programming", Pro- 
+ceedings of the Ninth International Workshop on Machine Learning, 353 - 
+357. 
+11. Watkins, C. 1989. Learning From Delayed Rewards, Ph.D. Disserta- 
+tion, King's College. 
+12. Werbos, P. 1990. "A Menu of Designs for Reinforcement Learning Over 
+Time". In Neural Networks for Control, Ed. Miller, W. R. Sutton and 
+P. Werbos, 67 - 96. 

@@ -1,0 +1,320 @@
+Better Generative Models for Sequential 
+Data Problems: Bidirectional Recurrent 
+Mixture Density Networks 
+Mike Schuster 
+ATR Interpreting Telecommunications Research Laboratories 
+2-2 Hikaridai, Seika-cho, Soraku-gun, Kyoto 619-02, JAPAN 
+gustl@itl. atr. co.jp 
+Abstract 
+This paper describes bidirectional recurrent mixture density net- 
+works, which can model multi-modal distributions of the type 
+P(xtly T) and P(xtlxl,x2,...,xt_,y T) without any explicit as- 
+sumptions about the use of context. These expressions occur fre- 
+quently in pattern recognition problems with sequential data, for 
+example in speech recognition. Experiments show that the pro- 
+posed generative models give a higher likelihood on test data com- 
+pared to a traditional modeling approach, indicating that they can 
+summarize the statistical properties of the data better. 
+I Introduction 
+Many problems of engineering interest can be formulated as sequential data prob- 
+lems in an abstract sense as supervised learning from sequential data, where an 
+input vector (dimensionality D) sequence X = x T = {Xl,X2,...,XT_i,XT} liv- 
+ing in space A' has to be mapped to an output vector (dimensionality K) target 
+sequence T = t T = {tl,t2,...,tT-,tT} in space  y, that often embodies cor- 
+relations between neighboring vectors xt,xt+l and tt,tt+l. In general there are 
+a number of training data sequence pairs (input and target), which are used to 
+estimate the parameters of a given model structure, whose performance can then 
+be evaluated on another set of test data pairs. For many applications the problem 
+becomes to predict the best sequence Y given an arbitrary input sequence X, with 
+'best' meaning the sequence that minimizes an error using a suitable metric that is 
+yet to be defined. Making use of the theory of pattern recognition [2] this problem 
+is often simplified by treating any sequence as one pattern. This makes it possi- 
+ble to express the objective of sequence prediction with the well known expression 
+Y = arg maxy P(YIX), with X being the input sequence, Y being any valid out- 
+put sequence and Y being the predicted sequence with the highest probability 2 
+I 
+a sample sequence of the training target data is denoted as T, while an output sequence 
+in general is denoted as Y, both live in the output space y 
+2to simplify notation, random variables and their values, are not denoted as different 
+symbols. This means, P(x)- P(X- x). 
+590 M. Schuster 
+among all possible sequences. 
+Training of a sequence prediction system corresponds to estimating the distribution 
+3 p(yix) from a number of samples which includes (a) defining an appropriate 
+model representing this distribution and (b) estimating its pa.rameters such that 
+P(Y]X) for the training data is maximized. In practice the model consists of 
+several modules with each of them being responsible for a different part of P(YIX). 
+Testing (usage) of the trained system or recognition for a given input sequence 
+X corresponds principally to the evaluation of P(Y[X) for all possible output se- 
+quences to find the best one Y*. This procedure is called the search and its efficient 
+implementation is important for many applications. 
+In order to build a model to predict sequences it is necessary to decompose the 
+sequences such that modules responsible for smaller parts can be build. An often 
+used approach is the decomposition into a generative and prior model part, using 
+P(BIA) = P(AIB)P(B)/P(A ) and P(A,B)= P(A)P(BIA), as: 
+Y* = arg maxP(Y[X)= arg maxP(XIY)P(Y) 
+y y 
+-- argnax [HP(xlx'x""'xt-'Yr)] 
+t=l t=l 
+generative part prior part 
+For many applications (1) is approximated by simpler expressions, for example as 
+a first order Markov Model 
+T T 
+Y*  argnax [H P(xtlYt)] [H P(YtlYt-1)] 
+t--1 t=l 
+making some simplifying approximations. These are for this example: 
+(2) 
+ß Every output Yt depends only on the previous output yt_ and not on all 
+previous outputs: 
+P(YtlYl,Y,..-,Yt-1)  P(YtlYt-1) (3) 
+ß The inputs are assumed to be statistically independent in time: 
+P(xtlx,x,...,xt-,y T) :: P(xtly) (4) 
+ß The likelihood of an input vector xt given the complete output sequence y 
+is assumed to depend only on the output found at t and not on any other 
+ones: 
+P(xt[y) :: P(xt[yt) (5) 
+Assuming that the output sequences are categorical sequences (consisting of sym- 
+bols), approximation (2) and derived expressions are the basis for many applications. 
+For example, using Gaussian mixture distributions to model P(xt[yt) -- P(x) V K 
+occuring symbols, approach (2) is used in a more sophisticated form in most state- 
+of-the-art speech recognition systems. 
+Focus of this paper is to present some models for the generative part of (1) which 
+need less assumptions. Ideally this means to be able to model directly expressions 
+of the form P(xtlx , x,..., xt_, yT), the possibly (multi-modal) distribution of a 
+vector conditioned on previous x vectors xt, xt_ ,..., Xl and a complete sequence 
+yT, as shown in the next section. 
+athere is no distinction made between probability mass and density, usually denoted 
+as P and p, respectively. If the quantity to model is categorical, a probability mass is 
+assumed, if it is continuous, a probability density is assumed. 
+Bidireca'onal Recurrent Mixture Density Networks 591 
+2 Mixture density recurrent neural networks 
+Assume we want to model a continuous vector sequence, conditioned on a sequence 
+of categorical variables as shown in Figure 1. One approach is to assume that 
+the vector sequence can be modeled by a uni-modal Gaussian distribution with 
+a constant variance, making it a uni-modal regression problem. There are many 
+practical examples where this assumption doesn't hold, requiring a more complex 
+output distribution to model multi-modal data. One example is the attempt to 
+model the sounds of phoneroes based on data from multiple speakers. A certain 
+phoneme will sound completely different depending on its phonetic environment or 
+on the speaker, and using a single Gaussian with a constant variance would lead to 
+a crude averaging of all examples. 
+The traditional approach is to build generative models for each symbol separately, as 
+suggested by (2). If conventional Gaussian mixtures are used to model the observed 
+input vectors, then the parameters of the distribution (means, covariances, mixture 
+weights) in general do not change with the temporal position of the vector to model 
+within a given state segment of that symbol. This can be a bad representation 
+for the data in some areas (shown are here the means of a very bi-modal looking 
+distribution), as indicated by the two shown variances for the state 'E'. When used 
+to model speech, a procedure often used to cope with this problem is to increase 
+the number of symbols by grouping often appearing symbol sub-strings into a new 
+symbol and by subdividing each original symbol into a number of states. 
+KKKEEEEEEEEEEIIIIIIIIIIIKKKOOOOOOOOO O 
+KKKEEEEEEEEEEIIIIIIIIIIIKKKOOOOOOOOOO 
+Figure 1: Conventional Gaussian mixtures (left) and mixture density BRNNs (right) 
+for multi-modal regression 
+Another alternative is explored here, where all parameters of a Gaussian mixture dis- 
+tribution modeling the continuous targets are predicted by one bidirectional recur- 
+rent neural network, extended to model mixture densities conditioned on a complete 
+vector sequence, as shown on the right side of Figure 1. Another extension (sec- 
+tion 2.1) to the architecture allows the estimation of time varying mixture densities 
+conditioned on a hypothesized output sequence and a continuous vector sequence 
+to model exactly the generative term in (1) without any explicit approximations 
+about the use of context. 
+Basics of non-recurrent mixture density networks (MLP type) can be found in [1112 ]. 
+The extension from uni-modal to multi-modal regression is somewhat involved but 
+straightforward for the two interesting cases of having a radial covariance matrix or a 
+diagonal covariance matrix per mixture component. They are trained with gradient- 
+descent procedures as regular uni-modal regression NNs. Suitable equations to 
+calculate the error that is back-propagated can be found in [6] for the two cases 
+mentioned, a derivation for the simple case in [1][2]. 
+Conventional recurrent neural networks (RNNs) can model expressions of the form 
+P(xtlyl, Y2,... ,Yt), the distribution of a vector given an input vector plus its past 
+input vectors. Bidirectional recurrent neural networks (BRNNs) [5][6] are a simple 
+592 M. Schuster 
+extension of conventional RNNs. The extension allows one to model expressions of 
+the form P(xtly) , the distribution of a vector given an input vector plus its past 
+and following input vectors. 
+2.1 Mixture density extension for BRNNs 
+liere two types of extensions of BRNNs to mixture density networks are considered: 
+I) An extension to model expressions of the type P(xtly), a multi-modal 
+distribution of a continuous vector conditioned on a vector sequence yT, 
+here labeled as mixture density BRNN of Type I. 
+II) An extension to model expressions of the type P(xtlx,x2,... ,xt_,y), 
+a probability distribution of a continuous vector conditioned on a vector 
+sequence y and on its previous context in time Xl,Xe,...,xt-. This 
+architecture is labeled as mixture density BRNN of Type II. 
+The first extension of conventional uni-modal regression BRNNs to mixture density 
+networks is not particularly difficult compared to the non-recurrent implementation, 
+because the changes to model multi-modal distributions are completely independent 
+of the structural changes that have to be made to form a BRNN. 
+The second extension involves a structural change to the basic BRNN structure 
+to incorporate the x,x2,... ,x-I as additional inputs, as shown in Figure 2. For 
+any t the neighboring xt-, xt-2,... are incorporated by adding an additional set 
+of weights to feed the hidden forward states with the extended inputs (the tar- 
+gets for the outputs) from the time step before. This includes xt_ directly and 
+xt-2, xt-a,... x indirectly through the hidden forward neurons. This architecture 
+allows one to estimate the generative term in (1) without making the explicit as- 
+sumptions (4) and (5), since all the information xt is conditioned on, is theoretically 
+available. 
+FORWARD 
+STATES 
+BACKWARD 
+STATES 
+t-I t t+l 
+Figure 2: BRNN mixture density extension (Type II) (inputs: striped, outputs: 
+black, hidden neurons: grey, additional inputs: dark grey). Note that without the 
+backward states and the additional inputs this structure is a conventional RNN, 
+unfolded in time. 
+Different from non-recurrent mixture density networks, the extended BRNNs can 
+predict the parameters of a Gaussian mixture distribution conditioned on a vector 
+sequence rather than a single vector, that is, at each (time) position t one parameter 
+set (means, variances (actually standard variations), mixture weights) conditioned 
+on yT for the BRNN of type I and on x, x2,..., xt_ 1, yT for the BRNN of type II. 
+Bidirectional Recurrent Mixture Density Networks 593 
+3 Experiments and Results 
+The goal of the experiments is to show that the proposed models are more suit- 
+able to model speech data than traditional approaches, because they rely on fewer 
+assumptions. The speech data used here has observation vector sequences repre- 
+senting the original waveform in a compressed form, where each vector is mapped to 
+exactly one out of K phonemes. Here three approaches are compared, which allow 
+the estimation of the likelihood P(XlY ) with various degrees of approximations: 
+Conventional Gaussian mixture model, P(XIY )  1-ltT=l P(xtlyt): 
+According to (2) the likelihood of a phoneme class vector is approximated by a 
+conventional Gaussian mixture distribution, that is, a separate mixture model is 
+built to estimate P(xly ) - P(x) for each of the possible K categorical states in 
+y. In this case the two assumptions (4) and (5) are necessary. For the variance 
+a radial covariance matrix (diagonal single variance for all vector components) is 
+chosen to match it to the conditions for the BRNN cases below. The number of 
+parameters for the complete model is KM(D + 2) for M > 1. Several models of 
+different complexity were trained (Table 1). 
+Mixture density BRNN I, P(X[Y)  HT__lP(Xt[y): One mixture density 
+BRNN of type I, with the same number of mixture components and a radial co- 
+variance matrix for its output distribution as in the approach above, is trained 
+by presenting complete sample sequences to it. Note that for type I all possible 
+context-dependencies (assumption (5)) are automatically taken care of, because the 
+probability is conditioned on complete sequences y. The sequence y contains for 
+any t not only the information about neighboring phonemes, but also the position of 
+a frame within a phoneme. In conventional systems this can only be modeled crudely 
+by introducing a certain number of states per phoneme. The number of outputs 
+for the network depends on the number of mixture components and is M(D + 2). 
+The total number of parameters can be adjusted by changing the number of hidden 
+forward and backward state neurons, and was set here to 64 each. 
+Mixture density BRNN II, P(XIY ) = H= P(x]x,x,... ,x_,y): 
+One mixture density BRNN of type II, again with the same number of mixture 
+components and a radial covariance matrix, is trained under the same conditions as 
+above. Note that in this case both assumptions (4) and (5) are taken care of, be- 
+cause exactly expressions of the required form can be modeled by a mixture density 
+BRNN of type II. 
+3.1 Experiments 
+The recommended training and test data of the TIMIT speech database [3] was 
+used for the experiments. The TIMIT database comes with hand-aligned phonetic 
+transcriptions for all utterances, which were transformed to sequences of categorical 
+class numbers (training: 702438, test = 256617 vec.). The number of possible 
+categorical classes is the number of phonemes, K = 61. The categorical data 
+(input data for the BRNNs) is represented as K-dimensional vectors with the kth 
+component being one and all others zero. The feature extraction for the waveforms, 
+which resulted in the vector sequences xl T to model, was done as in most speech 
+recognition systems [7]. The variances were normalized with respect to all training 
+data, such that a radial variance for each mixture component in the model is a 
+reasonable choice. 
+594 M. Schuster 
+All three model types were trained with M = 1, 2, 3, 4, the conventional Gaussian 
+mixture model also with M = 8, 16 mixture components. The number of resulting 
+parameters, used as a rough complexity measure for the models, is shown in Table 1. 
+The states of the triphone models were not clustered. 
+Table 1: Number of parameters for different types of models 
+mixture mono61 mono61 tri571 BRNN I BRNN II 
+components 1-state 3-state 3-state 
+1 1952 5856 54816 20256 22176 
+2 3904 11712 109632 24384 26304 
+3 5856 17568 164448 28512 30432 
+4 7808 23424 219264 32640 34560 
+8 15616 46848 438528 - - 
+16 31232 93696 877056 - - 
+Training for the conventional approach using M mixtures of Gaussians was done 
+using the EM algorithm. For some classes with only a few samples M had to be 
+reduced to reach a stationary point of the likelihood. Training of the BRNNs of both 
+types must be done using a gradient descent algorithm. Here a modified version of 
+RPROP [4] was used, which is in more detail described in [6]. 
+The measure used in comparing the tested approaches is the log-likelihood of train- 
+ing and test data given the models built on the training data. In absence of a search 
+algorithm to perform recognition this is a valid measure to evaluate the models since 
+maximizing log-likelihood on the training data is the objective for all model types. 
+Note that the given alignment of vectors to phoneme classes for the test data is 
+used in calculating the log-likelihood on the test data - theie is no search for the 
+best alignment. 
+3.2 Results 
+Figure 3 shows the average log-likelihoods depending on the number of mixture 
+components for all tested approaches on training (upper line) and test data (lower 
+line). The baseline 1-state monophones give the lowest likelihood. The 3-state 
+monophones are slightly better, but have a larger gap between training and test 
+data likelihood. For comparison on the training data a system with 571 distinct 
+triphones with 3 states each was trained also. Note that this system has a lot more 
+parameters than the BRNN systems (see Table 1) it was compared to. The results 
+for the traditional Gaussian mixture systems show how the models become better 
+by building more detailed models for different (phonetic) context, i.e., by using more 
+states and more context classes. 
+The mixture density BRNN of type I gives a higher likelihood than the traditional 
+Gaussian mixture models. This was expected because the BRNN type I models 
+are, in contrast to the traditional Gaussian mixture models, able to include all 
+possible phonetic context effects by removing assumption (5) - i.e. a frame of a 
+certain phoneme surrounded by frames of any other phonemes with theoretically no 
+restriction about the range of the contextual influence. 
+The mixture density BRNN of type II, which in addition removes the independence 
+assumption (4), gives a significant higher likelihood than all other models. Note 
+that the difference in likelihood on training and test data for this model is very 
+small, indicating a useful model for the underlying distribution of the data. 
+Bidirectional Recurrent Mixture Density Networks 595 
+-19 
+-20 
+-21 
+-22 
+-23 
+-24 
+-25 
+-26 
+-27 
+-28 
+-29 
+-30 
+0 
+'mono. 1 state.train' -- 
+'mono.lstate.test' -- 
+'mono.3state.traJn' - .... 
+'mono.3state.test' - .... 
+tri.571.3state.train ...... 
+'BRNN I.traJn' 
+'BRNI I,test 
+'BRNN IT. train' -- ~ 
+'BRNlll.test' -.- - 
+I I I I I I I 
+2 4 6 8 10 12 14 16 
+NUMBER OF GAUSSIAN MIXTURE COMPONENTS 
+Figure 3: Mixture density BRNNs for multi-modal regression: Results 
+4 Conclusions 
+The mixture density BRNNs allow one to model probabilistic expressions frequently 
+occurring in sequence processing problems, with less assumptions than traditionally 
+necessary. Here it was shown that they can model the statistical properties of 
+speech data better than the traditional approach using Gaussian mixture models, 
+making mixture density BRNNs and approximations to them potential candidates 
+for improved speech recognition, coding and synthesis. 
+Many issues couldn't be covered in this paper because of space limitations. A more 
+detailed description of these models can be found in [6]. 
+References 
+[1] C. M. Bishop. Mixture density networks. Technical Report NCRG/94/004, Neural 
+Computing Research Group, Aston University, Birmingham, England, 1994. 
+[2] C. M. Bishop. Neural Networks .for Pattern Recognition. Clarendon Press, Oxford, 
+England, 1995. 
+[3] Linguistic Data Consortium. TIMIT Acoustic-Phonetic Continuous Speech Corpus, 
+1993. (http://morph.ldc.upenn.edu/Catalog/LDC93S1.html). 
+[4] M. Riedmiller and H. Braun. A direct adaptive method for faster back-propagation 
+learning: The RPROP algorithm. In Proceedings o] the IEEE International ConIerence 
+on Neural Networks, pages 586-591, 1993. 
+[5] M. Schuster and K. K. Paliwal. Bidirectional recurrent neural networks. IEEE Trans- 
+actions on Neural Networks, 45(11):2673-2681, 1997. 
+[6] M. Schuster. On supervised learning ]tom sequential data with applications ]or 
+speech recognition. PhD thesis, Nara Institute of Science and Technology, Nara, 
+JAPAN, 1999. (http://isw3.aist-nara.ac.jp/IS/Shikano-lab/database/library/paper/ 
+DT9661205.ps.gz). 
+[7] S. Young. A review of large vocabulary speech recognition. IEEE Signal Processing 
+Magazine, 15(5):45-57, 1996. 

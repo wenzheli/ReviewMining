@@ -1,0 +1,335 @@
+A Hodgkin-Huxley Type Neuron Model 
+That Learns Slow Non-Spike Oscillation 
+Kenji Doya* 
+Allen I. Selverston 
+Department of Biology 
+University of California, San Diego 
+La Jolla, CA 92093-0357, USA 
+Peter F. Rowat 
+Abstract 
+A gradient descent algorithm for parameter estimation which is 
+similar to those used for continuous-time recurrent neural networks 
+was derived for Hodgkin-Huxley type neuron models. Using mem- 
+brane potential trajectories as targets, the parameters (maximal 
+conductances, thresholds and slopes of activation curves, time con- 
+stants) were successfully estimated. The algorithm was applied to 
+modeling slow non-spike oscillation of an identified neuron in the 
+lobster stomatogastric ganglion. A model with three ionic currents 
+was trained with experimental data. It revealed a novel role of 
+A-current for slow oscillation below -50 mV. 
+I INTRODUCTION 
+Conductance-based neuron models, first formulated by Hodgkin and Huxley [10], 
+are commonly used for describing biophysical mechanisms underlying neuronal be- 
+havior. Since the days of Hodgkin and Huxley, tens of new ionic channels have 
+been identified [9]. Accordingly, recent H-H type models have tens of variables and 
+hundreds of parameters [1, 2]. Ideally, parameters of H-H type models are deter- 
+mined by voltage-clamp experiments on individual ionic currents. However, these 
+experiments are often very difficult or impossible to carry out. Consequently, many 
+parameters must be hand-tuned in computer simulations so that the model behavior 
+resembles that of the real neuron. However, a manual search in a high dimensional 
+*current address: The Salk Institute, CNL, P.O. Box 85800, San Diego, CA 92186-5800. 
+566 
+A Hodgkin-Huxley Type Neuron Model That Learns Slow Non-Spike Oscillation 567 
+Figure 1: A connectionist's view of the H-H neuron model. 
+parameter space is very unreliable. Moreover, even if a good match is found be- 
+tween the model and the real neuron, the validity of the parameters is questionable 
+because there are, in general, many possible settings that lead to apparently the 
+same behavior. 
+We propose an automatic parameter tuning algorithm for H-H type neuron models 
+[5]. Since a H-H type model is a network of sigmoid functions, multipliers, and 
+leaky integrators (Figure 1), we can tune its parameters in a manner similar to the 
+tuning of connection weights in continuous-time neural network models [0, 12]. By 
+training a model from many initial parameter points to match the experimental 
+data, we can systematically estimate a region in the parameter space, instead of a 
+single point. 
+We first test if the parameters of a spiking neuron model can be identified from the 
+membrane potential trajectories. Then we apply the learning algorithm to a model 
+of slow non-spike oscillation of an identified neuron in the lobster stomatogastric 
+ganglion [7]. The resulting model suggests a new role of A-current [3] for slow 
+oscillation in the membrane potential range below -50 mV. 
+2 STANDARD FORM OF IONIC CURRENTS 
+Historically, different forms of voltage dependency curves have been used to repre- 
+sent the kinetics of different ionic channels. However, in order to derive a simple, 
+efficient learning algorithm, we chose a unified form of voltage dependency curves 
+which is based on statistical physics of ionic channels [11] for all the ionic currents 
+in the model. 
+The dynamics of the membrane potential v is given by 
+Ci '- I- EIj, I.i = g.ia?bjq. J(v - vrj), (1) 
+J 
+where C is the membrane capacitance and I is externally injected current. The j-th 
+ionic current Ij is the product of the maximum conductance gj, activation variable 
+568 Doya, Selverston, and Rowat 
+aj, inactivation variable bj, and the difference of the membrane potential v from 
+the reversal potential vrj. The exponents pj and qj represent multiplicity of gating 
+elements in the ionic channels and are usually an integer between 0 and 4. Variables 
+aj and bj are assumed to obey the first order differential equation 
+ = k(v). (-x + x(v)), (: aj, bj). (2) 
+Their steady states aj and bj are sigmoid functions of the membrane potential 
+1 
+ß () = ( =  ), (3) 
+1 + e-(-) ' ' 
+where v and s represent the threshold and slope of the steady state curve, re- 
+spectively. The rate coefficients k(v) and ka(v) have the voltage dependence 
+[] 
+1 cosh s(v - v) (x = a, b), (4) 
+():  2 
+where t is the time constant. 
+3 ERROR GRADIENT CALCULUS 
+Our goal is to minimize the average error over a cycle with period T: 
+E: 7 (v(t)- *(t))"t, 
+where v*(t) is the target membrane potential trajectory. 
+(5) 
+i> = OF OF 
+OX Y + OOi' 
+.' = F(X;...,Oi,...), 
+is evaluated by the variation equation 
+i: kx(*(t)). (- + (*(t)))(: a,b). 
+We use (6) in place of (2) during training. 
+The effect of a small change in a parameter Oi of a dynamical system 
+(x ß a ') (7) 
+( ß a'), (8) 
+which is an n-dimensional linear system with time-varying coefficients [6, 12]. In 
+general, this variation calculus requires O(n 2) arithmetics for each parameter. How- 
+ever, in the case of H-H model with teacher forcing, (8) reduces to a first or second 
+order linear system. For example, the effect of a small change in the maximum 
+conductance gj on the membrane potential v is estimated by 
+Ct = -G(t)y - aj(7)PJ bj(7 )qJ (v(7) -- Vrj ), (9) 
+(6) 
+We first derive the gradient of E with respect to the model parameters (..., Oi, ...) = 
+(..., gj, va,, sa, ta, ...). In studies of recurrent neural networks, it has been shown 
+that teacher forcing is very important in training autonomous oscillation patterns [4, 
+6, 12, 13]. In H-H type models, teacher forcing drives the activation and inactivation 
+variables by the target membrane potential v* (t) instead of v(t) as follows. 
+A Hodgkin-Huxley Type Neuron Model That Learns Slow Non-Spike Oscillation 569 
+where G(t) :  ga(t)Pkb(t) qk is the total membrane conductance. 
+the effect of the activation threshold va is estimated by the equations 
+C = -G(t)y - gipjaj(t)PJ-bj(t)qJ(v(t) - vrj) z, 
+}: --kay(t)[Z + S{aj(t)+aj(t)- 2aj(t)aj(t)}] . 
+The solution y(t) represents the perturbation in v at time t, namely 
+error gradient is then given by 
+OE 1 for 
+ooi = 7 
+Similarly, 
+(10) 
+The 
+(11) 
+4 PARAMETER UPDATE 
+Basically, we can use arbitrary gradient-based optimization algorithms, for example, 
+simple gradient descent or conjugate gradient descent. The particular algorithm we 
+used was a continuous-time version of gradient descent on normalized parameters. 
+Because the parameters of a H-H type model have different physical dimensions and 
+magnitudes, it is not appropriate to perform simple gradient descent on them. We 
+represent each parameter by the default value Oi and the deviation i as below. 
+gj=jeJ, 
+Then we perform gradient descent on the normalized parameters i. 
+Instead of updating the parameters in batches, i.e. after running the model for T 
+and integrating the error gradient by (11), we updated the parameters on-line using 
+the running average of the gradient as follows. 
+Ov(t) 00 
++ 
+Oi -- --/X,, (13) 
+where Ta is the averaging time and e is the learning rate. This on-line scheme was 
+less susceptible to 2T-periodic parameter oscillation than batch update scheme and 
+therefore we could use larger learning rates. 
+5 PARAMETER ESTIMATION OF A SPIKING MODEL 
+First, we tested if a model with random initial parameters can estimate the pa- 
+rameters of another model by training with its membrane potential trajectories. 
+The default parameters Oi of the model was set to match the original H-H model 
+[10] (Table 1). Its membrane potential trajectories at five different levels of current 
+injection (I = 0, 15,30, 45, and 60yA/cm ) were used alternately as the target v*(t). 
+We ran 100 trials after initializing i randomly in [-0.5,+0.5]. In 83 cases, the error 
+became less than 1.3 mV rms after 100 cycles of training. Figure 2a is an exam- 
+ple of the oscillation patterns of the trained model. The mean of the normalized 
+570 Doya, Selverston, and Rowat 
+Table 1: Parameters of the spiking neuron model. Subscripts L, Na and K speci- 
+fies leak, sodium and potassium currents, respectively. Constants: C=lluF/cm 2, 
+VN,=55mV, vK=-72mV, vœ=-50mV, pN,=3, qN,=l, pK=4, qK=pœ=qœ=O, 
+Av=20mV, e=0.1, T, = 5T. 
+gL 
+gNa 
+VaNa 
+$aNa 
+7aN a 
+VbNa 
+$bNa 
+7bNa 
+gK 
+YaK 
+8aK 
+7 a K 
+default value 
+0.3 mS/cm 
+120.0 mS/cm 
+-36.0 mV 
+0.1 1/mY 
+0.5 l'nsec 
+-62.0 mV 
+-0.09 1/mV 
+12.0 msec 
+40.0 mS/cm 
+-50.0 mV 
+0.06 1/mV 
+5.0 msec 
+ti after learning 
+mean s.d. 
+-0.017 0.252 
+-0.002 0.248 
+0.006 0.033 
+-0.052 0.073 
+-0.103 0.154 
+0.012 0.202 
+-0.010 0.140 
+0.093 0.330 
+0.050 0.264 
+-0.021 0.136 
+-0.061 0.114 
+-0.073 0.168 
+a_Na tbNa 
+sbNa 
+b_Na taNa 
+saNa 
+gNa 
+0 10 20 30 
+time (ms) 
+gL gNavaNasaNataNavbNasbNatbNa gK yak saK taK 
+(a) (b) 
+Figure 2: (a) The trajectory of the spiking neuron nodel at I = 30t. tA/cm . v: 
+membrane potential (-80 to +40 mV). a and b: activation and inactivation variables 
+(0 to 1). The dotted line in v shows the target trajectory v*(t). (b) Covariance 
+matrix of the normalized parameters i after learning. The black and white squares 
+represent negative and positive covariances, respectively. 
+A Hodgkin-Huxley Type Neuron Model That Learns Slow Non-Spike Oscillation 571 
+Table 2: Parameters of the DG cell model. Constants: C=lF/cm 2, VA=-80mV, 
+VH= -10mV, vœ=-50mV, pA=3, qA=l, pH=l, qH=pœ=qœ=O, Av=20mV, e=0.1, 
+T, = 2T. 
+tuned 0 i 
+0.01 0.025 mS/cm 2 
+50 41.0 mS/cm 2 
+-12 -11.1 mV 
+0.04 0.022 1/mV 
+7.0 7.0 msec 
+-62 -76 mV 
+-0.16 -0.19 1/mV 
+300 292 msec 
+0.1 0.039 mS/cm 2 
+-70 -75.1 mV 
+-0.14 -0.11 1/mV 
+3000 4400 msec 
+gL 
+VaA 
+$aA 
+taA 
+VbA 
+8bA 
+7bA 
+gH 
+Wall 
+Sail 
+7 aH 
+0 10000 20000 30000 40000 50000 
+time(ms) 
+Figure 3: Oscillation pattern of the DG cell model. v: membrane potential (-70 to 
+-50 mV). a and b: activation and inactivation variables (0 to 1). I: ionic currents 
+(-1 to +1 tA/cm2). 
+parameters i were nearly zero (Table 1), which implies that the original parame- 
+ter values were successfully estimated by learning. The standard deviation of each 
+parameter indicates how critical its setting is to replicate the given oscillation pat- 
+terns. From the covariance matrix of the parameters (Figure 2b), we can estimate 
+the distribution of the solution points in the parameter space. 
+6 MODELING SLOW NON-SPIKE OSCILLATION 
+Next we applied the algorithm to experimental data from the "DG cell" of the lob- 
+ster stomatogastric ganglion [7]. An isolated DG cell oscillates endogenously with 
+the acetylcholine agonist pilocarpine and the sodium channel blocker TTX. The 
+oscillation period is 5 to 20 seconds and the membrane potential is approximately 
+between -70 and -50 mV. From voltage-clamp data from other stomatogastric neu- 
+rons [8], we assumed that A-current (potassium current with inactivation) [3] and 
+H-current (hyperpolarization-activated slow inward current) are the principal active 
+currents in this voltage range. The default parameters for these currents were taken 
+from [2] (Table 2). 
+572 Doya, Selverston, and Rowat 
+2 
+-2 
+ionic currents 
+! 
+! 
+! 
+-60 -40 -20 0 20 40 
+v (mY) 
+--I_L 
+.... I_A 
+-- I_H 
+Figure 4: Current-voltage curves of the DG cell model. Outward current is positive. 
+Figure 3 is an example of the model behavior after learning for 700 cycles. The 
+actual output v of the model, which is shown in the solid curve, was very close 
+to the target output v*(t), which is shown in the dotted curve. The bottom three 
+traces show the ionic currents underlying this slow oscillation. Figure 4 shows the 
+steady state I-V curves of three currents. A-current has negative conductance in 
+the range from -70 to -40 mV. The resulting positive feedback on the membrane 
+potential destabilizes a quiescent state. If we rotate the I-V diagram 180 degrees, it 
+looks similar to the I-V diagram for the H-H model; the faster outward A-current 
+in our model takes the role of the fast inward sodium current in the H-H model and 
+the slower inward H-current takes the role of the outward potassium current. 
+7 DISCUSSION 
+The results indicate that the gradient descent algorithm is effective for estimating 
+the parameters of H-H type neuron models from membrane potential trajectories. 
+Recently, an automatic parameter search algorithm was proposed by Bhalla and 
+Bower [1]. They chose only the maximal conductances as free parameters and used 
+conjugate gradient descent. The error gradient was estimated by slightly changing 
+each of the parameters. In our approach, the error gradient was more efficiently de- 
+rived by utilizing the variation equations. The use of teacher forcing and parameter 
+normalization was essential for the gradient descent to work. 
+In order for a neuron to be an endogenous oscillator, it is required that a fast pos- 
+itive feedback mechanism is balanced with a slower negative feedback mechanism. 
+The most popular example is the positive feedback by the sodium current and the 
+negative feedback by the potassium current in the H-H model. Another common 
+example is the inward calcium current counteracted by the calcium dependent out- 
+ward potassium current. We found another possible combination of positive and 
+negative feedback with the help of the algorithm: the inactivation of the outward 
+A-current and the activation of the slow inward H-current. 
+A Hodgkin-Huxley Type Neuron Model That Learns Slow Non-Spike Oscillation 573 
+Acknowledgement s 
+The authors thank Rob Elson and Thom Cidand for providing physiological data 
+from stomatogastric cells. This study was supported in part by ONR grant N00014- 
+91-J-1720. 
+References 
+[1] U. S. Bhalla and J. M. Bower. Exploring parameter space in detailed single 
+neuron models: Simulations of the mitral and granule cells of the olfactory 
+bulb. Journal of Neurophysiology, 69:1948-1965, 1993. 
+[2] F. Buchholtz, J. Golowasch, I. R. Epstein, and E. Marder. Mathematical model 
+of an identified stomatogastric ganglion neuron. Journal of Neurophysiology, 
+67:332-340, 1992. 
+[3] J. A. Connor, D. Walter, and R. McKown. Neural repetitive firing, modifi- 
+cations of the Hodgkin-Huxley axon suggested by experimental results from 
+crustacean axons. Biophysical Journal, 18:81-102, 1977. 
+[4] K. Doya. Bifurcations in the learning of recurrent neural networks. In Proceed- 
+ings of 1992 IEEE International Symposium on Circuits and Systems, pages 
+6:2777-2780, San Diego, 1992. 
+[5] K. Doya and A. I. Selverston. A learning algorithm for Hodgkin-Huxley type 
+neuron models. In Proceedings of IJCNN'93, pages 1108-1111, Nagoya, Japan, 
+1993. 
+[6] K. Doya and S. Yoshizawa. Adaptive neural oscillator using continuous-time 
+back-propagation learning. Neural Networks, 2:375-386, 1989. 
+[7] R. C. Elson and A. I. Selverston. Mechanisms of gastric rhythm generation 
+in the isolated stomatogastric ganglion of spiny lobsters: Bursting pacemaker 
+potential, synaptic interactions, and muscarinic modulation. Journal of Neu- 
+rophysiology, 68:890-907, 1992. 
+[8] J. Golowasch and E. Marder. Ionic currents of the lateral pyloric neuron of 
+stomatogastric ganglion of the crab. Journal of Neurophysiology, 67:318-331, 
+1992. 
+[9] 
+[10] 
+[11] 
+[12] 
+[13] 
+B. Hille. Ionic Channels of Excitable Membranes. Sinauer, 1992. 
+A. L. Hodgkin and A. F. Huxley. A quantitative description of membrane 
+currents and its application to conduction and excitation in nerve. Journal of 
+Physiology, 117:500-544, 1952. 
+H. Lecar, G. Ehrenstein, and R. Latorre. Mechanism for channel gating in 
+excitable bilayers. Annals of the New York Academy of Sciences, 264:304-313, 
+1975. 
+P. F. Rowat and A. I. Selverston. Learning algorithms for oscillatory networks 
+with gap junctions and membrane currents. Network, 2:17-41, 1991. 
+R. J. Williams and D. Zipser. Gradient based learning algorithms for recurrent 
+connectionist networks. Technical Report NU-CCS-90-9, College of Computer 
+Science, Northeastern University, 1990. 

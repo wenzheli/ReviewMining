@@ -1,0 +1,331 @@
+The Relaxed Online 
+Maximum Margin Algorithm 
+Yi Li and Philip M. Long 
+Department of Computer Science 
+National University of Singapore 
+Singapore 119260, Republic of Singapore 
+{ liyi, plong} @comp. nus. edu. sg 
+Abstract 
+We describe a new incremental algorithm for training linear thresh- 
+old functions: the Relaxed Online Maximum Margin Algorithm, or 
+ROMMA. ROMMA can be viewed as an approximation to the algorithm 
+that repeatedly chooses the hyperplane that classifies previously seen ex- 
+amples correctly with the maximum margin. It is known that such a 
+maximum-margin hypothesis can be computed by minimizing the length 
+of the weight vector subject to a number of linear constraints. ROMMA 
+works by maintaining a relatively simple relaxation of these constraints 
+that can be efficiently updated. We prove a mistake bound for ROMMA 
+that is the same as that proved for the perceptron algorithm. Our analysis 
+implies that the more computationally intensive maximum-margin algo- 
+rithm also satisfies this mistake bound; this is the first worst-case perfor- 
+mance guarantee for this algorithm. We describe some experiments us- 
+ing ROMMA and a variant that updates its hypothesis more aggressively 
+as batch algorithms to recognize handwritten digits. The computational 
+complexity and simplicity of these algorithms is similar to that of per- 
+ceptron algorithm, but their generalization is much better. We describe a 
+sense in which the performance of ROMMA converges to that of SVM 
+in the limit if bias isn't considered. 
+1 Introduction 
+The perceptron algorithm [10, 11] is well-known for its simplicity and effectiveness in the 
+case of linearly separable data. Vapnik' s support vector machines (SVM) [13] use quadratic 
+programming to find the weight vector that classifies all the training data correctly and 
+maximizes the margin, i.e. the minimal distance between the separating hyperplane and the 
+instances. This algorithm is slower than the perceptron algorithm, but generalizes better. 
+On the other hand, as an incremental algorithm, the perceptron algorithm is better suited 
+for online learning, where the algorithm repeatedly must classify patterns one at a time, 
+then finds out the correct classification, and then updates its hypothesis before making the 
+next prediction. 
+In this paper, we design and analyze a new simple online algorithm called ROMMA (the 
+Relaxed Online Maximum Margin Algorithm) for classification using a linear threshold 
+The Relaxed Online Maximum Margin Algorithm 499 
+function. ROMMA has similar time complexity to the perceptron algorithm, but its gener- 
+alization performance in our experiments is much better on average. Moreover, ROMMA 
+can be applied with kernel functions. 
+We conducted experiments similar to those performed by Cortes and Vapnik [2] and Freund 
+and Schapire [3] on the problem of handwritten digit recognition. We tested the standard 
+perceptron algorithm, the voted perceptron algorithm (for details, see [3]) and our new 
+algorithm, using the polynomial kernel function with d = 4 (the choice that was best 
+in [3]). We found that our new algorithm performed better than the standard perceptron 
+algorithm, had slightly better performance than the voted perceptron. 
+For some other research with aims similar to ours, we refer the reader to [9, 4, 5, 6]. 
+The paper is organized as follows. In Section 2, we describe ROMMA in enough detail 
+to determine its predictions, and prove a mistake bound for it. In Section 3, we describe 
+ROMMA in more detail. In Section 4, we compare the experimental results of ROMMA 
+and an aggressive variant of ROMMA with the perceptron and the voted perceptron algo- 
+rithms. 
+2 A mistake-bound analysis 
+2.1 The online algorithms 
+For concreteness, our analysis will concern the case in which instances (also called pat- 
+terns) and weight vectors are in R ' . Fix n G N. In the standard online learning model [7], 
+learning proceeds in trials. In the tth trial, the algorithm is first presented with an instance 
+t G R '. Next, the algorithm outputs a prediction )t of the classification of œt. Finally, 
+the algorithm finds out the correct classification Yt G {-1, 1}. If )t  Yt, then we say that 
+the algorithm makes a mistake. It is worth emphasizing that in this model, when making 
+its prediction for the tth trial, the algorithm only has access to instance-classification pairs 
+for previous trials. 
+All of the online algorithms that we will consider work by maintaining a weight vector 
+which is updated between trials, and predicting )t = sign(tt ß a7t), where sign(z) is 1 if 
+is positive, -1 if z is negative, and 0 otherwise.  
+The perceptton 
+off with tl: 0. 
+by tt + 1 = tt + 
+algorithm. The perceptron algorithm, due to Rosenblatt [10, 11], starts 
+When its prediction differs from the label Yt, it updates its weight vector 
+Yt œt. If the prediction is correct then the weight vector is not changed. 
+The next three algorithms that we will consider assume that all of the data seen by the 
+online algorithm is collectively linearly separable, i.e. that there is a weight vector if such 
+that for all each trial t, Yt '- sign(if. at). When kernel functions are used, this is often the 
+case in practice. 
+The ideal online maximum margin algorithm. On each trial t, this algorithm chooses a 
+weight vector tt for which for all previous trials s _< t, sign(tt ß a7s) = ys, and which 
+maximizes the minimum distance of any  to the separating hyperplane. It is known [ 1, 14] 
+that this can be implemented by choosing v7t to minimize [[tt]] subject to the constraints 
+that y (tt ß a?) >_ 1 for all s _< t. These constraints define a convex polyhedron in weight 
+space which we will refer to as Pt. 
+The relaxed online maximum margin algorithm. This is our new algorithm. The first 
+difference is that trials in which mistakes are not made are ignored. The second difference 
+IThe prediction of 0, which ensures a mistake, is to make the proofs simpler. The usual mistake 
+bound proof for the perceptron algorithm goes through with this change. 
+500 Y. Li and P M. Long 
+is in how the algorithm responds to mistakes. The relaxed algorithm starts off like the ideal 
+algorithm. Before the second trial, it sets t2 to be the shortest weight vector such that 
+li (t2 ß œ1) _> 1. If there is a mistake on the second trial, it chooses ta as would the ideal 
+algorithm, to be the smallest element of 
+{t' Yl(Z' '1) _ 1} V1 {' Y2(-œ2) _> 1}. 
+(1) 
+However, if the third trial is a mistake, then it behaves differently. Instead of choosing 
+to be the smallest element of 
+{-' Yl( ' '1) _ 1} F1 {t ß y2(t. œ'2) _> 1} F3 {t' ya(t-œ3) _> 1}, 
+it lets 4 be the smallest element of 
+origin 
+Figure 1: In ROMMA, a convex 
+polyhedron in weight space is re- 
+placed with the halfspace with the 
+same smallest element. 
+IIall 2} n 1}. 
+This can be thought of as, before the third trial, replacing the polyhedron defined by (1) 
+with the halfspace {t ß ta. tg >_ [[ta[[ 2} (see Figure 1). 
+Note that this halfspace contains the polyhedron 
+of (1); in fact, it contains any convex set whose 
+smallest element is ta. Thus, it can be thought of 
+as the least restrictive convex constraint for which 
+the smallest satisfying weight vector is ta. Let 
+us call this halfspace Ha. The algorithm contin- 
+ues in this manner. If the tth trial is a mistake, 
+then tt+ is chosen to be the smallest element of 
+Ht 91 { t ß yt ( t . œt ) >_ 1}, and Ht + l is set to be 
+ß _ t 1 2 
+{ t+'> [[ + [[ }. If the tth trial is not a 
+mistake, then tt+ = t and Ht+ -' Hr. We will 
+call Ht the old constraint, and {t ß yt(t ß 't) 2 1} 
+the new constraint. 
+Note that after each mistake, this algorithm needs only to solve a quadratic programming 
+problem with two linear constraints. In fact, there is a simple closed-form expression for 
+tt+ as a function of tt, :t and lit that enables it to be computed incrementally using time 
+similar to that of the perceptron algorithm. This is described in Section 3. 
+The relaxed online maximum margin algorithm with aggressive updating. The algo- 
+rithm is the same as the previous algorithm, except that an update is made after any trial in 
+which lit(tt ß œt) < 1, not just after mistakes. 
+2.2 Upper bound on the number of mistakes made 
+Now we prove a bound on the number of mistakes made by ROMMA. As in previous 
+mistake bound proofs (e.g. [8]), we will show that mistakes result in an increase in a 
+"measure of progress", and then appeal to a bound on the total possible progress. Our 
+proof will use the squared length of t as its measure of progress. 
+First we will need the following lemmas. 
+Lemma 1 On any run of ROMMA on linearly separable data, if trial t was a mistake, then 
+the new constraint is binding at the new weight vector, i.e. !It (tt+ ß t) = 1. 
+Proof: For the purpose of contradiction suppose the new constraint is not binding at the 
+new weight vector tt+l. Since tt fails to satisfy this constraint, the line connecting t+l 
+and t intersects with the border hyperplane of the new constraint, and we denote the 
+intersecting point tq. Then tq can be represented as tq = at+(1 -ct)tt+i, 0 < ct < 1. 
+The Relaxed Online Maximum Margin Algorithm 501 
+Since the square of Euclidean length ll' II 2 is a convex function, the following holds: 
+llql[ = < llttll = + (1- )ll,t+ll = 
+-' 2 
+Since tt is the unique smallest member of Ht and t+  tt, we have I[tt][ = < []wt+l ]] , 
+which implies 
+llll = < II,t+11 = (2) 
+Since tt and tt+ are both in Ht, tq is too, and hence (2) contradicts the definition of 
+tt+. [-] 
+Lemma 2 On any run of ROMMA on linearly separable data, if trial t was a mistake, and 
+not the first one, then the old constraint is binding at the new weight vector, i.e. tt +  ß tt = 
+-' 2 
+Ilwtll ß 
+Proof: Let At be the plane of weight vectors that make the new constraint tight, i.e. At -- 
+= . --  be the element 
+{t ß lit(t- t) 1} By Lemma 1, tFt+  At. Let gt !It t/lltll = 
+of At that is perpendicular to it. Then each tF  At satisfies IIll  -- IItll  q- II - tll 2, 
+and therefore the length of a vector t in At is minimized when t - gt and is monotone 
+in the distance from t to gr. Thus, if the old constraint is not binding, then tt+ -- gt, 
+since otherwise the solution could be improved by moving tt+ a little bit toward gr. But 
+the old constraint requires that (tt ß tt+x) _> IItll =, and if tt+l = 7t = lItxt/lltll, this 
+t . Rearranging, we get lIt(tt. 3t) _> Ilr. tll=lltll = > 0 
+means that tt. (lItt/lltll 2) >_ II tll= 
+([[zt[[ > 0 follows from the fact that the data is linearly separable, and IIwtll > 0 follows 
+from the fact that there was at least one previous mistake). But since trial t was a mistake, 
+lIt (tt ß œt) <_ 0, a contradiction. [-] 
+Now we' re ready to prove the mistake bound. 
+Theorem 3 Choose m  N, and a sequence (  , lI ) , . . . , ( œ, , li, ) of pattern- 
+classification pairs in R n x {-1, +1}. Let/r/ =maxt IIr'tll. f there is a weight vector 
+ff such that lit ( ff ß gt ) >_ 1 for all 1 _< t < m, then the number of mistakes made by 
+ROMMA on (, li), . . . , (œm, l/m) is at most WII11 . 
+Proof: First, we claim that for all t, ff G Hr. This is easily seen since ff satisfies all the 
+constraints that are ever imposed on a weight vector, and therefore all relaxations of such 
+constraints. Since tt is the smallest element of Ht, we have II t ll _< 
+=  = 1/R which implies IIV=ll ' > 
+We have  xs/llxll  and therefore II =l X/llsll  
+" 2 
+1/R e. We claim that if any trial t > 1 is a mistake, then IIt+sll  IIll + x/W. This 
+will imply by induction that after M mistakes, the squed length of the algorithm' s weight 
+vector is at least M/R e, which, since all of the algorithm's weight vectors e no longer 
+than , will complete the proof. 
+Bt 
+Figure 2: At, Bt , and Pt 
+Choose an index t > 1 of a trial in which a mistake 
+is made. Let At = {t: lit (t' Zt) = 1} and Bt = 
+{: (. t) - 11,ll}. By Lemmas 1 and 2, 
+tt +   At ffl tt. 
+The distance from tt to At (call-it Pt) satisfies 
+IItll -II,l---j -> ' (3) 
+since the fact that there was a mistake in trial t im- 
+plies lIt ('t ß tt) _< 0. Also, since tt+  At, 
+[[Wtq-1- wtll _> pt. (4) 
+502 Y. Li and P M. Long 
+Because tt is the normal vector of Bt and tt+l G Bt, we have 
+[l+111  -II[I 2 + [1+1 - 11  
+ -IIll --I1+1- ell  _> d >_ 1/R2, 
+Thus, applying (3) and (4), we have II t+lll e- e - 
+which, as discussed above, completes the proof. [-] 
+Using the fact, easily proved using induction, that for all t, Pt C_ Ht, we can easily prove 
+the following, which complements analyses of the maximum margin algorithm using inde- 
+pendence assumptions [1, 14, 12]. Details are omitted due to space constraints. 
+Theorem 4 Choose m e N, and a sequence (1, Yl),'", (7m, Ym) of pattern- 
+classification pairs in R n x {-1, +1}. Let R =maxt IItll. If there is a weight vector 
+ff such that Yt(ff ß gt) _> l for all 1 < t _< rn, then the number of mistakes made by the 
+ideal online maximum margin algoritmon (l, Yl), " ' , (gin, Ym) is at most R2 IIll e. 
+In the proof of Theorem 3, if an update is made and yt (tt ß gt) < 1 - d instead of yt (tt . 
+zt) _< 0, then the progress made can be seen to be at least de/R e. This can be applied to 
+prove the following. 
+Theorem 5 Choose d > O, rn e N, and a sequence ( gl , Yi ) , ' " , (gin, Ym ) of pattern- 
+classification pairs in R n x {- 1, + 1 }. Let R =maxt [lt 1[. If there is a weight vector ff 
+such that Yt (if' ;t )  1 for all 1 < t < m, then if ( 1, Yl ),''', ( grn, Yrn ) are presented on 
+line the number of trials in which aggressive ROMMA has yt(tt ß t) < 1 -- d is at most 
+Theorem 5 implies that, in a sense, repeatedly cycling through a dataset using aggressive 
+ROMMA will eventually converge to SVM; note however that bias is not considered. 
+3 An efficient implementation 
+When the prediction of ROMMA differs from the expected label, the algorithm chooses 
+ to At+l = . -- 
+tt+l to minimize II t+ll] subject b, where A = and b - 
+(titStile / . Simple calculation shows that 
+t+l 
+= Ar(AAr)-xb 
+_ (IItllelltll e  yt(ft &t) 
+IIt ,lell II e- (t:--) *+ ( 
+t e t t 
+11 11 (y - ( ß 
+(5) 
+II'=11'll=-u'("') and dt -- 
+If on trials t in which a mistake is made, ct = 
+II*[l=(u*-(*'*)) and on other trials ct = landdt = 0, then always tt+l = ctttq-dt t 
+lit-, II 11, II 3_ (, .r-,) , ß 
+Note that based on Lemmas 1 and 2, the denominators in (5) will never be equal to zero. 
+Since the computations required by ROMMA involve inner products together with a few 
+operations on scalars, we can apply the kernel method to our algorithm, efficiently solving 
+the original problem in a very high dimensional space. Computationally, we only need to 
+modify the algorithm by replacing each inner product computation (i ß j) with a kernel 
+function computation/E(Zi, ;j). 
+To make a prediction for the tth trial, the algorithm must compute the inner product between 
+œt and prediction vector tt. In order to apply the kernel function, as in [1, 3], we store each 
+prediction vector 7t in an implicit manner, as the weighted sum of examples on which 
+The Relaxed Online Maximum Margin Algorithm 503 
+mistakes occur during the training. In particular, each tt is represented as 
+\j= j= \,=j+ 
+The above formula may seem daunting; however, making use of the recurrence (tt+ 1 ß ;) -- 
+ct (t ß :if) + dt (œt ß Z), it is obvious that the complexity of our new algorithm is similar to 
+that of perceptton algorithm. This was born out by our experiments. 
+The implementation for aggressive ROMMA is similar to the above. 
+4 Experiments 
+We did some experiments using the ROMMA and aggressive ROMMA as batch algorithms 
+on the MNIST OCR database. 2 We obtained a batch algorithm from our online algorithm 
+in the usual way, making a number of passes over the dataset and using the final weight 
+vector to classify the test data. 
+Every example in this database has two parts, the first is a 28 x 28 matrix which rep- 
+resents the image of the corresponding digit. Each entry in the matrix takes value from 
+{0,..-, 255}. The second part is a label taking a value from {0,.-., 9}. The dataset 
+consists of 60,000 training examples and 10,000 test examples. We adopt the following 
+polynomial kernel: K (Zi, Zj): (1 + (œi- j)) /. This corresponds to using an expanded 
+collection of features including all products of at most d components of the original fea- 
+ture vector (see [14]). Let us refer to the mapping from the original feature vector to the 
+expanded feature vector as . Note that one component of () is always 1, and therefore 
+the component of the weight vector corresponding to that component can be viewed as a 
+bias. In our experiments, we set t = () rather than  to speed up the learning of the 
+coefficient corresponding to the bias. We chose d = 4 since in experiments on the same 
+problem conducted in [3, 2], the best results occur with this value. 
+To cope with multiclass data, we trained ROMMA and aggressive ROMMA once for each 
+of the 10 labels. Classification of an unknown pattern is done according to the maximum 
+output of these ten classifiers. 
+As every entry in the image matrix takes value from {0, ß ß., 255}, the order of magnitude 
+of K (œ, œ) is at least 1026, which might cause round-offerror in the computation of ci and 
+di. We scale the data by dividing each entry with 1100 when training with ROMMA. 
+Table 1: Experimental results on MNIST data 
+T=I T=2 T=3 T=4 
+Err MisNo Err MisNo Err MisNo Err MisNo 
+percep 2.84 7970 2.27 10539 1.99 11945 1.85 12800 
+voted-percep 2.26 7970 1.88 10539 1.76 11945 1.69 12800 
+ROMMA 2.48 7963 1.96 9995 1.79 10971 1.77 11547 
+agg-ROMMA 2.14 6077 1.82 7391 1.71 7901 1.67 8139 
+agg-ROMMA (NC) 2.05 5909 1.76 6979 1.67 7339 1.63 7484 
+Since the performance of online learning is affected by the order of sample sequence, all 
+the results shown in Table 1 average over 10 random permutations. The columns marked 
+2National Institute for Standards and Technology, special database 3. 
+http://www. research.att.com/yann/ocr for information on obtaining this dataset. 
+See 
+504 Y. Li and P M. Long 
+"MisNo" in Table 1 show the total number of mistakes made during the training for the 10 
+labels. Although online learning would involve only one epoch, we present results for a 
+batch setting until four epochs (T in Table 1 represents the number of epochs). 
+To deal with data which are linearly inseparable in the feature space, and also to improve 
+generalization, Friess et al [4] suggested the use of quadratic penalty in the cost function, 
+which can be implemented using a slightly different kernel function [4, 5]: ](:k, :j) = 
+]C (:k, :j) + 6j, where j is the Kronecker delta function. The last row in Table 1 is the 
+result of aggressive ROMMA using this method to control noise ( = 30 for 10 classifiers). 
+We conducted three groups of experiments, one for the perceptron algorithm (denoted "per- 
+cep"), the second for the voted perceptron (denoted "voted-percep") whose description is 
+in [3], the third for ROMMA, aggressive ROMMA (denoted "agg-ROMM'), and aggres- 
+sive ROMMA with noise control (denoted "agg-ROMMA(NC)"). Data in the third group 
+are scaled. All three groups set t = (). 
+The results in Table 1 demonstrate that ROMMA has better performance than the standard 
+perceptron, aggressive ROMMA has slightly better performance than the voted perceptron. 
+Aggressive ROMMA with noise control should not be compared with perceptrons without 
+noise control. Its presentation is used to show what performance our new online algorithm 
+could achieve (of course it's not the best, since all 10 classifiers use the same ). A remark- 
+able phenomenon is that our new algorithm behaves very well at the first two epochs. 
+References 
+[1] B. E. Boser, I. M. Guyon, and V. N. Vapnik. A training algorithm for optimal margin classifiers. 
+Proceedings of the 1992 Workshop on Computational Learning Theory, pages 144-152, 1992. 
+[2] C. Cortes and V. Vapnik. Support-vector networks. Machine Learning, 20(3):273-297, 1995. 
+[3] Y. Freund and R. E. Schapire. Large margin classification using the perceptton algorithm. 
+Proceedings of the 1998 Conference on Computational Learning Theory, 1998. 
+[4] T T. Friess, N. Cristianini, and C. Campbell. The kernel adatron algorithm: a fast and simple 
+learning procedure for support vector machines. In Proc. 15th lnt. Conf. on Machine Learning. 
+Morgan Kaufman Publishers, 1998. 
+[5] S.S. Keerthi, S. K. Shevade, C. Bhattacharyya, and K. R. K. Murthy. A fast iterative nearest 
+point algorithm for support vector machine classiifer design. Technical report, Indian Institute 
+of Science, 99. TR-ISL-99-03. 
+[6] Adam Kowalczyk. Maximal margin perceptton. In Smola, Bartlett, Scholkopf, and Schuur- 
+mans, editors, Advances in Large Margin Classifiers, 1999. MIT-Press. 
+[7] N. Littlestone. Learning quickly when irrelevant attributes abound: a new linear-threshold 
+algorithm. Machine Learning, 2:285-318, 1988. 
+[8] N. Littlestone. Mistake Bounds and Logarithmic Linear-threshold Learning Algorithms. PhD 
+thesis, UC Santa Cruz, 1989. 
+[9] John C. Platt. Fast training of support vector machines using sequential minimal optimization. 
+In B. Scholkopf, C. Burges, A. Smola, editors, Advances in Kernel Methods: Support Vector 
+Machines, 1998. MIT Press. 
+[10] F. Rosenblatt. The perceptton: A probabilistic model for information storage and organization 
+in the brain. PsychologicalReview, 65:386-407, 1958. 
+[ 11] F. Rosenblatt. Principles ofNeurodynamics: Perceptrons and the Theory of Brain Mechanisms. 
+Spartan Books, Washington, D.C., 1962. 
+[12] J. Shawe-Taylor, P. Bartlett, R. Williamson, and M. Anthony. A framework for structural risk 
+minimization. In Proc. of the 1996 Conference on Computational Learning Theory, 1996. 
+[ 13] V. N. Vapnik. Estimation of Dependencies based on Empirical Data. Springer Verlag, 1982. 
+[14] V. N. Vapnik. The Nature of StatisticalLearning Theory. Springer, 1995. 

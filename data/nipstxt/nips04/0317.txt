@@ -1,0 +1,365 @@
+II 
+Extracting and Learning an Unknown Grammar with 
+Recurrent Neural Networks 
+C.L.Giles*, C.B. Miller 
+NEC Research Institute 
+4 Independence Way 
+Princeton, N.J. 08540 
+giles researchnj.nec.com 
+D. Chen, G.Z. Sun, H.H. Chen Y.C. Lee 
+*Institute for Advanced Computer Studies 
+Dept. of Physics and Astronomy 
+University of Maryland 
+College Park, Md 20742 
+Abstract 
+Simple second-order recurrent networks are shown to readily learn small known 
+regular grammars when trained with positive and negative strings examples. We 
+show that similar methods are appropriate for learning unknown grmnmars from 
+examples of their strings. The training algorithm is an incremental real-time, re- 
+current learning (RTRL) method that computes the complete gradient and updates 
+the weights at the end of each string. After or during training, a dynamic clustering 
+algorithm extracts the production rules that the neural network has learned. The 
+methods are illustrated by extracting rules from unknown deterministic regular 
+grammars. For many cases the extracted grammar outperforms the neural net from 
+which it was extracted in conectly classifying unseen strings. 
+1 INTRODUCTION 
+For many masons, there has been a long interest in "language" models of neural networks; 
+see [Elman 1991] for an excellent discussion. The orientation of his work is somewhat dif- 
+ferent. The focus here is on what ate good measures of the computational capabilities of 
+recurrent neural networks. Since currently there is little theoretical knowledge, what prob- 
+lems would be "good" experimental benchmarks? For discrete inputs, a natural choice 
+would be the problem of learning formal grammars - a "hard" problem even for regular 
+grammars [Anglnin, Smith 1982]. Strings of grammars can be presented one character at a 
+time and strings can be of arbitrary length. However, the strings themselves would be, for 
+the mot part, feature independent. Thus, the learning capabilities would be, for the most 
+part, feature independent and, therefore insensitive to featme extraction choice. 
+The learning of known grammars by recurrent neural networks has shown promise, for ex- 
+ample [Cleeresman, et al 1989], [Giles, et al 1990, 1991, 1992], [-Pollack 1991], [Sun, et al 
+1990], [Watroua, Kuhn 1992a, b], [Williams, Zipset 1988]. But what about learning un- 
+known grammars? We demonstrate in this paper that not only can unknown grammaxs be 
+learned, but it is possible to extract the grammar from the neural network, both during and 
+after training. Furthermore, the extraction process requires no a priori knowledge about the 
+317 
+318 Giles, Miller, Chen, Sun, Chen, and Lee 
+grammar, except that the grammar's representation can be regular, which is always true for 
+a grammar of bounded _string length; which is the grammatical "trainm sample." 2 FORMAL GRAMMARS 
+We give a brief ucfion to granunars; for a more detailed explanation see [Hilyzmfi & 
+Ullman, 1979]. We define a granunar as a 4-tuple (N, V, P, $) where N and V are nonter- 
+minal and terminal vocabularies, I a is a finite set of production rules and $ is the start sym- 
+bol. All grammars we discuss are deterministic and regular. For every grammar there exists 
+a language - the set of strings the grammar generates - and an automaton - the machine that 
+recogllizes (classifie$) the grammar's strings. For regular grammars, the recog!liing ma- 
+chine is a determini.qtic finite automaton (DFA). There exists a one-to-one mapping be- 
+tween a DFA and its grammar. Once the DFA is known, the production rules are the 
+ordered triples (node, arc, node). 
+Grammatical inference [Fu 1982] is deftlied as tile problem of finding (learning) a grainmar 
+from a finite set of string8, often called the training sample. One can interpret this problem 
+as devising an inference engine that learns and extracts the granunar, see laigure 1. 
+UNKNOWN 
+GRAMMAR 
+INFERENCE 
+ENGINE 
+(NEURAL 
+Figure 1: Grammatical inference 
+For a training sample of positive and negative strings and no knowledge of the nnlcnowll 
+regular grammar, the problem is NP-complete (for a summary, see [Angloin, Smith 1982]). 
+It is possible to construct an inference enne that consists of a recurrent mural network and 
+a rule extraction process that yields an inferred granunar. 
+3 RECURRENT NEURAL NETWORK 
+3.1 ARCHITECTURE 
+Our recurrent neural network is quite simple and can be considered as a simplified version 
+of the model by [Elman 1991]. For an excellent discussion of recurrent networks full of ref- 
+erences that we don't have room for here, see [Hertz, et al 1991]. 
+A fairly general expression for a recurrent network (which has the same computational 
+power as a DFA) is: 
+S t+l = F(Sj,/t;ItO 
+i 
+where F is a nonlinearity that maps the state neuron S t and the input neuron/t at time t to 
+the next state st+lat time t+l. The weight matrix W pammeterizes the mapping and is nsu- 
+ally learned (however, it can be totally or partially program). A DFA has an analogous 
+mapping but doea not use W. For a recurrent neural network we define the mapping F and 
+order of the mapping in the following manner ['Lee, et al 1986]. For a first-order recurrent 
+net: 
+where N is the number of hidden state neurons and L the number of input neurons; Wij and 
+Yij are the real-valued weights for respectively the state and input neurons; and c is a stan- 
+Extracting and Learning an Unknown Grammar with Recurrent Neural Networks 
+N œ 
+$t+l (Z $f' 
+i = o l/Vii + Yi 
+-1 t` 
+dard sigmoid discriminant function. The values of the hidden state neurons S t are defined 
+in  finite N-dimensional space [0,1] N. Assuming all weights are connected and the net 
+is fully recurrent, the weight space complexity is bounded by O(N2+NL). Note that the in- 
+put and state neurons are not tie same neurons. This representation has the capability, as- 
+sunning sufficiently large N and L, to represent any state machine. Note that there are non- 
+trainable unit weights on the recurrent feedback connections. 
+The natural second-order extension of thi. recurrent net is: 
+319 
+N, L 
+i t` := 
+rN, L x 
+c; tt 
+where certain state neurons become input neurons. Note that the weights Wijt` modify a 
+product of the hidden Sj and input It, neurons. This quadratic form directly represents the 
+state transition diagrami of a state automata process -- (input, state)  (next-state) and thus 
+makes the state transition mapping very easy to learn. It also permits the net to be directly 
+programmed to be a particular DFA. Unpublished experiments comparing first and second 
+order recurrent nets confirm thi.q ease-in-learning hypothesis. The space complexity (num- 
+ber of weights) is O(LN2). For L<<N, both first- and second-order are of the same complex- 
+ity, O(N2). 
+3.2 SUPERVISED TRAINING & ERROR FUNCTION 
+The error function is defined by a special recurrent output neuron which is checked at the 
+end of each string presentation to see if it is on or off. By convention this output neuron 
+should be on if the string is a positive example of the grammar and off if negative. In prac- 
+tice an error tolerance decides the on and off criteria; see [Giles, et al 1991] for detail. [If a 
+multiclass recognition is desired, another error scheme using many output neurons can be 
+constructed.] We define two error cases: (1) the network fail,q to reject a negative string (the 
+output neuron is on); (2) the network fails to accept a positive string (the output neuron is 
+off). This accept or reject occurs at the end of each string - we define this problem as infer- 
+ence versus prediction.There is no prediction of the next character in the string sequence. 
+As such, inference is a more difficult problem than prediction. If knowledge of the classi- 
+fication of every substring of every string exists and alphabetical training order is pre- 
+served, then the prediction and inference problems are equivalent. 
+The training method is real-time recurrent training (RTRL). For more details see [-Williams, 
+Zipser 1988]. The error function is defined as: 
+E = (1/2) (Target-S/o) 2 
+where So / is the output neuron value at the final time step t=f when the final character is 
+presented and Target is the desired value of (1,0) for (positive, negative) examples. Using 
+gradient descent training, the weight update rule for a second-order recurrent net becomes: 
+Wlm n =-(zV E = (z(Target-S/o).3Wlm n 
+where R is the learning rate. From the recursive network state equation we obtain the rela- 
+tionship between the derivatives ors t and st+l: 
+320 Giles, Miller, Chen, Sun, Chen, and Lee 
+_ ,as; 
+aWlm n o'. ilStm - ']tn- ' + Wijk k- 
+where   e derivative of e sct on. s i on- leing  
+p derivatives ccated itemfively  eh e sp. t ast=øWlm = O. Note  
+ a comple is O2) wNch cm  proNbifive for lge N d  co. 
+It  pomt to note at for  ining cd hem, e  em is clated  
+ven ove. 
+33 PRESENTAON OF TRNG SPLES 
+ aining m co of a fies of sulus-s p, whe  sus  a 
+sg of O's  l's, d e o  eider "1" for positive exples or"0" for negative 
+eples. e sifive  negative sgs  gemt by  unknown sour  
+(ated by a pro at as mdom m) prior to ning. At each &s 
+e step, o mbol om  sg acfivas one input neon,  or put neom 
+ ro (one-hot encing). Traing  on-line a occurs after each singpresenHon; 
+there is no toal error acculaon as in batch learMng; cont this to  batch me 
+of aus, K 1992].  ex e mbol is ded to  sg pht to ve  
+o mo power  debug  st final neuron ste comfiom s s m- 
+oor put neuron md ds not   comple of e DFA (oy N 2 mo 
+wei). e quen of s pnted dg ining is ve importer  y 
+ves a bi  leing. We have oed tomy exmen at &ca at ining 
+ phfi or wi m equ bufion of sifive md negative eples is 
+much fr d converg mo on  om or psenmfion. 
+ training algoHt  on-li, increnl. A sm poon of e ining t  p- 
+leed  pnd to  mo.  t  ed at  end of each sg pn- 
+fion. On e net h leed this sm t or acs a mum numar of e (t 
+fo g, 10 for een ned), a sm nnmr of s (10) clsified 
+comy  chon om e st ofe ining t  aed to  p-selecd set. s 
+ sg cmem pven  ining pmdu om vg  o t f to- 
+w my 1 minima at e sclsed sgs may pm. oer cle of ep- 
+och ining    end g set. H e t cfiy clsffies  e 
+ining da,  net is sd to converge.  to nmr of cles at e mo  r- 
+d to m  so d, usury to out 20. 
+4 EXTCTION (DFA GENEON) 
+As the network is training (or after training), we apply a procedure we call dynamic state 
+partitioning (dsp) for extracting the network's current conception of the DFA it is learning 
+or has learned. The role extraction process has the following steps: 1) clustering of DFA 
+states, 2) constructing a transition diagram by connecting these states together with the al- 
+phabet-labelled transitions, 3) putting these transitions together to make the full digraph - 
+forming cycles, and 4) reducing the digraph to a minimal representation. The hypothesis is 
+that during training, the network bedns to partition (or quantize) its state space imo fairly 
+well-separated, distinct regions or clusters, which represent corresponding states in some 
+DFA. See [Cleeremans, et al 1989] and [Watrous and Kuhn 1992a] for other clustering 
+methods. A simple way of finding these clusters is to divide each neuron's range [0,1] into 
+q partitions of equal size. For N state neurons, qN partitions. For example, for q=2, the val- 
+ues of st_>0.5 are 1 and st<.0.5 are 0q and there are 2N regions with 2 N possible values. Thus 
+for N hidden neurons, there exist q' possible regions. The DFA is constructed by generating 
+Extracting and Learning an Unknown Grammar with Recurrent Neural Networks 321 
+a state transition diagram -- associating an input symbol with a set of hidden neuron parti- 
+tions that it is currently in and the set of neuron partitions it activates. This ordered triple 
+is also a production rule. The initialpartition, or start state of the DFA, is determined from 
+the initial value of S t=ø. If the next input symbol maps to the same partition we assume a 
+loop in the DFA. Otherwise, a new state in the DFA is formed.This constructed DFA may 
+contain a maximum ofq N states; in practice it is usually much less, since not all neuron par- 
+tition sets are ever reached. This is basically a tree pruning method and different DFA could 
+be generated based on the choice of branching order. The extracted DFA can then be re- 
+duced to its minimal size using standard minimization algorithms (an O(N 2) algorithm 
+where N is the number of DFA states) [Hopcroft, Ullman 1979]. [This minimization pro- 
+cedure does not change the grammar of the DFA; the unminimized DFA has same time 
+complexity as the minimized DFA. The process just rids the DFA of redundant, unneces- 
+sary states and reduces the space complexity.] Once the DFA is known, the production rules 
+are easily extracted. 
+Since many partition values of q are available, many DFA can be extracted. How is the q 
+that gives the best DFA chosen? Or viewed in another way, using different q, what DFA 
+gives the best representation of the grammar of the training set? One approach is to use dif- 
+ferent q's (starting with q=2), different branching order, different runs with different num- 
+bers of neurons and different initial conditions, and see if any similar sets of DFA emerge. 
+Choose the DFA whose similarity set has the smallest number of states and appears most 
+often - an Occam's razor assumption. Define the guess of the DFA as DFAg. This method 
+seems to work fairly well. Another is to see which of the DFA give the best performance 
+on the training set, assuming that the training set is not perfectly leamed. We have little ex- 
+perience with this method since we usually train to perfection on the training set. It should 
+be noted that this DFA extraction method may be applied to any discrete-time recurrent 
+net, regardless of network order or number of hidden layers. Preliminary results on first- 
+order recurrent networks show that the same DFA are extracted as second-order, but the 
+first-order nets are less likely to converge and take longer to converge than second-order. 
+5 SIMULATIONS - GRAMMARS LEARNED 
+Many different small (< 15 states) regular known grammars have been learned successfully 
+with both first-order [Cleeremans, et al 1989] and second-order recurrent models [Giles, et 
+al 91] and [Watrous, Knhn 1992a]. In addition [Giles, et al 1990 & 1991] and [Watrous, 
+Kulm 1992b] show how corresponding DFA and production rules can be extracted. How- 
+ever for all of the above work, the grammars to be learned were already_ known. What is 
+more interesting is the learning of unknown grammars. 
+In figure 2b is a randomly generated minimal 10-state regular grammar created by a pro- 
+gram in which the only inputs are the number of states of the unm'mimized DFA and the 
+alphabet size p. (A good estimate of the number of possible unique DFA is (n2nt/n!) 
+[Alon, et al 1991] where n is number of DFA states) The shaded state is the start state, filled 
+and dashed arcs represent 1 and 0 transitions and all final states have a shaded outer circle. 
+This unknown (honestly, we didn't look) DFA was learned with both 6 and 10 hidden state 
+neuron second-order recurrent nets using the first 1000 strings in alphabetical training order 
+(we could ask the unknown granunar for strings). Of two runs for both 10 and 6 neurons, 
+both of the 10 and one of the 6 converged in less than 1000 epochs. (The initial weights 
+were all randomly chosen between [1,-1] and the learning rate and momentum were both 
+0.5.) Figure 2a shows one of the unminimized DFA that was extracted for a partition pa- 
+rameter of q=2. The minimized 10-state DFA, figure 3b, appeared for q=2 for one 10 neu- 
+ron net and for q=2,3,4 of the converged 6 neuron net. Consequently, using our previous 
+criteria, we chose this DFA as DFAg, our guess at the unknown grammar. We then asked 
+322 
+Giles, Miller, Chen, Sun, Chen, and Lee 
+I 
+I 
+I 
+! 
+I 
+! 
+I 
+i 
+I 
+I 
+! 
+I 
+% 
+% 
+I 
+I 
+t I 
+t I 
+# I 
+# 
+% 
+Figures 2a & 2b. Unminimized and minimized 10-state random grmnmar. 
+the program what the grammar was and discovered we were correct in our guess. The other 
+minimized DFA for different q's were all unique and usually very large (number of states 
+> 100). 
+The trained recurrent nets were then checked for generalization errors on all strings up to 
+length 15. All made a small number of errors, usually less than 1% of the total of 65,535 
+strings. However, the correct extracted DFA was perfect and, of course, makes no errors on 
+strings of any length. Again, [Giles, et a11991,1992], the extracted DFA outperforms the 
+trained neural net from which the DFA was extracted. 
+Figures 3a and 3b, we see the dynamics of DFA extraction as a 4 hidden neuron neural net- 
+work is learning as a function of epoch and partition size. This is for grammar Tomita-4 
+[Giles, et al 1991, 1992]] - a 4-state grammar that rejects any string which has more than 
+three O's in a row. The number of states of the extracted DFA starts out small, then increas- 
+es, and finally decreases to a constant value as the grammar is learned. As the partition q of 
+the neuron space increases, the number of minimized and unm'mimized states increases. 
+When the grammar is learned, the number of minimized states becomes constant and, as 
+expected, the number of minimized states, independent of q, becomes the number of states 
+in the grammar's DFA - 4. 
+6 CONCLUSIONS 
+Simple recurrein neural networks are capable of learning small regular unknown grmnmars 
+rather easily and generalize fairly well on unseen grammatical strings. The training results 
+are fairly independent of the initial values of the weights and numbers of neurons. For a 
+well-trained neural net, the generalization perfolmance on long unseen strings can be per- 
+fect. 
+Extracting and Learning an Unknown Grammar with Recurrent Neural Networks 323 
+Unminimized Minimized 
+triangles q=4 
+dots q=2 
+I I I I I I 
+20 30 40 50 60 70 
+Epoch 
+o lO 
+ lO - 
+o t 
+o lO 
+! I I I ! I 
+20 30 40 50 60 70 
+Epoch 
+Figures 3a & 3b. Size of number of states (unminimized and minimized) of DFA 
+versus training epoch for different partition parameter q. The correct state size is 4. 
+A heuristic algorithm called dynamic state partitioning was created to extract determini.qtic 
+finite state automata (DFA) from the neural network, both during and after training. Using 
+a standard DFA minimization algorithm, the extracted DFA can be reduced to an equivalent 
+minimal-state DFA which has reduced space (not time) complexity. When the source or 
+generating grammar is unknown, a good guess of the unknown grammar DFA can be ob- 
+tained from the minimal DFA that is most often extracted from different runs vath different 
+numbers of neurons and initial conditions. From the extracted DFA, minimal or not, the 
+production rules of the learned grammar are evident. 
+There are some interesting aspects of the extracted DFA. Each of the unminimized DFA 
+seems to be unique, even those with the same number of states. For recmxent nets that con- 
+verge, it is often possible to extract DFA that are perfect, i.e. the grammar of the unknown 
+source grammar. For these cases all unminimized DFA whose minimal sizes have the same 
+number of states constitute a large equivalence class of neural-net-generated DFA, and 
+have the same performance on string classification. This equivalence class extends across 
+neural networks which vary both in size (number of neurons) and initial conditions. Thus, 
+the extracted DFA gives a good indication of how well the neural network learns the gram- 
+mar. 
+In .fact, for most of the trained neural nets, the extracted DFA outperforms the 
+trained neural networks in classification of unseen strings. (By definition, a perfect 
+DFA will correctly classify all unseen strings). This is not surprising due to the possibility 
+of error accumulation as the neural network dassifies long unseen strings [Pollack 1991]. 
+However, when the neural network has leamed the grammar well, its generalization perfor- 
+mance can be perfect on all strings tested [Giles, et al 1991, 1992]. Thus, the neural network 
+can be considered as a tool for extracting a DFA that is representative of the unknown 
+grammar. Once the DFA s is obtained, it can be used independently of the trained neural 
+network. 
+The learning of small DFA using second-order techniques and the full gradiem computa- 
+tion reported here and elsewhere [Giles, et al 1991, 1992], [Watrous, Kuhn 1992a, 1992b] 
+give a strong impetus to using these techniques for learning DFA. The question of DFA 
+state capacity and scalability is unresolved. Further work must show how well these ap- 
+324 Giles, Miller, Chen, Sun, Chen, and Lee 
+proaches can model grammars with large numbers of states and establish a theoretical and 
+experimental relationship between DFA state capacity and neural net size. 
+Acknowledgments 
+The authors acknowledge useful and helpful discussions with E. Baum, M. Goudreau, G. 
+Kulm, K. Lang, L. Valiant, and R. Watrous. The University of Maryland authors gratefully 
+acknowledge partial support from AFOSR and DARPA. 
+References 
+N. Alon, A.K. Dewdney, and T.j. Ott, 'Efficient Simtdation of Finite Automata by Neural 
+Nets, Journal oftheACM, Vol 38, p. 495 (1991). 
+D. Angluin, C.H. Smith, Inductive Inference: Theory and Methods, ACM Computing Sur- 
+veys, Vol 15, No 3, p. 237, (1983). 
+A. Cleeremans, D. Setvan-Schreiber, J. McClelland, Finite State Automata and Simple Re- 
+current Recurrent Networks, Neural Computation, Vol 1, No 3, p. 372 (1989). 
+J.L. Elman, Distributed Representations, Simple Recurrein Networks, and Grammatical 
+Structure, Machine Learning, Vol 7, No 2/3, p. 91 (1991). 
+K.S. Fu, Syntactic Pattern Recognition and Applications, Prentice-Hall, Englewood Cliffs, 
+N.J. Ch. 10 (1982). 
+C.L. Giles, G.Z. Sun, H.H. Chen, Y.C. Lee, D. Chen, Higher Order Recurrent Networks & 
+Grammatical Inference, Advances in Neural Information Systems 2, D.S. Touretzlcy (ed), 
+Morgan Kaufmann, San Mateo, Ca, p.380 (1990). 
+C.L. Giles, D. Chen, C.B. Miller, H.H. Chen, G.Z. Sn, Y.C. Lee, Grammatical Inference 
+Using Second-Order Recurrent Neural Networks, Proceedings of the International Joint 
+Conference on Neural Networks, I!N.91CH3049-4, Vol 2, p.357 (1991). 
+C.L. Giles, C.B. Miller, D. Chen, H.H. Chen, G.Z. Sun, Y.C. Lee, Learning and Extracting 
+Finite State Automata with Second-Order Recurrein Neural Networks, Neural Computa- 
+tion, accepted for publication (1992). 
+J. Hertz, A. Krogh, R.G. Palmer, Introduction to the Theory of Neural Computation, Add- 
+ison-Wesley, Redwood City, Ca., Ch. 7 (1991). 
+J.E. Hopcroft, J.D. Ullman, Introduction to Automata Theory, Languages, and Computa- 
+tion, Addison Wesley, Reading, Ma. (1979). 
+Y.C. Lee, G. Doolen, H.H. Chen, G.Z. Sun, T. Maxwell, H.Y. Lee, C.L. Giles, Machine 
+Learning Using a Higher Order Correlational Network, Physica D, Vol 22-D, No 1-3, p. 276 
+(1986). 
+J.B. Pollack, The Induction of Dynamical Recognizers, Machine Learning, Vol 7, No 2/3, 
+p. 227 (1991). 
+G.Z. Sun, H.H. Chen, C.L. Giles, Y.C. Lee, D. Chen, Connectionist Pushdown Automata 
+that Learn Context-Free Grammars, Proceedings of the International Joint Conference on 
+Neural, Washington D.C., Lawrence Erlbaum Pub., Vol I, p. 577 (1990). 
+R.L. Watrous, G.M. Kuhn, Induction of Finite-State Languages Using Second-Order Re- 
+current Networks, Neural Computation, accepted for publication (1992a) and these pro- 
+ceedings, (1992b). 
+RJ. Williams, D. Zipser, A Learning Algorithm for Continually Running Fully Recurrent 
+Neural Networks, Neural Computation, Vol 1, No 2, p. 270, (1989). 

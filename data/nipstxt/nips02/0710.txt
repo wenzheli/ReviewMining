@@ -1,0 +1,337 @@
+710 Pineda 
+Time Dependent Adaptive Neural Networks 
+Fernando J. Pineda 
+Center for Microelectronics Technology 
+Jet Propulsion Laboratory 
+California Institute of Technology 
+Pasadena, CA 91109 
+ABSTRACT 
+A comparison of algorithms that minimize error functions to train the 
+trajectories of recurrent networks, reveals how complexity is traded off for 
+causality. These algorithms are also related to time-independent 
+formalisms. It is suggested that causal and scalable algorithms are 
+possible when the activation dynamics of adaptive neurons is fast 
+compared to the behavior to be learned. Standard continuous-time 
+recurrent backpropagation is used in an example. 
+1 INTRODUCTION 
+Training the time dependent behavior of a neural network model involves the minimization 
+of a function that measures the difference between an actual trajectory and a desired 
+trajectory. The standard method of accomplishing this minimization is to calculate the 
+gradient of an error function with respect to the weights of the system and then to use the 
+gradient in a minimization algorithm (e.g. gradient descent or conjugate gradient). 
+Techniques for evaluating gradients and performing minimizations are well developed in the 
+field of optimal control and system identification, but are only now being introduced to the 
+neural network community. Not all algorithms that are useful or efficient in control problems 
+are realizable as physical neural networks. In particular, physical neural network algorithms 
+must satisfy locality, scaling and causality constraints. Locality simply is the constraint that 
+one should be able to update each connection using only presynaptic and postsynaptic 
+information. There should be no need to use information from neurons or connections that 
+are not in physical contact with a given connection. Scaling, for this paper, refers to the 
+Time Dependent Adaptive Neural Networks 711 
+scaling law that governs the amount of computation or hardware that is required to perform 
+the weight updates. For neural networks, where the number of weights can become very 
+large, the amount of hardware or computation required to calculate the gradient must scale 
+linearly with the number of weights. Otherwise, large networks are not possible. Finally, 
+learning algorithms must be causal since physical neural networks must evolve forwards in 
+time. Many algorithms for learning time-dependent behavior, although they are seductively 
+elegant and computationally efficient, cannot be implemented as physical systems because 
+the gradient evaluation requires time evolution in two directions. In this paper networks that 
+violate the causality constraint will be referred to as unphysical. 
+It is useful to understand how scalability and causality trade off in various gradient evaluation 
+algorithms. In the next section three related gradient evaluation algorithms are derived and 
+their scaling and causality properties are compared. The three algorithms demonstrate a 
+natural progression from a causal algorithm that scales poorly to an a causal algorithm that 
+scales linearly. 
+The difficulties that these exact algorithms exhibit appear to be inescapable. This suggests 
+that approximation schemes that do not calculate exact gradients or that exploit special 
+properties of the tasks to-be-learned may lead to physically realizable neural networks. The 
+final section of this paper suggests an approach that could be exploited in systems where the 
+time scale of the to-be-learned task is much slower than the relaxation time scale of the 
+adaptive neurons. 
+2 ANALYSIS OF ALGORITHMS 
+We will begin by reviewing the learning algorithms that apply to time-dependent recurrent 
+networks. The control literature generally derives these algorithms by taking a variational 
+approach (e.g. Bryson and Ho, 1975). Here we will take a somewhat unconventional 
+approach and restrict ourselves to the domain of differential equations and their solutions. To 
+begin with, let us take a concrete example. Consider the neural system given by the equation 
+dx i n 
+dt - x i +  w i/(x j) + l (1) 
+i=1 
+Where f(.) is a sigmoid shaped function (e.g. tanh(.)) and Iiis an external input This system 
+is awell studied neural model (e.g. Aplevich, 1968; Cowan, 1967; Hopfield, 1984; Malsburg, 
+1973; Sejnowski, 1977). The goal is to find the weight matrix w that causes the states x(t) 
+of the output units to follow a specified trajectory x(t). The actually trajectory depends not 
+only on the weight matrix but also on the external input vector I. To find the weights one 
+minimizes a measure of the difference between the actual trajectory x(t) and the desired 
+trajectory (t). This measure is a functional of the trajectories and a function of the weights. 
+It is given by of t f 
+1 
+E(w,t f,to)= - dt (x i(t)-i(t)) 2 
+ß (2) 
+o 
+where O is the set of output units. We shall, only for the purpose of algorithm comparison, 
+712 Pineda 
+make the following assumptions: (1) That the networks are fully connected (2) That all the 
+interval [to,t f] is divided into q segments with numerical integrations performed using the 
+Euler method and (3) That all the operations are performed with the same precision. This will 
+allow us to easily estimate the amount of computation and memory required for each 
+algorithm relative to the others. 
+2.1 ALGORITHM A 
+If the objective function E is differentiated with respect to w. one obtains 
+=- d t J i(t ) p irs(t ) 
+W rs t 
+o 
+where 
+(3a) 
+where 
+ i(t )- x i(t ) if i  0 (3b) 
+Ji= 0 ifi 0 
+and where x i (3c) 
+P ird'- w 
+To evaluate p,, differentiate equation (1) with respect to w. and observe that the time 
+derivative and the partial derivative with respect to w commute. The resulting equation is 
+dp irs n 
+-- E L ij(X j) p jrs q- $ Jr, 
+dt 
+L o(x j) =-i5 ij+w ijf '(x j) 
+(4a) 
+(4b) 
+s i, = 8irf(X $) (4c) 
+and where 
+The initial condition for eqn. (4a) is p(t o): 0. Equations (1), (3) and (4) can be used to 
+calculate the gradient for a learning rule. This is the approach taken by Williams and Zipser 
+(1989) and also discussed by Pearlmutter(1988). Williams and Zipser further observe that 
+one can use the instantaneous value of p(t) and J(t) to update the weights continually 
+provided the weights change slowly. The computationally intensive part of this algorithm 
+occurs in the integration of equation (4a). There are n 3 components to p hence there are rO 
+equations. Accordingly the amount of hardware or memory required to perform the 
+calculation will scale like n 3. Each of these equations requires a summation over all the 
+neurons, hence the amount of computation (measured in multiply-accumulates) goes like n 4 
+per time step, and there are q time steps, hence the total number of multiply-accumulates 
+scales like n4q Clearly, the scaling properties of this approach are very poor and it cannot 
+be practically applied to very large networks. 
+2.2 ALGORITHM B 
+Rather than numerically integrate the system of equations (4a) to obtain P(O, suppose we 
+write down the formal solution. This solution is 
+Time Dependent Adaptive Neural Networks 713 
+Pits(t) =  Kij(t, to) pjrs(t o) + drKij(t,z) sjs(z) (5a) 
+j=l j=l to 
+The matfix K is defined by the expression 
+K (t t 1) = exp d, L (x (,)) (5b) 
+This matrix is known as the propagator or transition matrix. The expression for p, consists 
+of a homogeneous solution and a particular solution. The choice of initial condition p(to) 
+= 0 leaves only the particular solution. If the particular solution is substituted back into eqn. 
+(3a), one eventually obtains the following expression for the gradient 
+-- - dt d'Ji(t)K i(t,')f( x s(')) (6) 
+i=1 to to 
+To obtain this expression one must observe that sj can be expressed in terms of x,, i.e. use 
+eqn. (4c). This allows the summation over j to be performed trivially, thus resulting in 
+eqn.(6). The familiar outer product form of backpropagation is not yet manifest in this 
+expression. To uncover it, change the order of the integrations. This requires some care 
+because the limits of the integration are not the same. The result is 
+w dx' dt Ji(t)K i(t,)f(x s(')) (7) 
+rs i=l to 
+Inspection of this expression reveals that neither the summation over i nor the integration over 
+x includes x,(0, thus it is useful to factor it out. Consequenfiy equation (7) takes on the 
+familiar outer product form of backpropagation 
+- Y r(t )f (x )) (s) 
+Where yr(t) is defined to be 
+,f tf 
+y =- dt ;i(t)K i(t (9) 
+i=l 
+Equation (8), defines an expression for the gradient, provided we can calculate y,(t) from eqn. 
+(9). In principle, this can be done since the propagator K and the vectorJ are both completely 
+determined by x(t). The computationally intensive part of this algorithm is the calculation 
+of K(t,x) for all values of t and x. The calculation requires the integration of equations of the 
+form 
+dK (t ,) _ L (x (t)) K (t ,) (10) 
+dt 
+for q different values of x. There are n 2 different equations to integrate for each value of x 
+Consequently there are nq integrations to be performed where the interval from t to tf is 
+divided into q intervals. The calculation of all the components of K(t,x), from tf to t, scales 
+like nSq 2, since each integration requires n multiply-accumulates per time step and tere are 
+q time steps. Similarly, the memory requirements scale like nq  . This is because K has n  
+components for each (t,x) pair and there are q such pairs. 
+714 Pineda 
+Equation (10) must be integrated forwards in time from t= 'r to t = trand backwards in time 
+from t= 'r to t = t o. This is because K must satisfy K('r,'r) = 1 (the identity matrix) for all 
+'r. This condition follows from the definition of K eqn. (5b). Finally, we observe that 
+expression (9) is the time-dependent analog of the expression used by Rohwer and Forrest 
+(1987) to calculate the gradient in recurrent networks. The analogy can be made somewhat 
+more explicit by writing K(t,'0 as the inverse K 4 ('r,t). Thus we see that y(t) can be expressed 
+in terms of a matrix inverse just as in the Rohwer and Forrest algorithm. 
+2.3 
+ALGORITHM C 
+The final algorithm is familiar from continuous time optimal control and identification. The 
+algorithm is usually derived by performing a variation on the functional given by eqn. (2). 
+This results in a two-point boundary value problem. On the other hand, we know that y is 
+given by eqn. (9). So we simply observe that this is the particular solution of the differential 
+equation _ dy _ L r(x (t))y +J (11) 
+dt 
+Where L T is the transpose of the matrix defined in eqn. (4b). To see this simply substitute 
+the form for y into eqn. (11) and verify that it is indeed the solution to the equation. 
+The particular solution to eqn. (11) vanishes only if y(tf) = 0. In other words: to obtain Y(0 
+we need only integrate eqn. (11) backwards from the final condition y(t = 0. This is just 
+the algorithm introduced to the neural network community by Pearlmutter (1988). This also 
+corresponds to the unfolding in time approach discussed by Rumelhart et al. (1986), provided 
+that all the equations are discretized and one takes At = 1. 
+The two point boundary value problem is rather straight forward to solve because the 
+equation for x(0 is independent of Y(0. Both x(t) and y(t) can be obtained with n multiply- 
+accumulates per time step. There are q time steps from t o to tfand bothx(t) and y(t) have n 
+components, hence the calculation of x(t) and y(t) scales like n2q. The weight update 
+equation also requires n2q multiply- accumulates. Thus the computational requirements of 
+the algorithm as a whole scale like n2q The memory required also scales like Wq, since it 
+is necessary to save each value of x(t) along the trajectory to compute y(t). 
+2.4 
+SCALING VS CAUSALITY 
+The results of the previous sections are summarized in table 1 below. We see that we have 
+a progression of tradeoffs between scaling and causality. That is, we must choose between 
+a causal algorithm with exploding computational and storage requirements and an a causal 
+algorithm with modest storage requirements. There is no q dependence in the memory 
+requirments because the integral given in eqn. (3a) can be accumulated at each time step. 
+Algorithm B has some of the worst features of both algorithms. 
+Time Dependent Adaptive Neural Networks 715 
+Table 1: Comparison of three algorithms 
+Algorithm Memory 
+Multiply 
+-accumulates 
+diirection of integations 
+A n 3 nnq 
+B nq 2 n3q 2 
+C nq n:q 
+x and p are both forward in time 
+x is forward, K is forward and backward 
+x is forward, y is backward in time. 
+Digital hardware has no difficulties (at least over finite time intervals) with a causal 
+algorithms provided a stack is available to act as a memory that can recall states in reverse 
+order. To the extent that the gradient calculations are carried out on digital machines, it makes 
+sense to use algorithm C because it is the most efficient. In analog VLSI however, it is 
+difficult to imagine how to build a continually running network that uses an a causal 
+algorithm. Algorithm A is attractive for physical implementation because it could be run 
+continually and in real time (Williams and Zipser, 1989). However, its scaling properties 
+preclude the possibility of building very large networks based on the algorithm. Recently, 
+Zipser (1990) has suggested that a divide and conquer approach may reduce the 
+computational and spatial complexity of the algorithm. This approach, although promising, 
+does not always work and there is as yet no convergence proof. How then, is it possible to 
+learn trajectories using local, scalable and causal algorithms? In the next section a possible 
+avenue of attack is suggested. 
+3 EXPLOITING DISPARATE TIME SCALES 
+I assert that for some classes of problems there are scalable and causal algorithms that 
+approximate the gradient and that these algorithms can be found by exploiting the disparity 
+in time scales found in these classes of problems. In particular, I assert that when the time 
+scale of the adaptive units is fast compared to the time scale of the behavior to be learned, it 
+is possible to find scalable and causal adaptive algorithms. A general formalism for doing 
+this will not be presented here, instead a simple, perhaps artificial, example will be presented. 
+This example minimizes an error function for a time dependent problem. 
+It is likely that trajectory generation in motor control problems are of this type. The 
+characteristic time scales of the trajectories that need to be generated are determined by 
+inertia and friction. These mechanical time scales are considerably longer than the electronic 
+time scales that occur in VLSI. Thus it seems that for robotic problems, there may be no need 
+to use the completely general algorithms discussed in section 2. Instead, algorithms that take 
+advantage of the disparity between the mechanical and the electronic time scales are likely 
+to be more useful for learning to generate trajectories. 
+he task is to map from a periodic input I(0 to a periodic output (t). The basic idea is to use 
+the continuous-time recurrent-backpropagation approach with slowly varying time- 
+dependent inputs rather than with static inputs. The learning is done in real-time and in a 
+continuous fashion. Consider a set of n "fast" neurons (i= 1,..,n) each of which satisfies the 
+716 Pineda 
+additive activation dynamics determined by eqn (1). Assume that the initial weights are 
+sufficiently small that the dynamics of the network would be convergent if the inputs I were 
+constant. The external input vector  is applied to the network through the vector I. It has 
+been previously shown (Pineda, 1988) that the ij-th component of the gradient of E is equal 
+to yflf(xfj) where xfj is the steady state solution of eqn. (1) and where yiis a component of 
+the steady state solution of 
+dy _ L ?(x [)y +J (12) 
+dt 
+where the components of L T are given by eqn. (4.b). Note that the relative sign between 
+equations (11) and (12) is what enables this algorithm to be causal. Now suppose that instead 
+of a fred input vector I, we use a slowly varying input I(t/%) where x, is the characteristic 
+time scale over which the input changes significantly. If w'e take as fhe gradient descent 
+algorithm, the dynamics defined by 
+dw rs (13) 
+rw dt -Yi(t)xj(t) 
+where x, is the time constant that defines the (slow) time scale over which w changes and 
+where xj is the instantaneous solution of eqn. (1) and Yi is the instantaneous solution of 
+eqn.(12). Then in the adiabatic limit the Cartesian product yif(x. in eqn. (13) approximates 
+the negative gradient of the objective function E, that is 
+(14) 
+frf(xf(t))r(t)f(x t)) 
+This approach can map one continuous trajectory into another continuous trajectory, 
+provided the trajectories change slowly enough. Furthermore, learning occurs causally and 
+scalably. There is no memory in the model, i.e. the output of the adaptive neurons depends 
+only on their input and not on their internal state. Thus, this network can never learn to 
+perform tasks that require memory unless the learning algorithm is modified to learn the 
+appropriate transitions. This is the major drawback of the adiabatic approach. Some state 
+information can be incorporated into this model by using recurrent connections in which 
+case the network can have multiple basins and the final state will depend on the initial state 
+of the net as well as on the inputs, but this will not be pursued here. 
+Simple simulations were performed to verify that the approach did indeed perform gradient 
+descent. One simulation is presented here for the benefit of investigators who may wish to 
+verify the results. A feedforward network topology consisting of two input units, five hidden 
+units and two output units was used for the adaptive network. Units were numbered 
+sequentially, 1 through 9, beginning with the input layer and ending in the output layer. Time 
+dependent external inputs for the two input neurons were generated with time dependence 
+I = sin(2t) and I 2 = cos(2m). The targets for the output neurons were s = R sin(20 and 
+9 =R cos(2m) where R = 1.0 + 0. lsin(6nt). All the equations were simultaneously integrated 
+using 4th order Runge-Kutta with a time step of 0.1. A relaxation time scale was introduced 
+into the forward and backward propagation equations by multiplying the time derivatives in 
+eqns. (1) and (12) by 'g and'l;y respectively. These time scales were set to'l; ='l;y = 0.5. The 
+adaptive time scale of the weights was 'g, = 1.0. The error in the network was initially, E = 
+Time Dependent Adaptive Neural Networks 717 
+10 and the integration was cut off when the error reached a plateau at E = 0.12. The learning 
+curve is shown in Fig. 1. The trained trajectory did not exactly reach the desired solution. In 
+particular the network did not learn the odd order harmonic that modulates R. By way of 
+comparison, a conventional backpropagation approach that calculated a cumulative gradient 
+over the trajectory and used conjugate gradient for the descent, was able to converge to the 
+global minimum. 
+2 
+[] 
+[] 
+[] 
+[] 
+I 
+[] 
+20 0 40 50 
+Time 
+Figure 1: Learning curve. One time unit corresponds to a single oscillation 
+4 SUMMARY 
+The key points of this paper are: 1) Exact minimization algorithms for learning time- 
+dependent behavior either scale poorly or else violate causality and 2) Approximate gradient 
+calculations will likely lead to causal and scalable learning algorithms. The adiabatic 
+approach should be useful for learning to generate trajectories of the kind encountered when 
+learning motor skills. References 
+herein to any specific commercial product, process, or service by trade name, trademark, manufacturer, 
+or otherwise, does not constitute or imply any endorsement by the United States Government or the Jet Propulsion 
+Laboratory, California Institute of Technology. The work described in this paper was carried out at the 
+Center for Space Microelectonrics Technology, Jet Propulsion Laboratory, California Institute of 
+Technology. Support for the work came from the Air Force Office of Scientific Research through an 
+agreement with the National Aeronautics and Space Administration (AFOSR-ISSA-90-0027). 
+REFERENCES 
+Aplevich, J. D. (1968). Models of certain nonlinear systems. InE. R. Caianiello (Ed.),Neural 
+Networks, (pp. 110-115). Berlin: Springer Verlag. 
+Bryson, A. E. and Ho, Y. (1975). Applied Optimal Control: Optimization, Estimation, and 
+718 Pineda 
+Control. New York: Hemisphere Publishing Co. 
+Cowan, J. D. (1967). A mathematical theory of central nervous activity. Unpublished 
+dissertation, Imperial College, University of London. 
+Hopfield, J. J. (1984). Neurons with graded response have collective computational 
+properties like those of two-state neurons. Proc. Nat. Acad. Sci. USA, Bio., 81,3088-3092. 
+Malsburg, C. van der (1973). Self-organization of orientation sensitive cells in striate cortex, 
+Kybernetic, 14, 85-100. 
+Pearlmutter, B. A. (1988), Learning state space trajectories in recurrent neural networks: A 
+preliminary report, (Tech. Rep. AIP-54), Department of Computer Science, Carnegie Mellon 
+University, Pittsburgh, PA 
+Pineda, F. J. (1988). Dynamics and Architecture for Neural Computation. Journal of 
+Complexity, 4, (pp.216-245) 
+Rowher R, R. and Forrest, B. (1987). Training time dependence in neural networks, In M. 
+Caudil and C. Butler, (Eds.),Proceedings of the IEEE First Annual International Conference 
+on Neural Networks, 3, (pp. 701-708). San Diego, California: IEEE. 
+Rumelhart, D. E., Hinton, G. E., and Willaims, R.J. (1986). Learning Internal 
+Representations by Error Propagation. In D. E. Rumelhart and J. L. McClelland, (Eds.), 
+Parallel Distributed Processing, (pp. 318-362). Cambridge: M.I.T. Press. 
+Sejnowski, T. J. (1977). Storing covariance with nonlinearly interacting neurons. Journal 
+of Mathematical Biology, 4,303-321. 
+Williams, R.J. and Zipser, D. (1989). A learning algorithm for continually running 
+fully recurrent neural networks. Neural Computation, 1, (pp. 270-280). 
+Zipser, D. (1990). Subgrouping reduces complexity and speeds up learning in recurrent 
+networks, (this volume). 

@@ -1,0 +1,334 @@
+Greedy importance sampling 
+Dale Schuurmans 
+Department of Computer Science 
+University of Waterloo 
+dale @ cs.uwaterloo .ca 
+Abstract 
+I present a simple variation of importance sampling that explicitly search- 
+es for important regions in the target distribution. I prove that the tech- 
+nique yields unbiased estimates, and show empirically it can reduce the 
+variance of standard Monte Carlo estimators. This is achieved by con- 
+centrating samples in more significant regions of the sample space. 
+1 Introduction 
+It is well known that general inference and learning with graphical models is computa- 
+tionally hard [ 1] and it is therefore necessary to consider restricted architectures [ 13], or 
+approximate algorithms to perform these tasks [3, 7]. Among the most convenient and 
+successful techniques are stochastic methods which are guaranteed to converge to a correct 
+solution in the limit of large samples [ 10, 11, 12, 15]. These methods can be easily applied 
+to complex inference problems that overwhelm deterministic approaches. 
+The family of stochastic inference methods can be grouped into the independent Monte 
+Carlo methods (importance sampling and rejection sampling [4, 10, 14]) and the dependent 
+Markov Chain Monte Carlo (MCMC) methods (Gibbs sampling, Metropolis sampling, and 
+"hybrid" Monte Carlo) [5, 10, 11, 15]. The goal of all these methods is to simulate drawing 
+a random sample from a target distribution P(z) (generally defined by a Bayesian network 
+or graphical model) that is difficult to sample from directly. 
+This paper investigates a simple modification of importance sampling that demonstrates 
+some advantages over independent and dependent-Markov-chain methods. The idea is to 
+explicitly search for important regions in a target distribution P when sampling from a 
+simpler proposal distribution Q. Some MCMC methods, such as Metropolis and "hybrid" 
+Monte Carlo, attempt to do something like this by biasing a local random search towards 
+higher probability regions, while preserving the asymptotic "fair sampling" properties of 
+the exploration [11, 12]. Here I investigate a simple direct approach where one draws 
+points from a proposal distribution Q but then explicitly searches in P to find points from 
+significant regions. The main challenge is to maintain correctness (i.e., unbiasedness) of 
+the resulting procedure, which we achieve by independently sampling search subsequences 
+and then weighting the sample points so that their expected weight under the proposal 
+distribution Q matches their true probability under the target P. 
+Greedy Importance Sampling 597 
+Importance sampling 
+ß Draw z, ..., z, independently from Q. 
+ß Weight each point zi by w(zi) = 
+Q(,) ß 
+ß For a random variable, f, estimate Ev(,) f(x) 
+by f- 
+_ 
+"Indirect" importance sampling 
+ß Draw x, ...,x, independently from Q. 
+ß Weight each point xi by u(xi) = /sP() 
+Q('i) ' 
+ß For a random variable, f, estimate Eio(,) f(z) 
+Figure 1' Regular and "indirect" importance sampling procedures 
+2 Generalized importance sampling 
+Many inference problems in graphical models can be cast as determining the expected 
+value of a random variable of interest, f, given observations drawn according to a target 
+distribution P. That is, we are interested in computing the expectation E,(x) f(z). Usually 
+the random variable f is simple, like the indicator of some event, but the distribution P 
+is generally not in a form that we can sample from efficiently. Importance sampling is a 
+useful technique for estimating E,(x) f(z) in these cases. The idea is to draw independent 
+points zx, ..., z, from a simpler "proposal" distribution Q, but then weight these points 
+by w(z) = P(z)/Q(z) to obtain a "fair" representation of P. Assuming that we can 
+efficiently evaluate P(z) at each point, the weighted sample can be used to estimate de- 
+sired expectations (Figure 1). The correctness (i.e., unbiasedness) of this procedure is easy 
+to establish, since the expected weighted value of f under Q is just Ec2()f(z)w(z) = 
+Eex [f(x)w(x)] Q(x) = Eex If(z) 
+q()] Q(x)= -xex f(x)P(z) = Ep()f(z). 
+is technique can be implemented using "indirect" weights u(z) = P(z)/Q(z) and an 
+alternative estimator (Figure 1) that only requires us to compute a fixed multiple of P(z). 
+is preserves asymptotic cogectness because x Ei=x f(zi)u(zi) and x E=x u (zi) con- 
+verge to Ep() f(z) and  respectively, which yields f  Ep() f(z) (generally [4]). It 
+will always be possible to apply this extended approach below, but we drop it for now. 
+Importance stapling is an effective estimation technique when Q approximates P over 
+most of the domn, but it fails when Q misses high probability regions of P and system- 
+atically yields staples with sml weights. In this ce, the resulting estimator will have 
+high viance because the staple will almost always contn unrepresentative points but is 
+sometimes dominated by a few high weight points. To overcome this problem it is criti- 
+c to obtn data points from the important regions of P. Our goal is to avoid generating 
+systematically under-weight staples by explicitly seching for significant regions in the 
+tget distribution P. To do this, and mntn the unbiasedness of the resulting procedure, 
+we develop a series of extensions to importance stapling that e each provably cogect. 
+e first extension is to consider stapling blocks of points instead of just individu points. 
+Let BbeaptitionofX into finite blocksB, where esB = X, B B' = 0, 
+and each B is finite. (Note that B can be infinite.) e "block" stapling procedure 
+(Figure 2) draws independent blocks of points to construct the final staple, but then 
+weights points by their tget probability P(z) divided by the total block probability 
+Q(B(z)). For discrete spaces it is easy to verify that this procedure yields unbied esti- 
+mates, since EQ()[er()f(Xj)W(Xj)] : xeX [xeB(x) f(Xj)W(Xj) Q(x) = 
+$98 D. Schuurrnans 
+"Block" importance sampling 
+ß Draw z, ..., z, independently from Q. 
+ß For zi, recover block Bi = {zi,i, ..., zi,b }. 
+ß Create a large sample out of the blocks 
+1,1  ...  l,bl  32,1  ... 2,b2  '" n,1  ... n,bn ß 
+ß Weight each zi,j by 
+ß For a random variable, f, estimate E,(x) f(z) 
+"Sliding window" importance sampling 
+ß Draw z, ..., z, independently from Q. 
+ß For zi, recover block Bi, and let zi, = 
+- Get Zi,1 'S successors xi,1  :i,2  ... :i,rn 
+by climbing up ra - 1 steps from 
+- Get predecessors i,--rn+l   ... Xi,--1  :i,O 
+by climbing down ra - 1 steps from 
+- Weight w(zi,j)= P(x,j)/-]k=S_,+C2(x,k) 
+ß Create final sample from successor points 
+:CI,1  ... :Cl,rn 1C2,1  .--:C2,rn ... n,1  ...:Cn,rn. 
+ß For a random variable, f, estimate E,(,) f(z) 
+by ] =  E= E_- f(x,,j)w(x,,). 
+Figure 2: "Block" and "sliding window" importance sampling procedures 
+Crucially, this argument does not depend on how the partition of X is chosen. In fact, we 
+could fix any partition, even one that depended on the target distribution P, and still obtain 
+an unbiased procedure (so long as the partition remains fixed). Intuitively, this works be- 
+cause blocks are drawn independently from Q and the weighting scheme still produces a 
+"fair" representation of P. (Note that the results presented in this paper can all be extended 
+to continuous spaces under mild technical restrictions. However, for the purposes of clarity 
+we will restrict the technical presentation in this paper to the discrete case.) 
+The second extension is to allow countably infinite blocks that each have a discrete to- 
+tal order ..- < zi- < zi < zi+ < .-- defined on their elements. This order could 
+reflect the relative probability of zi and zj under P, but for now we just consider it 
+to be an arbitrary discrete order. To cope with blocks of unbounded length, we em- 
+ploy a "sliding window" sampling procedure that selects a contiguous sub-block of size 
+m from within a larger selected block (Figure 2). This procedure builds each indepen- 
+dent subsample by choosing a random point zx from the proposal distribution Q, de- 
+termining its containing block B(z), and then climbing up m - 1 steps to obtain the 
+successors zx, z2, ..., z,, and climbing down m - 1 steps to obtain the predecessors 
+z_,+x, ..., z_x, zo. The successor points (including zx) appear in the final sample, but 
+the predecessors are only used to determine the weights of the sample points. Weights 
+are determined by the target probability P(z) divided by the probability that the point 
+z appears in a random reconstruction under Q. This too yields an unbiased estimator 
+[ . ] [ t+,- ,() 
+since E() Ej= f(zj)w(zj) = EeX E=t f(z) Q(zt) : 
+6Bi=j-m+l 
+BE B x6 B j=! J 
+=_+ 
+(e middle line brews the sum into diQoint blocks and then reorders the sum so thin in- 
+stead of first choosing the stt point zt and then zt's successors zt, ..., Zt+m-X, we first 
+choose the successor point zj and then the st points zj-+x, ..., z i that could have led 
+to zj). Note that this derivation does not depend on the pticul block ptition nor on the 
+pticular discrete orderings, so long as they remEn fixed. is means thin, again, we can 
+use ptitions and orderings thin explicitly depend on P and still obtain a cogect procedure. 
+Greedy Importance Sampling 599 
+"Greedy" importance sampling (I-D) 
+ß Draw Zl, .... :r. independently from Q. 
+ß For each x, let xi,1 = xi: 
+- Compute successors xi,1, xi,2, ..., xi,, by taking 
+ra - 1 size e steps in the direction of increase. 
+- Compute predecessors xi,-,+l, ..., xi,_, xi,o by 
+taking ra- 1 size e steps in the direction of decrease. 
+- If an improper ascent or descent occurs, 
+truncate paths as shown on the upper right. 
+Weight w(xi,j) P(xi,j)/ J 
+- = 
+ß Create the final sample from successor points 
+Igl,1  --. Xl,rn  Ig2,1  ... II2,rn  ... IIn,1  ... n,rn. 
+ß For a random variable, f, estimate Ep() f(z) 
+collision 
+merge 
+Figure 3: "Greedy" importance sampling procedure; "colliding" and "merging" paths. 
+3 Greedy importance sampling: 1-dimensional case 
+Finally, we apply the sliding window procedure to conduct an explicit search for impor- 
+tant regions in X. It is well known that the optimal proposal distribution for importance 
+sampling is just Q* (z) = If(z)P(z)l/xx If(z)P(z)l (which minimizes variance [21). 
+Here we apply the sliding window procedure using an order structure that is determined by 
+the objective I f(z)P(z)[. The hope is to obtain reduced variance by sampling independent 
+blocks of points where each block (by virtue of being constructed via an explicit search) is 
+likely to contain at least one or two high weight points. That is, by capturing a moderate 
+size sample of independent high weight points we intuitively expect to outperform standard 
+methods that are unlikely to observe such points by chance. Our experiments below verify 
+this intuition (Figure 4). 
+The main technical issue is maintaining unbiasedness, which is easy to establish in the 1- 
+dimensional case. In the simple 1-d setting, the "greedy" importance sampling procedure 
+(Figure 3) first draws an initial point zx from Q and then follows the direction of increas- 
+ing ]f(z)P(z)l, taking fixed size  steps, until either rn - 1 steps have been taken or we 
+encounter a critical point. A single "block" in our final sample is comprised of a complete 
+sequence captured in one ascending search. To weight the sample points we account for all 
+possible ways each point could appear in a subsample, which, as before, entails climbing 
+down rn- 1 steps in the descent direction (to calculate the denominators). The unbiasedness 
+of the procedure then follows directly from the previous section, since greedy importance 
+sampling is equivalent to sliding window importance sampling in this setting. 
+The only nontrivial issue is to maintain disjoint search paths. Note that a search path must 
+terminate whenever it steps from a point z* to a point z** with lower value; this indicates 
+that a collision has occurred because some other path must reach z* from the "other side" 
+of the critical point (Figure 3). At a collision, the largest ascent point z* must be allocated 
+to a single path. A reasonable policy is to allocate z* to the path that has the lowest weight 
+penultimate point (but the only critical issue is ensuring that it gets assigned to a single 
+block). By ensuring that the critical point is included in only one of the two distinct search 
+paths, a practical estimator can be obtained that exhibits no bias (Figure 4). 
+To test the effectiveness of the greedy approach I conducted several 1-dimensional experi- 
+ments which varied the relationship between P, Q and the random variable f (Figure 4). In 
+600 D. Schuurmans 
+these experiments greedy importance sampling strongly outperformed standard methods, 
+including regular importance sampling and directly sampling from the target distribution P 
+(rejection sampling and Metropolis sampling were not competitive). The results not only 
+verify the unbiasedness of the greedy procedure, but also show that it obtains significantly 
+smaller variances across a wide range of conditions. Note that the greedy procedure actu- 
+ally uses rn out of 2rn - 1 points sampled for each block and therefore effectively uses a 
+double sample. However, Figure 4 shows that the greedy approach often obtains variance 
+reductions that are far greater than 2 (which corresponds to a standard deviation reduction 
+of x/-). 
+4 Multi-dimensional case 
+Of course, this technique is worthwhile only if it can be applied to multi-dimensional prob- 
+lems. In principle, it is straightforward to apply the greedy procedure of Section 3 to 
+multi-dimensional sample spaces. The only new issue is that discrete search paths can now 
+possibly "merge" as well as "collide"; see Figure 3. (Recall that paths could not merge 
+in the previous case.) Therefore, instead of decomposing the domain into a collection of 
+disjoint search paths, the objective If(z)P(z)l now decomposes the domain into a forest 
+of disjoint search trees. However, the same principle could be used to devise an unbiased 
+estimator in this case: one could assign a weight to a sample point z that is just its target 
+probability P(z) divided by the total Q-probability of the subtree of points that lead to z 
+in fewer than rn steps. This weighting scheme can be shown to yield an unbiased estimator 
+as before. However, the resulting procedure is impractical because in an N-dimensional 
+sample space a search tree will typically have a branching factor of Q(N); yielding expo- 
+nentially large trees. Avoiding the need to exhaustively examine such trees is the critical 
+issue in applying the greedy approach to multi-dimensional spaces. 
+The simplest conceivable strategy is just to ignore merge events. Surprisingly, this turns 
+out to work reasonably well in many circumstances. Note that merges will be a measure 
+zero event in many continuous domains. In such cases one could hope to ignore merges 
+and trust that the probability of "double counting" such points would remain near zero. 
+I conducted simple experiments with a version of greedy importance sampling procedure 
+that ignored merges. This procedure searched in the gradient ascent direction of the objec- 
+tive I f(z)p(z)l and heuristically inverted search steps by climbing in the gradient descent 
+direction. Figures 5 and 6 show that, despite the heuristic nature of this procedure, it nev- 
+ertheless demonstrates credible performance on simple tasks. 
+The first experiment is a simple demonstration from [ 12, 10] where the task is to sample 
+from a bivariate Gaussian distribution P of two highly correlated random variables using a 
+"weak" proposal distribution Q that is standard normal (depicted by the elliptical and circu- 
+lar one standard deviation contours in Figure 5 respectively). Greedy importance sampling 
+once again performs very well (Figure 5); achieving unbiased estimates with lower variance 
+than standard Monte Carlo estimators, including common MCMC methods. 
+To conduct a more significant study, I applied the heuristic greedy method to an inference 
+problem in graphical models: recovering the hidden state sequence from a dynamic proba- 
+bilistic model, given a sequence of observations. Here I considered a simple Kalman filter 
+model which had one state variable and one observation variable per time-step, and used 
+the conditional distributions XtIXt_x ,.., N(zt_x, 0.), Zt[Xt '" N(zt, 0'o 2) and initial dis- 
+tribution Xx ,--, N(0, 0'2). The problem was to infer the value of the final state variable zt 
+given the observations zx, z2, ..., zt. Figure 6 again demonstrates that the greedy approach 
+Greedy Importance Sampling 601 
+has a strong advantage over standard importance sampling. (In fact, the greedy approach 
+can be applied to "condensation" [6, 8] to obtain further improvements on this task, but 
+space bounds preclude a detailed discussion.) 
+Overall, these preliminary results show that despite the heuristic choices made in this sec- 
+tion, the greedy strategy still performs well relative to common Monte Carlo estimators, 
+both in terms of bias and variance (at least on some low and moderate dimension prob- 
+lems). However, the heuristic nature of this procedure makes it extremely unsatisfying. In 
+fact, merge points can easily make up a significant fraction of finite domains. It turns out 
+that a rigorously unbiased and feasible procedure can be obtained as follows. First, take 
+greedy fixed size steps in axis parallel directions (which ensures the steps can be inverted). 
+Then, rather than exhaustively explore an entire predecessor tree to calculate the weights of 
+a sample point, use the well known technique of Knuth [9] to sample a single path from the 
+root and obtain an unbiased estimate of the total Q-probability of the tree. This procedure 
+allows one to formulate an asymptotically unbiased estimator that is nevertheless feasible 
+to implement. It remains important future work to investigate this approach and compare 
+it to other Monte Carlo estimation methods on large dimensional problems--in particular 
+hybrid Monte Carlo [ 11, 12]. The current results already suggest that the method could 
+have benefits. 
+References 
+[1] 
+[21 
+[31 
+[41 
+[51 
+[61 
+[71 
+[81 
+[91 
+[lO1 
+[111 
+[121 
+[131 
+[141 
+[151 
+P. Dagum and M. Luby. Approximating probabilistic inference in Bayesian belief networks is 
+NP-hard. Artiflntell, 60:141-153, 1993. 
+M. Evans. Chaining via annealing. Ann Statist, 19:382-393, 1991. 
+B. Frey. Graphical Models for Machine Learning and Digital Communication. MIT Press, 
+Cambridge, MA, 1998. 
+J. Geweke. Baysian inference in econometric models using Monte Carlo integration. Econo- 
+metrica, 57:1317-1339, 1989. 
+W. Gilks, S. Richardson, and D. Spiegelhalter. Markov chain Monte Carlo in practice. Chapman 
+and Hall, 1996. 
+M. Isard and A. Blake. Coutour tracking by stochastic propagation of conditional density. In 
+ECCV, 1996. 
+M. Jordan, Z. Ghahramani, T. Jaakkola, and L. Saul. An introduction to variational methods for 
+graphical models. In Learning in Graphical Models. Kluwer, 1998. 
+K. Kanazawa, D. Koller, and S. Russell. Stochastic simulation algorithms for dynamic proba- 
+bilistic networks. In UAI, 1995. 
+D. Knuth. Estimating the efficiency of backtracking algorithms. Math. Cornput., 29(129):121- 
+136, 1975. 
+D. MacKay. Intro to Monte Carlo methods. In Learning in GraphicalModels. Kluwer, 1998. 
+R. Neal. Probabilistic inference using Markov chain Monte Carlo methods. 1993. 
+R. Neal. Bayesian Learning for Neural Networks. Springer, New York, 1996. 
+J. Peafl. Probabilistic Reasoning in Intelligence Systems. Morgan Kaufmann, 1988. 
+R. Shacter and M. Peot. Simulation approaches to general probabilistic inference in belief 
+networks. In Uncertainty in Artificial Intelligence 5. Elsevier, 1990. 
+M. Tanner. Tools for statistical inference: Methods for exploration of posterior distributions 
+and likelihood functions. Springer, New York, 1993. 
+602 D. Schuurmans 
+mean 
+stdev 
+Direc Greed Imprt 
+0.779 0.781 0.777 
+0.001 0.001 0.003 
+0.071 0.038 0.065 
+Direc Greed Imprt 
+1.038 1.044 1.032 
+0.002 0.003 0.008 
+0.088 0.049 0.475 
+Direc Greed Imprt. 
+0.258 0.208 0.209 
+0.049 0.000 0.001 
+0.838 0.010 0.095 
+Direc Greed Imprt 
+6.024 6.028 6.033 
+0.001 0.004 0.009 
+0.069 0.037 0.094 
+Figure 4: 1-dimensional experiments: 1000 repetitions on estimation samples of size 100. 
+Problems with varying relationships between P, Q, f and IfPI. 
+mean 
+bias 
+stdev 
+Direct Greedy Importance Rejection Gibbs Metropolis 
+0.1884 0.1937 0.1810 0.1506 0.3609 8.3609 
+0.0022 0.0075 0.0052 0.0356 0.1747 8.1747 
+0.07 0.1374 0.1762 0.2868 0.5464 22.1212 
+Figure 5: 2-dimensional experiments: 500 repetitions on estimation samples of size 200. 
+Pictures depict: direct, greedy importance, regular importance, and Gibbs sampling, show- 
+ing 1 standard deviation countours (dots are sample points, vertical lines are weights). 
+mean 
+bias 
+stdev 
+Importance Greedy 
+5.2269 6.9236 
+2.7731 1.0764 
+1.2107 0.1079 
+Figure 6: A 6-dimensional experiment: 500 repetitions on estimation samples of size 200. 
+Estimating the value of vet given the observations zx, ..., zt. Pictures depict paths sampled 
+by regular versus greedy importance sampling. 

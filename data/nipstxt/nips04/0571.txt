@@ -1,0 +1,348 @@
+Fast, Robust Adaptive Control by Learning only 
+Forward Models 
+Andrew W. Moore 
+MIT Artificial Intelligence Laboratory 
+545 Technology Square, Cambridge, MA 02139 
+amai. mir. edu 
+Abstract 
+A large class of motor control tasks requires that on each cycle the con- 
+troller is told its current state and must choose an action to achieve a 
+specified, state-dependent, goal behaviour. This paper argues that the 
+optimization of learning rate, the number of experimental control deci- 
+sions before adequate performance is obtained, and robustness is of prime 
+importance--if necessary at the expense of computation per control cy- 
+cle and memory requirement. This is motivated by the observation that 
+a robot which requires two thousand learning steps to achieve adequate 
+performance, or a robot which occasionally gets stuck while learning, will 
+always be undesirable, whereas moderate computational expense can be 
+accommodated by increasingly powerful computer hardware. It is not un- 
+reasonable to assume the existence of inexpensive 100 Mfiop controllers 
+within a few years and so even processes with control cycles in the low 
+tens of milliseconds will have millions of machine instructions in which to 
+make their decisions. This paper outlines a learning control scheme which 
+aims to make effective use of such computational power. 
+I MEMORY BASED LEARNING 
+Memory-based learning is an approach applicable to both classification and func- 
+tion learning in which all experiences presented to the learning box are explic- 
+itly remembered. The memory, Mere, is a set of input-output pairs, Mere = 
+{(x,y),(x2,y2),...,(xk,yk)}. When a prediction is required of the output of a 
+novel input lrquery , the memory is searched to obtain experiences with inputs close to 
+lrquery. These local neighbours are used to determine a locally consistent output for 
+the query. Three memory-based techniques, Nearest Neighbout, Kernel Regression, 
+and Local Weighted Regression, are shown in the accompanying figure. 
+571 
+572 Moore 
+ut 
+Nearest Neighbout: 
+Ypredict(:rquery) -- Yi where 
+Kernel Regression: Also 
+known as Shepard's interpo- 
+i minimizes {(zi - Zquery) 2: lation or Local Weighted Av- 
+(zi, yi)  Mem}. There erages. ?xp_edict(Zquery ) --- 
+is a general introduction (-wiyi)/2_wi where wi 
+in [5], some recent appli- 
+cations in [11], and recent 
+robot learning work in [9, 3]. 
+Input 
+Local Weighted Regres- 
+sion: finds the linear map- 
+ping y = Ax to minimize 
+the sum o/weighted squares 
+of residuals .axe) 
+exp(--(:ri- :rquery)2/Kwidth2)Yren diet is then A:rquery. 
+[6] describes some variants. .vvr was introduced for 
+robot learning control by [1]. 
+2 A MEMORY-BASED INVERSE MODEL 
+An inverse model maps State x Behaviour -. Action (s x b -. a). Behaviour is 
+the output of the system, typically the next state or time derivative of state. The 
+learned inverse model provides a conceptually simple controller: 
+1. Observe s and bgoa 1. 
+2. a := inverse-model(s, bgoal) 
+3. Perform action a and observe actual behaviour bactual. 
+4. Update MEM with (s, bactual '- a): If we are ever again in state s and 
+require behaviour bactual we should apply action a. 
+Memory-based versions of this simple algorithm have used nearest neighbout [9] 
+and LWR [3]. bgoal is the goal behaviour: depending on the task it may be fixed 
+or it may vary between control cycles, perhaps as a function of state or time. The 
+algorithm provides aggressive learning: during repeated attempts to achieve the 
+same goal behaviour, the action which is applied is not an incrementally adjusted 
+version of the previous action, but is instead the action which the memory and the 
+memory-based learner predicts will directly achieve the required behaviour. If the 
+function is locally linear then the sequence of actions which are chosen are closely 
+related to the Secant method [4] for numerically finding the zero of a function by 
+bisecting the line between the closest approximations that bracket the y = 0 axis. If 
+learning begins with an initial error E0 in the action choice, and we wish to reduce 
+this error to Eo/K, the number of learning steps is O(log log K): subject to benign 
+conditions, the learner jumps to actions close to the ideal action very quickly. 
+A common objection to learning the inverse model is that it may be ill-defined. For 
+a memory-based method the problems are particularly serious because of its update 
+rule. It updates the inverse model near bactua and therefore in those cases in which 
+bgoal and bactual differ greatly, the mapping near bgoal may not change. As a result, 
+Fast, Robust Adaptive Control by Learning only Forward Models 573 
+subsequent cycles will make identical mistakes. [10] discusses this furtherﬂ 
+3 A MEMORY-BASED FORWARD MODEL 
+One fix for the problem of inverses becoming stuck is the addition of random noise 
+to actions prior to their application. However, this can result in a large proportion 
+of control cycles being wasted on experiments which the robot should have been able 
+to predict as valueless, defeating the initial aim of learning as quickly as possible. 
+An alternative technique using multilayer neural nets has been to learn a forward 
+model, which is necessarily well defined, to train a partial inverse. Updates to the 
+forward model are obtained by standard supervised training, but updates to the 
+inverse model are more sophisticated. The local Jacobian of the forward model 
+is obtained and this value is used to drive an incremental change to the inverse 
+model [8]. In conjunction with memory-based methods such an approach has the 
+disadvantage that incremental changes to the inverse model loses the one-shot learn- 
+ing behaviour, and introduces the danger of becoming trapped in a local minimum. 
+Instead, this investigation only relies on learning the forward model. Then the 
+inverse model is implicitly obtained from it by online numerical inversion instead of 
+direct lookup. This is illustrated by the following algorithm: 
+Observe s and bgoal. 
+Perform numerical inversion: 
+Search among a series of candidate actions 
+al, a2... ak: 
+bPredict := forard-aodel(s, al MEM) 
+1 ' 
+bPredict forward-model(s, a2 MEM) 
+2 := ' 
+predict := forvard-model(s, ak, MEM) 
+k 
+If TIME-OUT then perform experimental action else perform a k. 
+Update MEM with (s, ak  bactual) 
+Until [,.TIME-OUT J 
+o-I bPredict '- b I 
+A nice feature of this method is the absence of a preliminary training phase such 
+as random flailing or feedback control. A variety of search techniques for numerical 
+inversion can be applied. Global random search avoids local minima but is very slow 
+for obtaining accurate actions, hill climbing is a robust local procedure and more 
+aggressive procedures such as Newton's method can use partial derivative estimates 
+from the forward model to make large second-order steps. The implementation used 
+for subsequent results had a combination of global search and local hill climbing. 
+In very high speed applications in which there is only time to make a small number 
+of forward model predictions, it is not difficult to regain much of the speed advantage 
+of directly using an inverse model by commencing the action search with a0 as the 
+action predicted by a learned inverse model. 
+4 OTHER CONSIDERATIONS 
+Actions selected by a forward memory-based learner can be expected to converge 
+very quickly to the correct action in benign cases, and will not become stuck in dif- 
+ficult cases, provided that the memory based representation can fit the true forward 
+574 Moore 
+model. This proviso is weak compared with incremental learning control techniques 
+which typically require stronger prior assumptions about the environment, such as 
+near-linearity, or that an iterative function approximation procedure will avoid local 
+minima. One-shot methods have an advantage in terms of number of control cy- 
+cles before adequate performance whereas incremental methods have the advantage 
+of only requiring trivial amounts of computation per cycle. However, the simple 
+memory-based formalism described so far suffers from two major problems which 
+some forms of adaptive and neural controllers may avoid. 
+ﬂ Brittle behaviour in the presence of outliers. 
+ﬂ Poor resistance to non-stationary environments. 
+Many incremental methods implicitly forget all experiences beyond a certain hori- 
+zon. For example, in the delta rule Awij = ,(yctual . predict\ 
+-- Yi ).j, the age beyond 
+which experiences have a negligible effect is determined by the learning rate v. As 
+a result, the detrimental effect of misleading experiences is present for only a fixed 
+amount of time and then fades away 1. In contrast, memory-based methods remem- 
+ber everything for ever. Fortunately, two statistical techniques: robust regression 
+and cross-validation allow extensions to the numerical inversion method in which 
+we can have our cake and eat it too. 
+5 USING ROBUST REGRESSION 
+We can judge the quality of each experience (zi, yi)  Mean by how well it is 
+predicted by the rest of the experiences. A simple measure of the ith error is the 
+cross validation error, in which the experience is first removed from the memory 
+before prediction. e} ve =1 Predict(x,,Mean-{(x,,yi)}) I. With the memory- 
+based formalism, in which all work takes place at prediction time, it is no more 
+expensive to predict a value with one datapoint removed than with it included. 
+Once we have the measure e.xve of the quality of each experience, we can decide 
+if it is worth keeping. Robust statistics [7] offers a wide range of methods: this 
+implementation uses the Median Absolute Deviation (MAD) procedure. 
+6 FULL CROSS VALIDATION 
+The value - xve "good" 
+Ctotal --  xve 
+c i , summed over all experiences, provides a measure 
+of how well the current representation fits the data. By optimizing this value with 
+respect to internal learner parameters, such as the width of the local weighting 
+function Kwidth used by kernel regression and LWR, the internal parameters can be 
+found automatically. Another important set of parameters that can be optimized is 
+the relative scaling of each input variable: an example of this procedure applied to a 
+two-joint arm task may be found in Reference [2]. A useful feature of this procedure 
+is its quick discovery (and subsequent ignoring) of irrelevant input variables. 
+Cross-validation can also be used to selectively forget old inaccurate experiences 
+caused by a slowly drifting or suddenly changing environment. We have already 
+seen that adaptive control algorithms such as the LMS rule can avoid such problems 
+because the effects of experiences decay with time. Memory based methods can also 
+forget things according to a forgetfulness parameter: all observations are weighted 
+This also has disadvantages: persistence of excitation is required and multiple tasks 
+can often require relearning if they have not been practised recently. 
+Fast, Robust Adaptive Control by Learning only Forward Models 575 
+by not only the distance to the Zquery but also by their age: 
+wi = exp(--(xi- Xquery)'/Kwidth' -- (n -- i)/Krecall) (1) 
+where we assume the ordering of the experiences' indices i is temporal, with expe- 
+rience n the most recent. 
+We find the Krecall that ninimizes the recent weighted average cross validation error 
+- _xve exp(-(n- i)/7), where 7 is a human assigned 'meta-forgetfulness' con- 
+Ei=O ei 
+stant, reflecting how many experiences the learner would need in order to benefit 
+from observation of an environmental change. It should be noted that 7 is a sub- 
+stantially less task dependent prescription of how far back to forget than would be 
+a human specified Kreeall. Some initial tests of this technique are included among 
+the experiments of Section 8. 
+Architecture selection is another use of cross validation. Given a family of learners, 
+the member with the least cross validation error is used for subsequent predictions. 
+7 COMPUTATIONAL CONSIDERATIONS 
+Unless the real time between control cycles is longer than a few seconds, cross vali- 
+dation is too expensive to perform after every cycle. Instead it can be performed as 
+a separate parallel process, updating the best parameter values and removing out- 
+liers every few real control cycles. The usefulness of breaking a learning control task 
+into an online realtime processes and offiine mental simulation was noted by [12]. 
+Initially, the small number of experiences means that cross validation optimizes 
+the parameters very frequently, but the time between updates increases with the 
+memory size. The decreasing frequency of cross validation updates is little cause 
+for concern, because as time progresses, the estimated optimal parameter values are 
+expected to become decreasingly variable. 
+If there is no time to make more than one memory based query per cycle, then 
+memory based learning can nevertheless proceed by pushing even more of the com- 
+putation into the offiine component. If the offiine process can identify meaningful 
+states relevant to the task, then it can compute, for each of them, what the optimal 
+action would be. The resulting state-action pairs are then used as a policy. The 
+online process then need only look up the recommended action in the policy, apply 
+it and then insert (s, a, b) into the memory. 
+8 COMPARATIVE TESTS 
+The ultimate goal of the investigation is to produce a learning control algorithm 
+which can learn to control a fairly wide family of different tasks. Some basic, very 
+different, tasks have been used for the initial tests. 
+The HARD task, graphed in Figure 1, is a one-dimensional direct relationship between 
+action and behaviour which is both non-monotonic and discontinuous. The VARIER 
+task (Figure 2) is a sinusoidal relation for which the phase continuously drifts, and 
+occasionally alters catastrophically. 
+LINEAR is a noisy linear relation between 4-d states, 4-d actions and 4-d behaviours. 
+For these first three tasks, the goal behaviour is selected randomly on each control 
+cycle. ARI (Figure 3) is a simulated noisy dynamic two-joint arm acting under 
+gravity in which state is perceived in cartesian coordinates and actions are produced 
+576 Moore 
+in joint-torque coordinates. Its task is to follow the circular trajectory. BILLIARDS is 
+a simulation of the real billiards robot described shortly in which 5% of experiences 
+are entirely random outliers. 
+Action Action 
+Figure 1: The HARD relation. Figure 2: VARIER relation. Figure 3: The AR!{ task. 
+The following learning methods were tested: nearest neighbout, kernel regression 
+and LWR, all searching the forward model and using a form of uncertainty-based in- 
+telligent experimentation [10] when the forward search proved inadequate. Another 
+method under test was sole use of the inverse, learned by LWR. Finally a "best- 
+possible" value was obtained by numerically inverting the real simulated forward 
+model instead of a learned model. 
+All tasks were run for only 200 control cycles. In each case the quality of the learner 
+was measured by the number of successful actions in the final hundred cycles, where 
+"successful" was defined as producing behaviour within a small tolerance of bgoal. 
+Results are displayed in Table 1. There is little space to discuss them in detail, 
+but they generally support the arguments of the previous sections. The inverse 
+model on its own was generally inferior to the forward method, even in those cases 
+in which the inverse is well-defined. Outlier removal improved performance on 
+the BILLIARDS task over non-robustified versions. Interestingly, outlier removal 
+also greatly benefited the inverse only method. The selectively forgetful methods 
+performed better than than their non-forgetful counterparts on the VARIER task, but 
+in the stationary environments they did not pay a great penalty. Cross validation 
+for Kwidth was useful: for the HARD task, LWR found a very small Kwidth but in the 
+LINEAR task it unsurprisingly preferred an enormous Kwidth. 
+Some experiments were also performed with a real billiards robot shown in Figure 4. 
+Sensing is visual: one camera looks along the cue stick and the other looks down 
+at the table. The cue stick swivels around the cue ball, which starts each shot 
+at the same position. At the start of each attempt the object ball is placed at a 
+random position in the half of the table opposite the cue stick. The camera above 
+the table obtains the (x, y) image coordinates of the object ball, which constitute 
+the state. The action is the x-coordinate of the image of the object ball on the cue 
+stick camera. A motor swivels the cue stick until the centroid of the actual image 
+of the object ball coincides with the chosen x-coordinate value. The shot is then 
+performed and observed by the overhead camera. The behaviour is defined as the 
+cushion and position on the cushion with which the object ball first collides. 
+Fast, Robust Adaptive Control by Learning only Forward Models 577 
+Controller type. (K = use MAD VARIER HARD LINEAR ARM BIL'DS 
+outlier removal, X = use cross- 
+validation for Kwidth, R -- use cross- 
+validation for Krecall  IF = obtain 
+initial candidate action from the in- 
+verse model then search the forward 
+model.) 
+Best Possible: Obtained from nu- 100 q- 0 100 q- 0 75 q- 3 94 q- 1 82 + 4 
+merically inverting simulated world 
+Inverse Only, learned with LWR 15 q- 9 24 q- 11 7 q- 6 76 q- 28 71 q- 5 
+Inverse only, learned with LWR, KRX 48 q- 16 72 q- 8 70 q- 4 89 q- 4 70 q- 10 
+LWR{ IF 14 q- 10 11 q- 5: ' 58 q- 4 83 q- 4 55  12 
+LWR:IF X 19 q-9 72 q-4 70 q-4 89 q-3 61 q-9 
+LWR: IF KX 22 q- 15 51 q- 27 73 q- 3 90 q- 3 75 q- 7 
+LWR: IF KRX 54 q- 8 65 q- 28 70 q- 5 89 q- 2 69 q- 7 
+LWR: Forward only, KRX 56 q- 9 53 q- 17 73 4- I 89 q- I 69 q- 7 
+Kernel Regression: IF 8 q- 2 6 4- 2 13 q- 3 3 q- 2 1 q- 1 
+Kernel Regression: IF KRX 15 q- 8 42 q- 21 14 q- 2 23 q- 10 30 q- 5 
+Nearest Neighbout: IF 22 q- 4 92 q- 2 0 q- 0 44 q- 6 10"+ 2 
+Nearest Neighbout: IF K 26 4- 10 69 q- 4 0 q- 0 40 4- 6 9 q- 3 
+Nearest Neighbout: IF KR 44 q- 8 68 q- 3 0 q- 0 40 q- 7 11 4- 3 
+Nearest Neighbout: Forward only, 43 q- 8 66 q- 5 0 4- 0 37 q- 3 8 q- 1 
+KR 
+Global Linear Regression: IF 8 q- 3 7 br 3 74 q- 5 60 q- 17 23 q- 6 
+Global Linear Regression: IF KR 20 q- 13 9 q- 2' 73 q- 4 72 q- 3 21'q- 4 
+Global Quadratic Regression: IF 14 q- 7 5 q- 3 64 q- 2 70 q- 22 40 q- 11 
+Table 1: Relative performance of a family of learners on a family of tasks. Each 
+combination of learner and task was run ten times to provide the mean number 
+of successes and standard deviation shown in the table. 
+The controller uses the memory based learner to choose the action to maximize the 
+probability that the ball will enter the nearer of the two pockets at the end of the 
+table. A histogram of the number of successes against trial number is shown in 
+Figure 5. In this experiment, the learner was LWR using outlier removal and cross 
+validation for Kwidth. After 100 experiences, control choice running on a Sun-4 was 
+taking 0.8 seconds 2. Sinking the ball requires better than 1% accuracy in the choice 
+of action, the world contains discontinuities and there are random outliers in the 
+data and so it is encouraging that within less than 100 experiences the robot had 
+reached a 70% success rate---substantially better than the author can achieve. 
+ACKNOWLEDGEMENTS 
+Some of the work discussed in this paper is being performed in collaboration with Chris 
+Atkeson. The robot cue stick was designed and built by Wes Huang with help from Get- 
+tit van Zyl. Dan Hill also helped considerably with the billiards robot. The author is 
+supported by a Postdoctoral Fellowship from SERC/NATO. Support was provided un- 
+der Air Force Office of Scientific Research grant AFOSR-89-0500 and a National Science 
+Foundation Presidential Young Investigator Award to Christopher G. Atkeson. 
+=This could have been greatly improved with more appropriate hardware or better 
+software techniques such as kd-trees for structuring data [11, 9]. 
+578 Moore 
+1o 
+9 
+8 
+6 
+$ 
+4 
+o 
+o 
+1III 
+Trial number (batches of 10) 
+Figure 4: The billiards robot. In the 
+foreground is the cue stick which at- 
+tempts to sink balls in the far pockets. 
+Figure 5: Frequency of successes versus 
+control cycle for the billiards task. 
+References 
+[1] C. G. Atkeson. Using Local Models to Control Movement. In Proceedings o.f Neural 
+Information Processing Systems Conference, November 1989. 
+[2] C. G. Atkeson. Memory-Based Approaches to Approximating Continuous Functions. 
+Technical report, M. I. T. Artificial Intelligence Laboratory, 1990. 
+[3] C. G. Atkeson and D. J. Reinkensmeyer. Using Associative Content-Addressable 
+Memories to Control Robots. In Miller, Sutton, and Werbos, editors, Neural Networks 
+.for Control. MIT Press, 1989. 
+[4] S. D. Conte and C. De Boor. Elementary Numerical Analysis. McGraw Hill, 1980. 
+[5] R. O. Duda and P. E. Hart. Pattern Classification and Scene Analysis. John Wiley 
+& Sons, 1973. 
+[6] R. Franke. Scattered Data Interpolation: Tests of Some Methods. Mathematics o.f 
+Computation, 38(157), January 1982. 
+[7] F. Hampbell, P. Rousseeuw, E. Ronchetti, and W. Stahel. Robust Statistics. Wiley 
+International, 1985. 
+[8] M. I. Jordan and D. E. Rumelhart. Forward Models: Supervised Learning with a 
+Distal Teacher. Technical report, M. I. T., July 1990. 
+[9] A. W. Moore. Efficient Memory-based Learning for Robot Control. PhD. Thesis; 
+Technical Report No. 209, Computer Laboratory, University of Cambridge, October 
+1990. 
+[10] A. W. Moore. Knowledge of Knowledge and Intelligent Experimentation for Learning 
+Control. In Proceedings o.f the 1991 Seattle International Joint Conference on Neural 
+Networks, July 1991. 
+[11] S. M. Omohundro. Efficient Algorithms with Neural Network Behaviour. Journal o.f 
+Complex Systems, 1(2):273-347, 1987. 
+[12] R. S. Sutton. Integrated Architecture for Learning, Planning, and Reacting Based 
+on Approximating Dynamic Programming. In Proceedings of the 7th International 
+Conference on Machine Learning. Morgan Kaufman, June 1990. 

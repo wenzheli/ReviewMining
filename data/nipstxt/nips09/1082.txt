@@ -1,0 +1,277 @@
+Approximate Solutions to 
+Optimal Stopping Problems 
+John N. Tsitsiklis and Benjamin Van Roy 
+Laboratory for Information and Decision Systems 
+Massachusetts Institute of Technology 
+Cambridge, MA 02139 
+e-mail: jnt@mit.edu, bvr@mit.edu 
+Abstract 
+We propose and analyze an algorithm that approximates solutions 
+to the problem of optimal stopping in a discounted irreducible ape- 
+riodic Markov chain. The scheme involves the use of linear com- 
+binations of fixed basis functions to approximate a Q-function. 
+The weights of the linear combination are incrementally updated 
+through an iterative process similar to Q-learning, involving sim- 
+ulation of the underlying Markov chain. Due to space limitations, 
+we only provide an overview of a proof of convergence (with prob- 
+ability 1) and bounds on the approximation error. This is the first 
+theoretical result that establishes the soundness of a Q-learning- 
+like algorithm when combined with arbitrary linear function ap- 
+proximators to solve a sequential decision problem. Though this 
+paper focuses on the case of finite state spaces, the results extend 
+naturally to continuous and unbounded state spaces, which are ad- 
+dressed in a forthcoming full-length paper. 
+I INTRODUCTION 
+Problems of sequential decision-making under uncertainty have been studied ex- 
+tensively using the methodology of dynamic programming [Bertsekas, 1995]. The 
+hallmark of dynamic programming is the use of a value function, which evaluates 
+expected future reward, as a function of the current state. Serving as a tool for 
+predicting long-term consequences of available options, the value function can be 
+used to generate optimal decisions. 
+A number of algorithms for computing value functions can be found in the dynamic 
+programming literature. These methods compute and store one value per state in a 
+state space. Due to the curse of dimensionality, however, states spaces are typically 
+Approximate Solutions to Optimal Stopping Problems 1083 
+intractable, and the practical applications of dynamic programming are severely 
+limited. 
+The use of function approximators to "fit" value functions has been a central theme 
+in the field of reinforcement learning. The idea here is to choose a function ap- 
+proximator that has a tractable number of parameters, and to tune the parameters 
+to approximate the value function. The resulting function can then be used to 
+approximate optimal decisions. 
+There are two preconditions to the development an effective approximation. First, 
+we need to choose a function approximator that provides a "good fit" to the value 
+function for some setting of parameter values. In this respect, the choice requires 
+practical experience or theoretical analysis that provides some rough information on 
+the shape of the function to be approximated. Second, we need effective algorithms 
+for tuning the parameters of the function approximator. 
+Watkins (1989) has proposed the Q-learning algorithm as a possibility. The original 
+analyses of Watkins (1989) and Watkins and Dayan (1992), the formal analysis 
+of Tsitsiklis (1994), and the related work of Jaakkola, Jordan, and Singh (1994), 
+establish that the algorithm is sound when used in conjunction with exhaustive look- 
+up table representations (i.e., without function approximation). Jaakkola, $ingh, 
+and Jordan (1995), Tsitsiklis and Van Roy (1996a), and Gordon (1995), provide a 
+foundation for the use of a rather restrictive class of function approximators with 
+variants of Q-learning. Unfortunately, there is no prior theoretical support for the 
+use of Q-learning-like algorithms when broader classes of function approximators 
+are employed. 
+In this paper, we propose a variant of Q-learning for approximating solutions to 
+optimal stopping problems, and we provide a convergence result that established its 
+soundness. The algorithm approximates a Q-function using a linear combination of 
+arbitrary fixed basis functions. The weights of these basis functions are iteratively 
+updated during the simulation of a Markov chain. Our result serves as a starting 
+point for the analysis of Q-learning-like methods when used in conjunction with 
+classes of function approximators that are more general than piecewise constant. 
+In addition, the algorithm we propose is significant in its own right. Optimal 
+stopping problems appear in practical contexts such as financial decision making 
+and sequential analysis in statistics. Like other problems of sequential decision 
+making, optimal stopping problems suffer from the curse of dimensionality, and 
+classical dynamic programming methods are of limited use. The method we propose 
+presents a sound approach to addressing such problems. 
+2 OPTIMAL STOPPING PROBLEMS 
+We consider a discrete-time, infinite-horizon, Markov chain with a finite state space 
+S = {1,..., n} and a transition probability matrix P. The Markov chain follows a 
+trajectory xo, xx, x2,.. ß where the probability that the next state is y given that the 
+current state is x is given by the (x, y)th element of P, and is denoted by Pxu- At 
+each time t 6 {0, 1,2,...} the trajectory can be stopped with a terminal reward of 
+G(xt). If the trajectory is not stopped, a reward of g(xt) is obtained. The objective 
+is to maximize the expected infinite-horizon discounted reward, given by 
+Lt=O 
+where a E (0, 1) is a discount factor and r is the time at which the process is 
+stopped. The variable r is defined by a stopping policy, which is given by a sequence 
+1084 J. N. Tsitsiklis and B. Van Roy 
+of mappings Pt ' S t+x ' {stop, continue}. Each Pt determines whether or not to 
+terminate, based on xo,..., xt. If the decision is to terminate, then - - t. 
+We define the value function to be a mapping from states to the expected discounted 
+future reward, given that an optimal policy is followed starting at a given state. In 
+particular, the value function J* ß $   is given by 
+J*(x) = inf 
+(m,2,..4 
+Lt:O 
+where - is the stopping time given by the policy {Pt}. It is well known that the 
+value function is the unique solution to Bellman's equation: 
+= j* 
+J*(x) max G(x),g(x) + a pxy (y) 
+yes 
+Furthermore, there is always an optimal policy that is stationary (i.e., of the form 
+{Pt = P*, Vt}) and defined by 
+stop, 
+p* (x) = continue, 
+if 6(x) _> V*(x), 
+otherwise. 
+Following Watkins (1989), we define the Q-function as the function Q* ß $ +  
+given by 
+Q* (x) = g(x) + a  pxyV* (y). 
+yes 
+It is easy to show that the Q-function uniquely satisfies 
+Q* (x) = g(x) + a  py max [G(y), Q* (y)], 
+Furthermore, an optimal policy can be defined by 
+stop, if 6(x) _> Q*(x), 
+p* (x) = continue, otherwise. 
+Vx e S. (1) 
+3 APPROXIMATING THE Q-FUNCTION 
+Classical computational approaches to solving optimal stopping problems involve 
+computing and storing a value function in a tabular form. The most common way 
+for doing this is through use of an iterative algorithm of the form 
+J+ (x) = max 
+G(x), g(x) -t- a 
+yes 
+When the state space is extremely large, as is the typical case, two difficulties arise. 
+The first is that computing and storing one value per state becomes intractable, 
+and the second is that computing the summation on the right hand side becomes 
+intractable. We will present an algorithm, motivated by Watkins' Q-learning, that 
+addresses both these issues, allowing.for approximate solution to optimal stopping 
+problems with large state spaces. 
+Approximate Solutions to Optimal Stopping Problems 1085 
+3.1 LINEAR FUNCTION APPROXIMATORS 
+We consider approximations of Q* using a function of the form 
+K 
+O(x,r) = 
+k=l 
+Here, r = (r(1),...,r(K)) is a parameter vector and each ½k is a fixed scalar 
+function defined on the state space S. The functions ½ can be viewed as basis 
+functions (or as vectors of dimension n), while each r(k) can be viewed as the 
+associated weight. To approximate the Q-function, one usually tries to choose the 
+parameter vector r so as to minimize some error metric between the functions 0 (', r) 
+and Q* (-). 
+It is convenient to define a vector-valued function ½: $  K, by letting )(x) -- 
+(el(x),... ,½K(X)). With this notation, the approximation can also be written in 
+the form ((x,r) = (rI)r)(x), where rI) is viewed as a ISI x K matrix whose ith row 
+is equal to ((x). 
+3.2 THE APPROXIMATION ALGORITHM 
+In the approximation scheme we propose, the Markov chain underlying the stopping 
+problem is simulated to produce a single endless trajectory {xt]t = 0, 1, 2,...}. The 
+algorithm is initialized with a parameter vector to, and after each time step, the 
+parameter vector is updated according to 
+rt+ = rt + 7t½(xt)(9(xt)+ amax [½'(xt+)rt, 
+where 7t is a scalar stepsize. 
+3.3 CONVERGENCE THEOREM 
+Before stating the convergence theorem, we introduce some notation that will make 
+the exposition more concise. Let x(1),..., x(n) denote the steady-state probabilities 
+for the Markov chain. We assume that x(x) > 0 for all x 6 S. Let D be an n x n 
+diagonal matrix with diagonal entries x(1),... ,x(n). We define a weighted norm 
+II' lid by 
+'IJllo-xs(X)J2(x) ß 
+We define a "projection matrix" II that induces a weighted projection onto the 
+subspace X = {(I)r ] r 6 RK} with projection weights equal to the steady-state 
+probablilities. In particular, 
+IIJ = arg _min [IJ - Jll. 
+It is easy to show that II is given by II = ('D)-'D. 
+We define an operator F' Rn  n by 
+FJ = g + aP max ['Irt, G] , 
+where the max denotes a componentwise maximization. 
+We have the following theorem that ensures soundness of the algorithm: 
+1086 J. N. Tsitsiklis and B. Van Roy 
+Theorem 1 Let the following conditions hold: 
+(a) The Markov chain has a unique invariant distribution ,r that satisfies ,rP = r , 
+with x(x) > 0 for all x C S. 
+(b) The matrix  has full column rank; that is, the "basis functions" {½k I k = 
+1,..., K} are linearly independent. 
+(c) The step sizes 't are nonnegative, nonincreasing, and predetermined. Further- 
+more, they satisfy Y-t=o fit = cx, and Y-t=o 
+We then have: 
+(a) The algorithm converges with probability 1. 
+(b) The limit of convergence r* is the unique solution of the equation 
+IIF(r*) = r*. 
+(c) Furthermore, r* satisfies 
+II'I'r* - Q*llr 
+-- 
+3.4 OVERVIEW OF PROOF 
+The proof of Theorem 1 involves an analysis in a Euclidean space where the operator 
+F and projection II serve as tools for interpreting the algorithm's dynamics. The 
+ideas for this type of analysis can be traced back to Van Roy and Tsitsiklis (1996) 
+and have since been used to analyze Sutton's temporal-difference learning algorithm 
+(Tsitsiklis and Van Roy, 1996b). Due to space limitations, we only provide an 
+overview of the proof. 
+We begin by establishing that, with respect to the norm ]]. lID, P is a nonexpansion 
+and F is a contraction. In the first case, we apply Jensen's inequality to obtain 
+= x(Y)J2(Y) 
+-Iljll 2 
+-- O' 
+The fact that F is a contraction now follows from the fact that 
+](FJ)(x) - (FJ)(x)l _< al(PJ)(x) - (PJ)(x)l, 
+for any J, J C Rn and any state x  S. 
+Let s ß Rm  Rm denote the "steady-state" expectation of the steps taken by the 
+algorithm: 
+s(r) = Eo[½(xt) (g(xt) + am[½'(Xt+l)r,G(xt+)] - ½'(xt)r) ], 
+where Eo [.] denotes the expectation with respect to steady-state probabilities. Some 
+simple algebra gives 
+Approximate Solutions to Optimal Stopping Problems 1087 
+We focus on analyzing a deterministic algorithm of the form 
+The convergence of the stochastic algorithm we have proposed can be deduced 
+from that of this deterministic algorithm through use of a theorem on stochastic 
+approximation, contained in (Benveniste, et ed., 1990). 
+Note that the composition IIF(.) is a contraction with respect to II' lid with con- 
+traction coefficient c since projection is nonexpansive and F is a contraction. It 
+follows that 1-IF(.) has a fixed point of the form r* for some r* C m that uniquely 
+satisfies 
+ß r* - IIF(r*). 
+1 7'* 
+To establish convergence, we consider the potential function U(7') = 117' - I1. 
+We have 
+= 
+where the last equality follows because 'DII = 'D. Using the contraction prop- 
+erty of F and the nonexpansion property of projection, we have 
+IInF(7')--7'*11D = 
+IInF(7') - nF(7'*)IID 
+c117' -- 7'*11D, 
+and it follows from the Cauchy-Schwartz inequality that 
+< 117' - 7'*1111nF(7') - 7''11 -117' - 
+< ( - 1)11'7'- 7''11. 
+Since ß has full column rank, it follows that (VV(7'))'(7') < -V(7'), for some fixed 
+e > O, and St converges to r*. 
+We can further establish the desired error bound: 
+lira7'* - Q*IID 
+_< 117'* - nQ*IID + IInQ* - Q*IID 
+= IInF(7'*) - IIQ*IID + IInQ* - Q*IID 
+<_ 11m7'* - Q'lID + IInQ* - Q'lID, 
+and it follows that 
+117'* - Q*IID <_ 
+IInQ* - Q*IID 
+4 CONCLUSION 
+We have proposed an algorithm for approximating Q-functions of optimal stopping 
+problems using linear combinations of fixed basis functions. We have also presented 
+a convergence theorem and overviewed the associated analysis. This paper has 
+served a dual purpose of establishing a new methodology for solving difficult optimal 
+stopping problems and providing a starting point for analyses of Q-learning-like 
+algorithms when used in conjunction with function approximators. 
+1088 J. N. Tsitsiklis and B. Van Roy 
+The line of analysis presented in this paper easily generalizes in several directions. 
+First, it extends to unbounded continuous state spaces. Second, it can be used to 
+analyze certain variants of Q-learning that can be used for optimal stopping prob- 
+lems where the underlying Markov processes are not irreducible and/or aperiodic. 
+Rigorous analyses of some extensions, as well as the case that was discussed in this 
+paper, are presented in a forthcoming full-length paper. 
+Acknowledgments 
+This research was supported by the NSF under grant DMI-9625489 and the ARO 
+under grant DAAL-03-92-G-0115. 
+References 
+Benveniste, A., Metivier, M., & Priouret, P. (1990) Adaptive Algorithms and 
+Stochastic Approximations, Springer-Verlag, Berlin. 
+Bertsekas, D. P. (1995) Dynamic Programming and Optimal Control. Athena Sci- 
+entific, Belmont, MA. 
+Gordon, G. J. (1995) Stable Function Approximation in Dynamic Programming. 
+Technical Report: CMU-CS-95-103, Carnegie Mellon University. 
+Jaakkola, T., Jordan M. I., & Singh, $. P. (1994) "On the Convergence of Stochastic 
+Iterative Dynamic Programming Algorithms," Neural Computation, Vol. 6, No. 6. 
+Jaakkola T., Singh, S. P., & Jordan, M. I. (1995) "Reinforcement Learning Al- 
+gorithms for Partially Observable Markovian Decision Processes," in Advances in 
+Neural Information Processing Systems 7, J. D. Cowan, G. Tesauro, and D. Touret- 
+zky, editors, Morgan Kaufmann. 
+Sutton, R. $. (1988) Learning to Predict by the Method of Temporal Differences. 
+Machine Learning, 3:9-44. 
+Tsitsiklis, J. N. (1994) "Asynchronous Stochastic Approximation and Q-Learning," 
+Machine Learning, vol. 16, pp. 185-202. 
+Tsitsiklis, J. N. & Van Roy, B. (1996a) "Feature-Based Methods for Large Scale 
+Dynamic Programming," Machine Learning, Vol. 22, pp. 59-94. 
+Tsitsiklis, J. N. & Van Roy, B. (1996b) An Analysis of Temporal-Difference Learning 
+with Function Approximation. Technical Report: LIDS-P-2322, Laboratory for 
+Information and Decision Systems, Massachusetts Institute of Technology. 
+Van Roy, B. & Tsitsiklis, J. N. (1996) "Stable Linear Approximations to Dynamic 
+Programming for Stochastic Control Problems with Local Transitions," in Advances 
+in Neural Information Processing Systems 8, D. S. Touretzky, M. C. Mozer, and M. 
+E. Hasselmo, editors, MIT Press. 
+Watkins, C. J. C. H. (1989) Learning from Delayed Rewards. Doctoral dissertation, 
+University of Cambridge, Cambridge, United Kingdom. 
+Watkins, C. J. C. H. & Dayan, P. (1992) "Q-learning," Machine Learning, vol. 8, 
+pp. 279-292. 

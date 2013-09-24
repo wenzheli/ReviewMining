@@ -1,0 +1,287 @@
+Stable Dynamic Parameter Adaptation 
+Stefan M. Riiger 
+Fachbereich Informatik, Technische Universit/it Berlin 
+Sekr. FR 5-9, Franklinstr. 28/29 
+10 587 Berlin, Germany 
+async¸cs.tu-berlin.de 
+Abstract 
+A stability criterion for dynamic parameter adaptation is given. In 
+the case of the learning rate of backpropagation, a class of stable 
+algorithms is presented and studied, including a convergence proof. 
+1 INTRODUCTION 
+All but a few learning algorithms employ one or more parameters that control the 
+quality of learning. Backpropagation has its learning rate and momentum param- 
+eter; Boltzmann learning uses a simulated annealing schedule; Kohonen learning 
+a learning rate and a decay parameter; genetic algorithms probabilities, etc. The 
+investigator always has to set the parameters to specific values when trying to solve 
+a certain problem. Traditionally, the metaproblem of adjusting the parameters is 
+solved by relying on a set of well-tested values of other problems or an intensive 
+search for good parameter regions by restarting the experiment with different val- 
+ues. In this situation, a great deal of expertise and/or time for experiment design 
+is required (as well as a huge amount of computing time). 
+1.1 DYNAMIC PARAMETER ADAPTATION 
+In order to achieve dynamic parameter adaptation, it is necessary to modify the 
+learning algorithm under consideration: evaluate the performance of the parameters 
+in use from time to time, compare them with the performance of nearby values, and 
+(if necessary) change the parameter setting on the fly. This requires that there 
+exist a measure of the quality of a parameter setting, called performance, with the 
+following properties: the performance depends continuously on the parameter set 
+under consideration, and it is possible to evaluate the performance locally, i.e., at 
+a certain point within an inner loop of the algorithm (as opposed to once only at 
+the end of the algorithm). This is what dynamic parameter adaptation is all about. 
+2 2 6 s.M. ROGER 
+Dynamic parameter adaptation has several virtues. It is automatic; and there is no 
+need for an extra schedule to find what parameters suit the problem best. When 
+the notion of what the good values of a parameter set are changes during learning, 
+dynamic parameter adaptation keeps track of these changes. 
+1.2 EXAMPLE: LEARNING RATE OF BACKPROPAGATION 
+Backpropagation is an algorithm that implements gradient descent in an error 
+function E: 11{ n - 11{. Given w ø  11{  and a fixed  > 0, the iteration rule is 
+w t+l - w t - TVE(wt). The learning rate  is a local parameter in the sense that 
+at different stages of the algorithm different learning rates would be optimal. This 
+property and the following theorem make  especially interesting. 
+Trade-off theorem for backpropagation. Let E: 11{  - 11{ be the error function of 
+a neural net with a regular minimum at w*  lit n, i.e., E is expansible into a 
+Taylor series about w* with vanishing gradient VE(w*) and positive definite Hessian 
+matrix H(w*). Let A denote the largest eigenvalue of H(w*). Then, in general, 
+backpropagation with a fixed learning rate )  2/ cannot converge to w*. 
+Proof. Let U be an orthogonal matrix that diagonalizes H(w*), i.e., D := 
+UTH(w*)U is diagonal. Using the coordinate transformation x = UT(w - w*) 
+and Taylor expansion, E(w) - E(w*) can be approximated by F(x) := xTDx/2. 
+Since gradient descent does not refer to the coordinate system, the asymptotic be- 
+havior of backpropagation for E near w* is the same as for F near 0. In the latter 
+t = x(1- Dii7) t at time 
+case, backpropagation calculates the weight components x i 
+step t. The diagonal elements Dii are the eigenvalues of H(w*); convergence for all 
+geometric sequences t  xti thus requires  < 2/;k. 1 
+The trade-off theorem states that, given , a large class of minima cannot be found, 
+namely, those whose largest eigenvalue of the corresponding Hessian matrix is larger 
+than 2/. Fewer minima might be overlooked by using a smaller , but then the 
+algorithm becomes intolerably slow. Dynamic learning-rate adaptation is urgently 
+needed for backpropagation! 
+2 STABLE DYNAMIC PARAMETER ADAPTATION 
+Transforming the equation for gradient descent, W t+l = W t -- ]VE(wt), into a 
+differential equation, one arrives at Owt/Ot = -TVE(wt). Gradient descent with 
+constant step size  can then be viewed as Euler's method for solving the differential 
+equation. One serious drawback of Euler's method is that it is unstable: each finite 
+step leaves the trajectory of a solution without trying to get back to it. Virtually 
+any other differential-equation solver surpasses Euler's method, and there are even 
+some featuring dynamic parameter adaptation [5]. 
+However, in the context of function minimization, this notion of stability ("do not 
+drift away too far from a trajectory") would appear to be too strong. Indeed, 
+differential-equation solvers put much effort into a good estimation of points that 
+are as close as possible to the trajectory under consideration. What is really needed 
+for minimization is asymptotic stability: ensuring that the performance of the pa- 
+rameter set does not decrease at the end of learning. This weaker stability criterion 
+allows for greedy steps in the initial phase of learning. 
+There are several successful examples of dynamic learning-rate adaptation for back- 
+propagation: Newton and quasi-Newton methods [2] as an adaptive -tensor; indi- 
+vidual learning rates for the weights [3, 8]; conjugate gradient as a one-dimensional 
+-estimation [4]; or straightforward -adaptation [1, 7]. 
+Stable Dynamic Parameter Adaptation 22 7 
+A particularly good example of dynamic parameter adaptation was proposed by 
+Salomon [6, 7]: let ( > 1; at every step t of the backpropagation algorithm test two 
+values for /, a somewhat smaller one, lt/(, and a somewhat larger one, h(; use as 
+h+x the value with the better performance, i.e., the smaller error: 
+if E(w  - q/( . VE(w)) _< E(w  - q( . VE(w)) 
+otherwise 
+The setting of the new parameter ( proves to be uncritical (all values work, especially 
+sensible ones being those between 1.2 and 2.1). This method outperforms many 
+other gradient-based algorithms, but it is nonetheless unstable. 
+a) 
+b) 
+Figure 1: Unstable Parameter Adaptation 
+The problem arises from a rapidly changing length and direction of the gradient, 
+which can result in a huge leap away from a minimum, although the latter may have 
+been almost reached. Figure la shows the niveau lines of a simple quadratic error 
+function E: l 2 - l along with the weight vectors w ø, wX,... (bold dots) resulting 
+from the above algorithm. This effect was probably the reason why Salomon sug- 
+gested using the normalized gradient instead of the gradient, thus getting rid of the 
+changes in the length of the gradient. Although this works much better, Figure lb 
+shows the instability of this algorithm due to the change in the gradient's direction. 
+There is enough evidence that these algorithms converge for a purely quadratic 
+error function [6, 7]. Why bother with stability? One would like to prove that an 
+algorithm asymptotically finds the minimum, rather than occasionally leaping far 
+away from it and thus leaving the region where the quadratic Hessian term of a 
+globally nonquadratic error function dominates. 
+3 A CLASS OF STABLE ALGORITHMS 
+In this section, a class of algorithms is derived from the above ones by adding 
+stability. This class provides not only a proof of asymptotic convergence, but also 
+a significant improvement in speed. 
+Let E: lI n - IR be an error function of a neural net with random weight vector 
+w ø ElI n. Let(> 1,o 0, O<c_< 1, andO<a_< l_<b. At stept of the algo- 
+rithm, choose a vector gt restricted only by the conditions gtX7E(wt)/lgtl[VEwt I >- c 
+and that it either holds for all t that 1/gtl  [a,b] or that it holds for all t that 
+IVE(wt)l/Igtl  [a,b], i.e., the vectors g have a minimal positive projection onto 
+the gradient and either have a uniformly bounded length or are uniformly bounded 
+by the length of the gradient. Note that this is always possible by choosing gt as the 
+gradient or the normalized gradient. 
+Let e: l  E( wt - lg t) denote a one-dimensional error function given by E, w t and 
+gr. Repeat (until the gradient vanishes or an upper limit of t or a lower limit Emin 
+228 S.M. ROGER 
+of E is reached) the iteration w t+ = w t -rit+lg t with 
+t+l '-- 
+e(ri½) - e(0) if e(0) < 
+1+ 
+rit(gtVE(w t) (1) 
+if e(rid½) < e(ri½) < e(0) 
+otherwise. 
+The first case for rit-]-i is a stabilizing term ri*, which definitely decreases the error 
+when the error surface is quadratic, i.e., near a minimum. ri* is put into effect 
+when the error e(rit), which would occur in the next step if rit+l = rit was chosen, 
+exceeds the error e(0) produced by the present weight vector w t. By construction, 
+ri* results in a value less than rit/2 if e(rit) > e(0); hence, given  < 2, the learning 
+rate is decreased as expected, no matter what E looks like. Typically, (if the values 
+for ( are not extremely high) the other two cases apply, where rit( and rit/( compete 
+for a lower error. 
+Note that, instead of gradient descent, this class of algorithms proposes a ,,gt de- 
+scent," and the vectors gt may differ from the gradient. A particular algorithm is 
+given by a specification of how to choose gr. 
+4 PROOF OF ASYMPTOTIC CONVERGENCE 
+Asymptotic convergence. Let E: w  2in__1 iw /2 with Ai > O. For all  > 1, 
+0 < c _ 1, 0 < a _ I _ b, rio > O, and w ø 6 ll n, every algorithm from Section 3 
+produces a sequence t  w t that converges to the minimum 0 of E with an at least 
+exponential decay of t  E(wt). 
+Proof. This statement follows if a constant q < I exists with E(w t+x) _ qE(w t) for 
+all t. Then, limt- w t = 0, since w  vIE(w) is a norm in ll n . 
+Fix a w t, pit, and a gt according to the premise. Since E is a positive definite 
+quadratic form, e: ri  E(w t - rigt) is a one-dimensional quadratic function with 
+a minimum at, say, ri*. Note that e(0) = E(w t) and e(rit+x) = E(wt+). e is 
+completely determined by e(0), e'(0)= -gtVE(wt), rit, and e(rit). Omitting the 
+algebra, it follows that ri* can be identified with the stabilizing term of (1). 
+0 
+Figure 2: Steps in Estimating a Bound q for the Improvement of E. 
+Stable Dynamic Parameter Adaptation 2 2 9 
+If e(7t() > e(0), by (1) 7t+ will be set to 7*; hence, w t+x has the smallest possible 
+error e(7*) along the line given by gr. Otherwise, the three values 0, 7t/(, and 
+cannot have the same error e, as e is quadratic; e(7t() or e(7t/() must be less than 
+e(0), and the argument with the better performance is used as 7t+x. The sequence 
+t  E(w t) is strictly decreasing; hence, a q _ I exists. The rest of the proof shows 
+the existence of a q < 1. 
+Assume there are two constants 0 < qe, q, < I with 
+qt+x/q* e [q.,2-qn (2) 
+e(q*) _ qee(O). (3) 
+Let 7t+x _ 7*; using first the convexity of e, then (2), and (3), one obtains 
+e(Tt+x) 
+e 27* + (1 
+\ 7* 
+rh+l -- 7* 
+7* e(0) + (1 
+7t-t-1 -- 7* 
+;/ )"*) 
+7t+l -- 7* 
+7' 
+_ (1-q,)e(O) +q,e(7*) 
+_ (1 - q,(1 - qe))e(O). 
+Figure 2 shows how the estimations work. The symmetric case 0 < 7t+x _ 7* has 
+the same result E(w t+x) _ qE(w t) with q := 1 - q,(1 - qe) < 1. 
+Let A < A > 
+:-- min{)i} and :-- max{)i}. A straightforward estimation for qe yields 
+qe :-- 1- c2 - < 1. 
+Note that 7* depends on w t and gr. A careful analysis of the recursive dependence 
+of 7t+1/7' (w t, gt) on 7t/7 * (w t-l, gt-1) uncovers an estimation 
+{2 2 ca(A 
+q.:= min 2 + 1'2 + 1 b - 
+3/2 
+bmax{1, V/2A > E(wø)} } > O. 
+1 
+5 
+NON-GRADIENT DIRECTIONS CAN IMPROVE 
+CONVERGENCE 
+It is well known that the sign-changed gradient of a function is not necessarily the 
+best direction to look for a minimum. The momentum term of a modified back- 
+propagation version uses old gradient directions; Newton or quasi-Newton methods 
+explicitly or implicitly exploit second-order derivatives for a change of direction; 
+another choice of direction is given by conjugate gradient methods [5]. 
+The algorithms from Section 3 allow almost any direction, as long as it is not nearly 
+perpendicular to the gradient. Since they estimate a good step size, these algorithms 
+can be regarded as a sort of "trial-and-error" line search without bothering to find 
+an exact minimum in the given direction, but utilizing any progress made so far. 
+One could incorporate the Polak-Ribiere rule, +1 = VE(wt+l) + od t, for conju- 
+gate directions with d ø = VE(wø), a = 1, and 
+] -- (VE(w t+l) -- VE(wt))VE(w t+x) 
+(rE(w,)? 
+230 S.M. ROGER 
+to propose vectors gt := dt/[dt[ for an explicit algorithm from Section 3. As in 
+the conjugate gradient method, one should reset the direction d  after each n (the 
+number of weights) updates to the gradient direction. Another reason for resetting 
+the direction arises when gt does not have the minimal positive projection c onto 
+the normalized gradient. 
+a = 0 sets the descent direction gt to the normalized gradient VE(wt)/[VE(wt)[; 
+this algorithm proves to exhibit a behavior very similar to Salomon's algorithm with 
+normalized gradients. The difference lies in the occurrence of some stabilization 
+steps from time to time, which, in general, improve the convergence. 
+Since comparisons of Salomon's algorithm to many other methods have been pub- 
+lished [7], this paper confines itself to show that significant improvements are 
+brought about by non-gradient directions, e.g., by Polak-Ribiere directions (a = 1). 
+Table 1: Average Learning Time for Some Problems 
+PROBLEM Emin c, ---- 0 c, -- I 
+(a) 3-2-4 regression 100 195 4- 95% 58 4- 70% 
+(b) 3-2-4 approximation 10 -4 1070 4- 140% 189 + 115% 
+(c) Pure square (n = 76) 10 -x6 464 4- 17% 118 4- 
+(d) Power 1.8 (n = 76) 10 -4 486 4- 29% 84 4- 23% 
+(e) Power 3.8 (n = 76) 10 -x6 28 4- 10% 374- 14% 
+(f) 8-3-8 encoder 10 -4 1380 4- 60% 300 4- 60% 
+Table I shows the average number of epochs of two algorithms for some problems. 
+The average was taken over many initial random weight vectors and over values of 
+(  [1.7, 2.1]; the root mean square error of the averaging process is shown as a 
+percentage. Note that, owing to the two test steps for rh/ and qt, one epoch has 
+an overhead of around 50% compared to a corresponding epoch of backpropagation. 
+a  0 helps: it could be chosen by dynamic parameter adaptation. 
+Problems (a) and (b) represent the approximation of a function known only from 
+some example data. A neural net with 3 input, 2 hidden, and 4 output nodes was 
+used to generate the example data; artificial noise was added for problem (a). The 
+same net with random initial weights was then used to learn an approximation. 
+These problems for feedforward nets are expected to have regular minima. 
+n 
+Problem (c) uses a pure square error function E: w  --i=x ilwi[P/2 with p = 2 
+and n = 76. Note that conjugate gradient needs exactly n epochs to arrive at the 
+minimum [5]. However, the few additional epochs that are needed by the a = 1 
+algorithm to reach a fairly small error (here 118 as opposed to 76) must be compared 
+to the overhead of conjugate gradient (one line search per epoch). 
+Powers other than 2, as used in (d) or (e), work well as long as, say, p > 1.5. A power 
+p < I will (if n _ 2) produce a "trap" for the weight vector at a location near a 
+coordinate axis, where, owing to an infinite gradient component, no gradient-based 
+algorithm can escape x. Problems are expected even for p near 1: the algorithms of 
+Section 3 exploit the fact that the gradient vanishes at a minimum, which in turn 
+is numerically questionable for a power like 1.1. Typical minima, however, employ 
+powers 2, 4,... Even better convergence is expected and found for large powers. 
+Dynamic parameter adaptation as in (1) can cope with the square-root singularity 
+(p = 1/2) in one dimension, because the adaptation rule allows a fast enough decay of 
+the learning rate; the ability to minimize this one-dimensional square-root singularity is 
+somewhat overemphasized in [7]. 
+Stable Dynamic Parameter Adaptation 231 
+The 8-3-8 encoder (f) was studied, because the error function has global minima 
+at the boundary of the domain (one or more weights with infinite length). These 
+minima, though not covered in Section 4, are quickly found. Indeed, the ability 
+to increase the learning rate geometrically helps these algorithms to approach the 
+boundary in a few steps. 
+6 CONCLUSIONS 
+It has been shown that implementing asymptotic stability does help in the case of the 
+backpropagation learning rate: the theoretical analysis has been simplified, and the 
+speed of convergence has been improved. Moreover, the presented framework allows 
+descent directions to be chosen fiexibly, e.g., by the Polak-Ribiere rule. Future work 
+includes studies of how to apply the stability criterion to other parametric learning 
+problems. 
+References 
+[1] R. Battiti. Accelerated backpropagation learning: Two optimization methods. 
+Complex Systems, 3:331-342, 1989. 
+[2] S. Becker and Y. le Cun. Improving the convergence of back-propagation learn- 
+ing with second order methods. In D. Touretzky, G. Hinton, and T. Sejnowski, 
+editors, Proceedings of the 1988 Connectionist Models Summer School, pages 
+29-37. Morgan Kaufmann, San Mateo, 1989. 
+[3] R. Jacobs. Increased rates of convergence through learning rate adaptation. 
+Neural Networks, 1:295-307, 1988. 
+[4] A. Kramer and A. Sangiovanni-Vincentelli. Efficient parallel learning algorithms 
+for neural networks. In D. Touretzky, editor, Advances in Neural Information 
+Processing Systems 1, pages 40-48. Morgan Kaufmann, San Mateo, 1989. 
+[5] W. H. Press, B. P. Flannery, S. A. Teukolsky, and W. T. Vetterling. Numerical 
+Recipes in C. Cambridge University Press, 1988. 
+[6] R. Salomon. Verbesserung konnektionistischer Lernverfahren, die nach der Gra- 
+dientenmethode arbeiten. PhD thesis, TU Berlin, October 1991. 
+[7] R. Salomon and J. L. van Hemmen. Accelerating backpropagation through 
+dynamic self-adaptation. Neural Networks, 1996 (in press). 
+[8] 
+F. M. Silva and L. B. Almeida. Speeding up backpropagation. In Proceedings of 
+NSMS - International Symposium on Neural Networks for Sensory and Motor 
+Systems, Amsterdam, 1990. Elsevier. 

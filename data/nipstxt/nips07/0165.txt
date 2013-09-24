@@ -1,0 +1,317 @@
+Grouping Components of 
+Three-Dimensional Moving Objects in 
+Area MST of Visual Cortex 
+Richard S. Zemel 
+Carnegie Mellon University 
+Department of Psychology 
+Pittsburgh, PA 15213 
+zemelcmu. edu 
+Terrence J. Sejnowski 
+CNL, The Salk Institute 
+P.O. Box 85800 
+San Diego, CA 92186-5800 
+; errysalk. edu 
+Abstract 
+Many cells in the dorsal part of the medial superior temporal 
+(MST) area of visual cortex respond selectively to spiral flow 
+patterns--specific combinations of expansion/contraction and ro- 
+tation motions. Previous investigators have suggested that these 
+cells may represent self-motion. Spiral patterns can also be gener- 
+ated by the relative motion of the observer and a particular object. 
+An MST cell may then account for some portion of the complex 
+flow field, and the set of active cells could encode the entire flow; 
+in this manner, MST effectively segments moving objects. Such 
+a grouping operation is essential in interpreting scenes containing 
+several independent moving objects and observer motion. We de- 
+scribe a model based on the hypothesis that the selective tuning 
+of MST cells reflects the grouping of object components undergo- 
+ing coherent motion. Inputs to the model were generated from 
+sequences of ray-traced images that simulated realistic motion sit- 
+uations, combining observer motion, eye movements, and indepen- 
+dent object motion. The input representation was modeled after 
+response properties of neurons in area MT, which provides the pri- 
+mary input to area MST. After applying an unsupervised learning 
+algorithm, the units became tuned to patterns signaling coherent 
+motion. The results match many of the known properties of MST 
+cells and are consistent with recent studies indicating that these 
+cells process 3-D object motion information. 
+166 Richard $. Zemel, Terrence J. Sejnowski 
+I INTRODUCTION 
+A number of studies have described neurons in the dorsal part of the medial superior 
+temporal (MSTd) monkey cortex that respond best to large expanding/contracting, 
+rotating, or shifting patterns (Tanaka et al., 1986; Duffy & Wurtz, 1991a). Recently 
+Graziano et al. (1994) found that MSTd cell responses correspond to a point in a 
+multidimensional space of spiral motions, where the dimensions are these motion 
+types. 
+Combinations of these motions are generated as an animal moves through its envi- 
+ronment, which suggests that area MSTd could play a role in optical flow analysis. 
+When an observer moves through a static environment, a singularity in the flow 
+field known as the focus of expansion may be used to determine the direction of 
+heading (Gibson, 1950; Warren &Hannon, 1988). Previous computational models 
+of MSTd (Lappe & Rauschecker, 1993; Perrone & Stone, 1994) have shown how 
+navigational information related to heading may be encoded by these cells. These 
+investigators propose that each MSTd cell represents a potential heading direction 
+and responds to the aspects of the flow that are consistent with that direction. 
+In natural environments, however, MSTd cells are often faced with complex flow 
+patterns produced by the combination of observer motion with other independently- 
+moving objects. These complex flow fields are not a single spiral pattern, but instead 
+are composed of multiple spiral patterns. This observation that spiral flows are local 
+subpatterns in flow fields suggests that an MSTd cell represents a particular regular 
+subpattern which corresponds to the aspects of the flow field arising from a single 
+cause--the relative motion of the observer and some object or surface in the scene. 
+Adopting this view implies a new goal for MST: the set of MST responses accounts 
+for the flow field based on the ensemble of motion causes. 
+An MST cell that responds to a local subpattern accounts for a portion of the flow 
+field, specifically the portion that arises from a single motion cause. In this manner, 
+MST can be considered to be segmenting motion signals. As in earlier models, the 
+MSTd cell responds to the aspects of flow consistent with its motion hypothesis, 
+but here a cell's motion hypothesis is not a heading direction but instead represents 
+the 3-D motion of a scene element relative to the observer. This encoding may be 
+useful not only in robustly estimating heading detection, but may also facilitate 
+several other tasks thought to occur further down the motion processing stream, 
+such as localizing objects and parsing scenes containing multiple moving objects. 
+In this paper we describe a computational model based on the hypothesis that an 
+MST cell signals those aspects of the flow that arise from a common underlying 
+cause. We demonstrate how such a model can develop response properties from the 
+statistics of natural flow images, such as could be extracted from MT signals, and 
+show that this model is able to capture several known properties of information 
+processing in MST. 
+2 THE MODEL 
+The input to the system is a movie containing some combination of observer motion, 
+eye movements, and a few objects undergoing independent 3-D motion. An optical 
+Grouping Components of 3-D Moving Objects in Area MST of Visual Cortex 167 
+flow algorithm is then applied to yield local motion estimates; this flow field is the 
+input to the network, which consists of three layers. The first layer is designed after 
+monkey area MT. The connectivity between this layer and the second layer is based 
+on MST receptive field properties, and the second layer has the same connectivity 
+pattern to the output layer. The weights on all connections are determined by a 
+training algorithm which attempts to force the network to recreate the input pattern 
+on the output units. We discuss the inputs, the network, and the training algorithm 
+in more detail below. 
+2.1 STIMULI 
+The flow field input to the network is produced from a movie. The various movies 
+are intended to simulate natural motion situations. Sample situations include one 
+where all motion is due to the observer's movement, and the gaze is in the motion 
+direction. Another situation that produces a qualitatively different flow field is when 
+the gaze is not in the motion direction. A third situation includes independent 
+motion of some of the objects in the environment. Each movie is a sequence of 
+images that simulates one of these situations. 
+The images are created using a flexible ray-tracing program, which allows the simu- 
+lation of many different objects, backgrounds, observer/camera motions, and light- 
+ing effects. We currently employ a database of 6 objects (a block of swiss cheese, 
+a snail, a panther, a fish, a ball, and a teapot) and three different backgrounds. A 
+movie is generated by randomly selecting one to four of the objects, and a back- 
+ground. To simulate one of the motion situations, a random selection of motion 
+parameters follows: a). The observer's motion along (x, z) describes her walking; 
+b). The eyes can rotate in (x, y), simulating the tracking of an object during motion; 
+c). Each object can undergo independent 3-D motion. A sequence of 15 images is 
+produced by randomly selecting 3-D initial positions and then updating the pose 
+of the camera and each object in the image based on these motion parameters. 
+Figure i shows 3 images selected from a movie generated in this manner. 
+We apply a standard optical flow technique to extract a single flow field from each 
+synthetic image sequence. Nagel's (1987) flow algorithm is a gradient-based scheme 
+which performs spatiotemporal smoothing on the set of images and then uses a 
+multi-resolution second-order derivative technique, in combination with an oriented 
+smoothness relaxation scheme, to produce the flow field. 
+2.2 MODEL INPUT AND ARCHITECTURE 
+The network input is a population encoding of these optical flow vectors at each 
+location in a 21x31 array by small sets of neurons that share the same receptive 
+field position but are tuned to different directions of motion. The values for each 
+input unit is computed by projecting the local flow vector onto the cell's preferred 
+direction. We are currently using 4 inputs per location, with evenly spaced preferred 
+directions and a tuning half-width of 45 ø. 
+This population encoding in the input layer is intended to model the response of 
+cells in area MT to a motion sequence. The receptive field (RF) of each model MT 
+unit is determined by the degree of spatial smoothing and subsampling in the flow 
+168 Richard S. Zemel, Terrence J. Sejnowski 
+Figure 1: Three images from a movie, and the corresponding flow field. In this 
+movie, the observer is moving into the scene while maintaining his gaze on the 
+fish. The panther is moving independently. Note that the flow field contains spiral 
+subpatterns that describe the independent relative motion of different objects. 
+algorithm. We have set these so that each input unit in the model is sensitive to 
+a 10 ø range in the visual field, which approximately matches the RF sensitivity of 
+MT neurons near the fovea. 
+The connectivity between the input layer and hidden layer of the network is based 
+on the receptive field properties of MST cells. These RFs have always been reported 
+to be large, but the exact size has been controversial. We base our RFs on the recent 
+studies of Lagae et al. (1994), who found that most MSTd RFs included the fovea, 
+and the sensitive part of the RF averaged 25o-30 ø and was relatively independent of 
+eccentricity. Our input images cover approximately a 60øx45 ø portion of the visual 
+field. We therefore evenly place the centers of the second layer cell's RFs within 
+a region near the image center, and extend the RFs to include approximately 13 
+of the image. There are a total of 20 different RF centers, and ten hidden layer 
+units share each RF; each of these 200 hidden units receives input from a 14x21 
+unit patch in the input layer. 
+Grouping Components of 3-D Moving Objects in Area MST of Visual Cortex 169 
+2.3 LEARNING ALGORITHM 
+The question that we asked is whether the model would develop MST-like response 
+properties in the second layer of the network under conditions of unsupervised 
+learning. This would provide evidence for our hypothesis that the spiral pattern 
+selectivity of an MST cell derives from the regular occurrence of a set of flow sig- 
+nals caused by the relative motion of an object and the observer. An earlier model 
+(Zhang et al., 1993) showed how simple Hebbian synapses can yield weight patterns 
+resembling the combinations of motion components; the inputs to this model were 
+simple linear combinations of these motion patterns. However, a Hebbian mech- 
+anism fails to find the underlying structure--the spiral motion patterns--for the 
+more complicated inputs described above. Other standard unsupervised methods, 
+such as Principal Components Analysis and competitive learning, also fail to achieve 
+the desired selectivity in the MST units. 
+The network we used for unsupervised learning was an autoencoder, in which the 
+network is trained to reconstruct the input on its output units. This type of network 
+is well-suited for a generarive view of input examples, in which inputs are seen as 
+random samples drawn from some particular distribution, which it is then the goal of 
+learning to discover. Unsupervised learning methods attempt to invert this process 
+to extract the representations of the underlying causes of the inputs. Zemel (1993) 
+shows that unsupervised techniques contain assumptions about the form of these 
+underlying causes; these different assumptions can be translated into the network 
+architecture, activations, and cost function, and the resulting network tends to learn 
+representations that conform to these assumptions. 
+In this network we make an assumption about the causes that generated the scene 
+based on our knowledge of the underlying structure in the flow fields. Each input 
+example is assumed to be generated by several independent causes, each of which 
+corresponds to one moving object, or a part thereof. Furthermore, we assume that 
+the value of a single output dimension, here the response of an MT cell, can always 
+be specified as coming from just one cause; that is, local flow is generally the result 
+of the relative motion of the observer and the nearest object along that line-of-sight. 
+This assumption can be translated into an activation function for the output units 
+which encourages the causes to compete to account for the activity of an input unit 
+while also allowing multiple causes to be present in each image (Dayan & Zemel, 
+1995). The stochastic activity of an output unit j is given by: pj = 1 - (1 + 
+i x,wy, )-1 where xi is the binary output of hidden unit i, sampled from the 
+1-w j,  
+standard sigmoidal function of its net input. 
+We use a cross-entropy error measure for each output unit j: Ej = -tj logp/- (1 - 
+tj) log(1 -pj), where tj is the value of the corresponding input unit. A second cost 
+in the objective function implements our assumption that only a few causes will 
+account for an input example. This cost is the asymmetric divergence between each 
+hidden unit's expected and actual activity distributions, which encourages the unit's 
+activity to match its expected activity b across the training set. We back-propagate 
+this summed error to determine the network weights. 1 
+ Our activation function is derived from a probabilistic formulation of the image for- 
+mation process. A biologically plausible learning rule can be applied if the network is run 
+170 Richard S. Zemel, Terrence J. Sejnowski 
+3 SIMULATION RESULTS 
+The training set for the network contained 600 flow fields, each computed from a 
+different motion sequence. The network reached a minimum of the cost function 
+after approximately 1000 iterations of a conjugate gradient procedure. 
+We have tested the generalization ability of the network by presenting 50 flow fields 
+from novel random motion sequences. The network is able to successfully recon- 
+struct these fields using only a few active hidden units. We have examined the 
+selectivity of individual hidden units by simulating the neurophysiological experi- 
+ments, i.e., presenting various spiral flow patterns in the unit's RF. The speed was 
+held equal for all stimuli, and the pitch of spiral motion systematically varied. Fig- 
+ure 2 shows the result for one unit; like most units, this unit prefers a particular 
+combination of the motion types. To quantify the units' selectivities, we fit a cir- 
+cular normal function to each unit's tuning curve. We found that 68% of the cells 
+(all with Ymax > 0.9) were selective--their tuning half-width was less than 30 ø. 
+Another interesting property of some dorsal MST neurons is that they maintain 
+their preference for a motion pattern regardless of the location of the velocity flow 
+center. We tested the position-invariance of the model MST units in our network by 
+shrinking the flow stimuli and placing them in different positions within each unit's 
+RF. Most of the selective units retained their preferences in these experiments. 
+In this position-invariance test, we discovered another interesting property of the 
+network: 43 of the 200 model MST units that were not selective for a particular 
+motion type on the full-field test were selective when the stimuli were reduced in size; 
+that is, these units responded preferentially to particular flows at specific positions 
+in their RFs. This local flow specificity is a natural consequence of modeling not 
+only observer motion but also independent object motion, as can be seen in Figure 1. 
+4 DISCUSSION 
+Many of the hidden units in the model have receptive fields that prefer spiral flow 
+fields and resemble the responses observed in area MST neurons. Several other 
+properties are consistent with this identification. For example, the hidden unit re- 
+sponses are relatively invariant to the object shape. This is clear from the units' flow 
+selectivities, as shown in Figure 2--the units instead respond to localized patches 
+of the flow field undergoing coherent motion. This shape-invariance agrees with the 
+physiological findings of (Lagae et al., 1994), who found that MST cells are less 
+selective for motion types that depend on object structure than they are to types 
+that depend primarily on the relative movement between objects and the observer. 
+Also, many of the model MST units motion selectivities are unaffected by placing the 
+stimulus in different locations within the RF, which matches the results of (Duffy & 
+Wurtz, 1991b; Graziano et al., 1994) and others, One way that our simulation results 
+diverge from the neurophysiological findings on MSTd is the presence of units that 
+are selective to a particular motion type at specific locations within their RF. This 
+local selectivity suggests that these units may model the response properties of 
+using a stochastic sampling procedure. We use a mean-field approximation, and back- 
+propagation to speed up learning. 
+Grouping Components of 3-D Moving Objects in Area MST of Visual Cortex 171 
+@ 
+© © 
+© 
+© © 
+Q 
+Figure 2: The response selectivity of an individual model MST unit to various mo- 
+tion types. In this polar plot, the angle represents the pitch of spiral motion, and the 
+radius represents the response of the unit. Eight directions were sampled in two con- 
+tinuous spaces, one for translation and the other for rotation-expansion/contraction. 
+cells that have been described in MST1, the lateral portion of MST. This leads to 
+a testable prediction concerning these cells--that they would exhibit similar local 
+selectivities on these full-field and within-RF flow selectivity experiments. 
+We have thus demonstrated that a network constructed to model MT-MST cortical 
+processing is capable of learning (via an unsupervised procedure) to group compo- 
+nents of the optical flow field for a variety of images. This grouping is accomplished 
+through the cooperative activity of several model MST units, each of which accounts 
+for a portion of the field indicative of coherent motion. Adopting a novel approach 
+to the question of what MST is encoding has produced an alternative derivation of 
+its response characteristics. 
+We are currently extending this model in several directions. Recent studies have 
+shown that over 90% of MSTd cells are sensitive to the disparity of the visual 
+stimulus (Roy et al., 1992). This disparity sensitivity provides an additional criteria 
+for making segmentation decisions, as image components at similar depths may be 
+grouped. Furthermore, for some MSTd cells the preferred direction of stimulus 
+motion reversed as the disparity (relative to the plane of fixation) of the stimulus 
+reversed. Adding disparity information to the network input should allow the hidden 
+units to respond to particular combinations of these cues. 
+We also intend to extend our model to consider the relations between functions 
+carried out in the dorsal and lateral portions of MST. Our current results indicate 
+that it may be possible to construct a model of MST that incorporates both areas. 
+For both areas, evidence exists that many cells are sensitive to an extraretinal 
+input (Newsome et al., 1988), and respond differently to identical flows depending 
+on whether the motion is due to observer or object motion (Erickson & Thier, 1991). 
+Including an extraretinal signal in the network will allow us to tie the model more 
+closely to the animal's behavior. Our current hypothesis is that the two MST areas 
+act in conjunction to allow an observer to track a moving object through a dynamic 
+172 Richard S. Zemel, Terrence J. Sejnowski 
+environment, while maintaining enough information about other objects that may 
+be relevant, either for avoidance or to switch attention. 
+Acknowledgement s 
+We thank Thomas Albright, Peter Dayan, Alexandre Pouget, Gene Stoner, and Paul Viola 
+for helpful comments, and the developers of the Persistence of Vision Ray Tracer for making 
+this package pubhc. This research was supported by the Office of Naval Research. 
+References 
+Dayan, P., g Zemel, R. S. (1995). Competition and multiple cause models. Neural 
+Computation. In press. 
+Duffy, C. J., g Wurtz, R. H. (1991a). The sensitivity of MST neurons to optic flow 
+stimuli. I. A continuum of response selectivity to large field stimuli. Journal of Neu- 
+rophysiology, 65, 1329-1345. 
+Duffy, C. J., g Wurtz, R. H. (1991b). Sensitivity of MST neurons to optic flow stimuli. 
+II. Mechanisms of response selectivity revealed by small field stimuli. Journal of 
+Neurophysiology, 65, 1346-1359. 
+Erickson, R. G., g Thier, P. (1991). A neuronal correlate of spatial stability during 
+periods of self-induced visual motion. Experimental Brain Research, 86, 608-616. 
+Gibson, J. J. (1950). The perception of the visual world. Boston: Houghton Mifflin. 
+Graziano, M. S. A., Andersen, R. A., g Snowden, R. J. (1994). Tuning of MST neurons 
+to spiral motions. Journal of Neuroscience, 1 (1), 54-67. 
+Lagae, L., Maes, H., Raiguel, S., Xiao, D.-K., g Orban, G. A. (1994). Responses of 
+macaque STS neurons to optic flow components: A comparison of areas MT and 
+MST. Journal of Neurophysiology, 71(5), 1597-1626. 
+Lappe, M., g Rauschecker, J.P. (1993). A neural network for the processing of optic flow 
+from ego-motion in man and higher mammals. Neural Computation, 5(3), 374-391. 
+Nagel, H.-H. (1987). On the estimation of optical flow: relations between different ap- 
+proaches and some new results. Artificial Intelligence, 33(3), 299-324. 
+Newsome, W. T., Wurtz, R. H., g Komatsu, H. (1988). Relation of cortical areas MT and 
+MST to pursuit eye movements. II. Differentiation of retinal from extretinal inputs. 
+Journal of Neurophysiology, 60,604-620. 
+Perrone, J. A., g Stone, L. S. (1994). A model of self-motion estimation within primate 
+extrastriate visual cortex. Vision Research, 3 (21), 2917-2938. 
+Roy, J.~P., Komatsu, H., g Wurtz, R. H. (1992). Disparity sensitivity of neurons in 
+monkey extrastriate area MST. Journal of Neuroscience, Iœ(7), 2478-2492. 
+Tanaka, K., Hikosaka, K., Saito, H.-A., Yukie, M., Fukada, Y., g Iwai, E. (1986). Analysis 
+of local and wide-field movements in the superior temporal visual areas of the macaque 
+monkey. Journal of Neuroscience, 6, 134-144. 
+Warren, W. H., g Harmon, D. J. (1988). Direction of self motion is perceived from optical 
+flow. Nature, 336, 162-163. 
+Zemel, R. S. (1993). A minimum description length framework for unsupervised learning. 
+PhD thesis, University of Toronto. 
+Zhang, K., Sereno, M. I., g Sereno, M. E. (1993). Emergence of position-independent 
+detectors of sense of rotation and dilation with hebbian learning: An analysis. Neural 
+Computation, 5(4), 597-612. 

@@ -1,0 +1,336 @@
+Generalization in Reinforcement Learning: 
+Safely Approximating the Value Function 
+Justin A. Boyan and Andrew W. Moore 
+Computer Science Department 
+Carnegie Mellon University 
+Pittsburgh, PA 15213 
+j ab@cs.cmu.edu, awm@cs.cmu.edu 
+Abstract 
+A straightforward approach to the curse of dimensionality in re- 
+inforcement learning and dynamic programming is to replace the 
+lookup table with a generalizing function approximator such as a neu- 
+ral net. Although this has been successful in the domain of backgam- 
+mon, there is no guarantee of convergence. In this paper, we show 
+that the combination of dynamic programming and function approx- 
+imation is not robust, and in even very benign cases, may produce 
+an entirely wrong policy. We then introduce Grow-Support, a new 
+algorithm which is safe from divergence yet can still reap the benefits 
+of successful generalization. 
+I INTRODUCTION 
+Reinforcement learning--the problem of getting an agent to learn to act from sparse, 
+delayed rewards--has been advanced by techniques based on dynamic programming 
+(DP). These algorithms compute a value function which gives, for each state, the min- 
+imum possible long-term cost commencing in that state. For the high-dimensional 
+and continuous state spaces characteristic of real-world control tasks, a discrete repre- 
+sentation of the value function is intractable; some form of generalization is required. 
+A natural way to incorporate generalization into DP is to use a function approximator, 
+rather than a lookup table, to represent the value function. This apl?roach, which 
+dates back to uses of Legendre polynomials in DP [Bellman et al., 1963J, has recently 
+worked well on several dynamic control problems [Mahadevan and Connell, 1990, Lin, 
+1993] and succeeded spectacularly on the game of backgammon [Tesauro, 1992, Boyan, 
+1992]. On the other hand, many sensible implementations have been less successful 
+[Bradtke, 1993, Schraudolph et al., 1994]. Indeed, given the well-established success 
+3 70 Justin Boyan, Andrew W. Moore 
+on backgammon, the absence of similarly impressive results appearing for other games 
+is perhaps an indication that using function approximation in reinforcement learning 
+does not always work well. 
+In this paper, we demonstrate that the straightforward substitution of function ap- 
+proximators for lookup tables in DP is not robust and, even in very benign cases, may 
+diverge, resulting in an entirely wrong control policy. We then present Grow-Support, 
+a new algorithm designed to converge robustly. Grow-Support grows a collection of 
+states over which function approximation is stable. One-step backups based on Bell- 
+man error are not used; instead, values are assigned by performing "rollouts"--explicit 
+simulations with a greedy policy. We discuss potential computational advantages of 
+this method and demonstrate its success on some example problems for which the 
+conventional DP algorithm fails. 
+2 DISCRETE AND SMOOTH VALUE ITERATION 
+Many popular reinforcement learning algorithms, including Q-learning and TD(0), 
+are based on the dynamic programming algorithm known as value iteration [Watkins, 
+1989, Sutton, 1988, Barto et al., 1989J, which for clarity we will call discrete value 
+iteration. Discrete value iteration takes as input a complete model of the world as a 
+Markov Decision Task, and computes the optimal value function J*: 
+J* (x) = the minimum possible sum of future costs starting from x 
+To assure that J* is well-defined, we assume here that costs are nonnegative and that 
+some absorbing goal state--with all future costs O--is reachable from every state. For 
+simplicity we also assume that state transitions are deterministic. Note that J* and 
+the world model together specify a "greedy" policy which is optimal for the domain: 
+optimal action from state x = argmin (CoST(x, a) + J*(NIxT-ST^TE(x, a))) 
+aEA 
+We now consider extending discrete value iteration to the continuous case: we replace 
+the lookup table over all states with a function approximator trained over a sample of 
+states. The smooth value iteration algorithm is given in the appendix. Convergence 
+is no longer guaranteed; we instead recognize four possible classes of behavior: 
+good convergence The function approximator accurately represents the interme- 
+diate value functions at each iteration (that is, after m iterations, the value 
+function correctly represents the cost of the cheapest m-step path), and suc- 
+cessfully converges to the optimal J* value function. 
+lucky convergence The function approximator does not accurately represent the 
+intermediate value functions at each iteration; nevertheless, the algorithm 
+manages to converge to a value function whose greedy policy is optimal. 
+bad convergence The algorithm converges, i.e. the target J-values for the N train- 
+ing points stop changing, but the resulting value function and policy are 
+poor. 
+divergence Worst of all: small fitter errors may become magnified from one iteration 
+to the next, resulting in a value function which never stops changing. 
+The hope is that the intermediate value functions will be smooth and we will achieve 
+"good convergence." Unfortunately, our experiments have generated all four of these 
+behaviors--and the divergent behavior occurs frequently, even for quite simple prob- 
+lems. 
+Generalization in Reinforcement Learning: Safely Approximating the Value Function 371 
+2.1 DIVERGENCE IN SMOOTH VALUE ITERATION 
+We have run simulations in a variety of domains--including a continuous gridworld, 
+a car-on-the-hill problem with nonlinear dynamics, and tic-tac-toe versus a stochas- 
+tic opponent--and using a variety of function approximaters, including polynomial 
+regression, backpropagation, and local weighted regression. In our experiments, none 
+of these function approximaters was immune from divergence. 
+The first set of results is from the 2-D continuous gridworld, described in Figure 1. 
+By quantizing the state space into a 100 x 100 grid, we can compute J* with discrete 
+value iteration, as shown in Figure 2. The optimal value function is exactly linear: 
+J* (x, y) - 20- 10x- 10y. 
+Since J* is linear, one would hope smooth value iteration could converge to it with a 
+function approximator as simple as linear or quadratic regression. However, the in- 
+termediate value functions of Figure 2 are not smooth and cannot be fit accurately by 
+a low-order polynomial. Using linear regression on a sample of 256 randomly-chosen 
+states, smooth value iteration took over 500 iterations before "luckily" converging to 
+optimal. Quadratic regression, though it always produces a smaller fit error than lin- 
+ear regression, did not converge (Figure 3). The quadratic function, in trying to both 
+be fiat in the middle of state space and bend down toward 0 at the goal corner, must 
+compensate by underestimating the values at the corner opposite the goal. These 
+underestimates then enlarge on each iteration, as the one-step DP lookaheads erro- 
+neously indicate that points can lower their expected cost-to-go by stepping farther 
+away from the goal. The resulting policy is anti-optimal. 
+Continuous Gridworld 
+J* (x,y) 
+0. 
+0. 
+20 20 
+15 15 
+6 6 
+0.2 /0.4 0  '/0.4 0.2 /0.4 
+Fie 2: Computation of J* by screte vue iteration 
+0.2 0.4 0.6 0.8 
+x 1 
+Figure 1: In the continuous gdworld domain, the state is a point (x, y) 6 [0, 1] . There are 
+four actions corresponding to short steps (length 0.05, cost 0.5) in each compass drection, 
+and the goal region is the upper right-hand comer. J*(x, y) is linear. 
+Iteration 12 Iteration 25 Iteration 40 
+372 Justin Boyan, Andrew W. Moore 
+Iteration 17 Iteration 43 Iteration 127 
+i 1 -200 
+-3oq 
+ 8 -10 - 2j'- /0.8 -400 /0.8 
+ o. -% /o. -oo_-- /o. 
+, 
+'-o. /o.: o jb.: O-o..: 
+Fie 3: Divergence of smooh vMue keraion wih quadratic regression (note z-aMs). 
+0. 
+2-D Puddle World 
+0 0.2 0.4 0.6 0.8 
+J* (x, y) 
+%, 'o. 8 - 4 o 
+-0.2  W/0.4 
+O.o. o.2 o. 60.8 
+1 0.8 
+1 
+Iteration 144 
+018 
+02 
+x 
+Figure 4: The 2-D continuous gridworld with puddles, its optimal value function, and a 
+diverging approximation of the value function by Local Weighted Regression (note z-axis). 
+Car - on - the-Hi 11 
+-1 -0.5 0 0.5 
+pos 
+J* (pos,vel) 
+Figure 5: The car-on-the-hill domain. When the velocity is below a threshold, the car must 
+reverse up the left hill to gain enough speed to reach the goal, so J* is discontinuous. 
+Iteration 11 Iteration 101 Iteration 201 
+25 2 0 2 
+11 2 -10 
+1 
+-25% . ' /1 -200 I1 
+-1 0 
+-0.5 -1 -0. 1 -0.5 
+-1 
+0 
+0 ' 
+Figure DivergenCe value iteration ropagation for car-o thøe-lifi 
+neural net, a 2-layer MLP with 80 hidden units, was trained for 2000 epochs per iteration. 
+It may seem as though the divergence of smooth value iteration shown above can be 
+attributed to the global nature of polynomial regression. In fact, when the domain 
+is made slightly less trivial, the same types of instabilities appear with even a highly 
+Generalization in Reinforcement Learning: Safely Approximating the Value Function 373 
+Table 1: Summary of convergence results: Smooth value iteration 
+Domain Linear Quadratic LWR Backprop 
+2-D gridworld lucky diverge good lucky 
+2-D puddle world -- diverge diverge 
+Car-on-the-hill -- -- good diverge 
+local memory-based function approximator such as local weighted regression (LWR) 
+[Cleveland and Delvin, 1988]. Figure 4 shows the continuous gridworld augmented 
+to include two oval "puddles" through which it is costly to step. Although LWR can 
+fit the corresponding J* function nearly perfectly, smooth value iteration with LWR 
+nonetheless reliably diverges. On another two-dimensional domain, the car-on-the-hill 
+(Figure 5), smooth value iteration with LWR did converge, but a neural net trained 
+by backpropagation did not (see Figure 6). Table 1 summarizes our results. 
+In light of such experiments, we conclude that the straightforward combination of 
+DP and function approximation is not robust. A general-purpose learning method 
+will require either using a function approximator constrained to be robust during DP 
+[Yee, 1992], or an algorithm which explicitly prevents divergence even in the face of 
+imperfect function approximation, such as the Grow-Support algorithm we present 
+in Section 3. 
+2.2 RELATED WORK 
+Theoretically, it is not surprising that inserting a smoothing process into a recursive 
+DP procedure can lead to trouble. In [Thrun and Schwartz, 1993] one case is analyzed 
+with the assumption that errors due to function approximation bias are independently 
+distributed. Another area of theoretical analysis concerns inadequately approximated 
+J* functions. In [Singh and Yee, 1994] and [Williams, 1993] bounds are derived for the 
+maximum reduction in optimality that can be produced by a given error in function 
+approximation. If a basis function approximator is used, then the reduction can be 
+large [Sabes, 1993]. These results assume generalization from a dataset containing 
+true optimal values; the true reinforcement learning scenario is even harder because 
+each iteration of DP requires its own function approximation. 
+3 THE GROW-SUPPORT ALGORITHM 
+The Grow-Support algorithm is designed to construct the optimal value function with 
+a generalizing function approximator while being robust and stable. It recognizes that 
+function approximators cannot always be relied upon to fit the intermediate value 
+functions produced by DP. Instead, it assumes only that the function approximator 
+can represent the final J* function accurately. The specific principles of Grow-Support 
+are these: 
+1. We maintain a "support" set of states whose final J* values have been com- 
+puted, starting with goal states, and growing this set out from the goal. The 
+fitter is trained only on these values, which we assume it is capable of fitting. 
+2. Instead of propagating values by one-step DP backups, we use simulations 
+with the current greedy policy, called "rollouts". They explicitly verify the 
+achievability of a state's cost-to-go estimate before adding that state to the 
+3 74 Justin Boyan, Andrew W. Moore 
+support. In a rollout, the J values are derived from costs of actual paths to the 
+goal, not from the values of the previous iteration's function approximation. 
+This prevents divergence. 
+3. We take maximum advantage of generalization. Each iteration, we add to 
+the support set any sample state which can, by executing a single action, 
+reach a state that passes the rollout test. In a discrete environment, this 
+would cause the support set to expand in one-step concentric "shells" back 
+from the goal. But in our continuous case, the function approximator may 
+be able to extrapolate correctly well beyond the support region--and when 
+this happens, we can add many points to the support set at once. This leads 
+to the very desirable behavior that the support set grows in big jumps in 
+regions where the value function is smooth. 
+Iteration 1, I Support I =4 Iteration 2, I Support ] =12 Iteration 3, I Support 1=256 
+-00- ,- /0.6 .6  0.6 
+o. 
+ø'o. I.. o . o. 7. 
+Figure 7: Grow-Support with quadratic recession on the dworld. (Compe Fie 3.) 
+Iteration 1, ISupportl=3 Iteration 2, ]Supportl=213 Iteration 5, Support]=253 
+ o. o o.  o. 
+0 ' 0 ' 0 
+øo. 2.  øo. . øo.. 
+o o . J2.: o o ..: o o.2.: 
+Figure 8: Grow-Support with LWR on the two-pude dworld. (Compare Fibre 4.) 
+Iteration 3, ]Supportl=79 Iteration 8 ISupport]=134 Iteration 14, Isupportl=206 
+20 _ - 2 30 2 40 _ 2 
+- n0 -x ' -0 - 0 
+0 0 0 
+Fige 9: Grow-Support with backprop on car-on-the-H. (Compare Fige 6.) 
+The algorithm, again restricted to the deterministic case for simplicity, is outlined in 
+the appendix. In Figures 7-9, we illustrate its convergence on the same combinations 
+of domain and function approximator which caused smooth value iteration to diverge. 
+In Figure 8, all but three points are added to the support within only five iterations, 
+Generalization in Reinforcement Learning: Safely Approximating the Value Function 3 75 
+and the resulting greedy policy is optimal. In Figure 9, after 14 iterations, the algo- 
+rithm terminates. Although 50 states near the discontinuity were not added to the 
+support set, the resulting policy is optimal within the support set. Grow-support 
+converged to a near-optimal policy for all the problems and fitters in Table 1. 
+The Grow-Support algorithm is more robust than value iteration. Empirically, it was 
+also seen to be no more computationally expensive (and often much cheaper) despite 
+the overhead of performing rollouts. Reasons for this are (1) the rollout test is not 
+expensive; (2) once a state has been added to the support, its value is fixed and it 
+needs no more computation; and most importantly, (3) the aggressive exploitation 
+of generalization enables the algorithm to converge in very few iterations. However, 
+with a nondeterministic problem, where multiple rollouts are required to assess the 
+accuracy of a prediction, Grow-Support would become more expensive. 
+It is easy to prove that Grow-Support will always terminate after a finite number 
+of iterations. If the function approximator is inadequate for representing the J* 
+function, Grow-Support may terminate before adding all sample states to the support 
+set. When this happens, we then know exactly which of the sample states are having 
+trouble and which have been learned. This suggests potential schemes for adaptively 
+adding sample states to the support in problematic regions. Investigation of these 
+ideas is in progress. 
+In conclusion, we have demonstrated that dynamic programming methods may di- 
+verge when their tables are replaced by generalizing function approximators. Our 
+Grow-Support algorithm uses rollouts, rather than one-step backups, to assign train- 
+ing values and to keep inaccurate states out of the training set. We believe these 
+principles will contribute substantially to producing practical, robust, reinforcement 
+learning. 
+Acknowledgement s 
+We thank Scott Fahlman, Geoff Gordon, Mary Lee, Michael Littman and Marc Ringuette for 
+their suggestions, and the NDSEG fellowship and NSF Grant IRI-9214873 for their support. 
+APPENDIX: ALGORITHMS 
+Smooth Value Iteration(X, G, A, NEXT-STATE, COST, FIT J): 
+Given: ß a finite collection of states ) = {x, x,... xN} sampled from the 
+continuous state space X C , and goal region G C X 
+ß a finite set of allowable actions A 
+ß a deterministic transition function NExT-STATE: X x A - X 
+ß the 1-step cost function COST: X x A -  
+ß a smoothing function approximator FITJ 
+iter := 0 
+j(o)[i] := 0 Vi = 1...N { } 
+repeat Xl  j(iter)[1] 
+Train FITJ (iter) to approximate the training set: . 
+iter := iter + 1; 
+for i :-- 1... N do xv -> j(iter)[N] 
+j(iter)[i] :-- { 0 
+minaea (CosT(x,,a)+ FITJ(iter-)(NEXT-STATE(xi,a))) 
+until j array stops changing 
+if xi E (7 
+otherwise 
+3 76 Justin Boyan, Andrew W. Moore 
+subroutine RolloutCost(x, J): 
+Starting from state x, follow the greedy policy defined by value function J until 
+either reaching the goal, or exceeding a total path cost of J(x) q- c. Then return: 
+) the actual total cost of the path, if goal is reached from x with cost _ J(x) q- c; 
+) cx, if goal is not reached in cost J(x) q- ½. 
+Grow-Support(X, G, A, NEXT-STATE, COST, FIT J): 
+Given: ß exactly the same inputs as Smooth Value Iteration. 
+SUetORT := {(xi  0) Ix/e G} 
+repeat 
+Train FITJ to approximate the training set SUPPORT 
+for each x/  SUPPORT do 
+c :-- minaeA [CosT(x/, a) q- RolIoutCost(NExT-STATE(xi, a), FIT J)] 
+if c < cx then 
+add (xi + c) to the training set SUrrORT 
+until SUPPORT stops growing or includes all sample points. 
+References 
+[Barto et al., 1989] A. Barto, R. Sutton, and C. Watkins. Learning and sequential decision making. Tech- 
+nical Report COINS 89-95, Univ. of Massachusetts, 1989. 
+[Bellman et al., 1963] R. Bellman, R. Kalaba, and B. Kotkin. Polynomial approximation--a new compu- 
+tational technique in dynamic programming: Allocation processes. Mathematics of Computation, 17, 
+1963. 
+[Boyan, 1992] J. A. Boyan. Modular neural networks for learning context-dependent game strategies. 
+Master's thesis, Cambridge University, 1992. 
+[Bradtke, 1993] S. J. Bradtke. Reinforcement learning applied to linear quadratic regulation. In S. J. 
+Hanson, J. Cowan, and C. L. Giles, editors, NIPS-5. Morgan Kaufmann, 1993. 
+[Cleveland and Delvin, 1988] W. S. Cleveland and S. J. Delvin. Locally weighted regression: An approach 
+to regression analysis by local fitting. JASA, 83(403):596-610, September 1988. 
+[Lin, 1993] L.-J. Lin. Reinforcement Learning for Robots Using Neural Networks. PhD thesis, Carnegie 
+Mellon University, 1993. 
+[Mahadevan and Connell, 1990] S. Mahadevan and J. Connell. Automatic programming of behavior-based 
+robots using reinforcement learning. Technical report, IBM T. J. Watson Research Center, NY 10598, 
+1990. 
+[Sabes, 1993] P. Sabes. Approximating Q-values with basis function representations. In Proceedings of 
+the Fourth Connect/on/st Models Summer School, 1993. 
+[Schraudolph et al., 1994] N. Schraudolph, P. Dayan, and T. Sejnowski. Using TD(1) to learn an eval- 
+uation function for the game of Go. In J. D. Cowan, G. Tesauro, and J. Alspector, editors, NIPS-6. 
+Morgan Kaufmann, 1994. 
+[Singh and Yee, 1994] S.P. Singh and R. Yee. An upper bound on the loss from approximate optimal-value 
+functions. Machine Learning, 1994. Technical Note (to appear). 
+[Sutton, 1988] R. Sutton. Learning to predict by the methods of temporal differences. Machine Learning, 
+3, 1988. 
+[Tesauro, 1992] G. Tesauro. Practical issues in temporal difference learning. Machine Learning, 8(3/4), 
+May 1992. 
+[Thrun and Schwartz, 1993] S. Thrun and A. Schwartz. Issues in using function approximation for rein- 
+forcement learning. In Proceedings of the Fourth Connect/on/st Models Summer School, 1993. 
+[Watkins, 1989] C. Watkins. Learning from Delayed Rewards. PhD thesis, Cambridge University, 1989. 
+[Williams, 1993] R. Williams. Tight performance bounds on greedy policies based on imperfect value 
+functions. Technical Report NU-CCS-93-13, Northeastern University, 1993. 
+[Yee, 1992] R. Yee. Abstraction in control learning. Technical Report COINS 92-16, Univ. of Mas- 
+sachusetts, 1992. 

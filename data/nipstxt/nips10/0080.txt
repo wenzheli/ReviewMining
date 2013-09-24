@@ -1,0 +1,330 @@
+Correlates of Attention in a Model of 
+Dynamic Visual Recognition* 
+Rajesh P. N. Rao 
+Department of Computer Science 
+University of Rochester 
+Rochester, NY 14627 
+rao@cs. rochester. edu 
+Abstract 
+Given a set of objects in the visual field, how does the the visual system learn 
+to attend to a particular object of interest while ignoring the rest? How are 
+occlusions and background clutter so effortlessly discounted for when rec- 
+ognizing a familiar object? In this paper, we attempt to answer these ques- 
+tions in the context of a Kalman filter-based model of visual recognition that 
+has previously proved useful in explaining certain neurophysiological phe- 
+nomena such as endstopping and related extra-classical receptive field ef- 
+fects in the visual cortex. By using results from the field of robust statistics, 
+we describe an extension of the Kalman filter model that can handle multiple 
+objects in the visual field. The resulting robust Kalman filter model demon- 
+strates how certain forms of attention can be viewed as an emergent prop- 
+erty of the interaction between top-down expectations and bottom-up sig- 
+nals. The model also suggests functional interpretations of certain attention- 
+related effects that have been observed in visual cortical neurons. Exper- 
+imental results are provided to help demonstrate the ability of the model 
+to perform robust segmentation and recognition of objects and image se- 
+quences in the presence of varying degrees of occlusions and clutter. 
+1 INTRODUCTION 
+The human visual system possesses the remarkable ability to recognize objects despite the 
+presence of distractors and occluders in the field of view. A popular suggestion is that an "at- 
+tentional spotlight" mediates this ability to preferentially process a relevant object in a given 
+scene (see [5, 9] for reviews). Numerous models have been proposed to simulate the control of 
+this "focus of attention" [10, 11, 15]. Unfortunately, there is inconclusive evidence for the ex- 
+istence of an explicit neural mechanism for implementing an attentional spotlight in the visual 
+*This research was supported by NIH/PHS research grant 1-P41-RR09283. I am grateful to Dana 
+Ballard for many useful discussions and suggestions. Author's current address: The Salk Institute, CNL, 
+10010 N. Torrey Pines Road, La Jolla, CA 92037. E-mail: <ao$alk. edu. 
+Correlates of Attention in a Model of Dynamic Visual Recognition 81 
+cortex. Thus, an important question is whether there are alternate neural mechanisms which 
+don't explicitly use a spotlight but whose effects can nevertheless be interpreted as attention. 
+In other words, can attention be viewed as an emergent property of a distributed network of 
+neurons whose primary goal is visual recognition? 
+In this paper, we extend a previously proposed Kalman filter-based model of visual recognition 
+[13, 12] to handle the case of multiple objects, occlusions, and clutter in the visual field. We 
+provide simulation results suggesting that certain forms of attention can be viewed as an emer- 
+gent property of the interaction between bottom-up signals and top-down expectations during 
+visual recognition. The simulation results demonstrate how "attention" can be switched be- 
+tween different objects in a visual scene without using an explicit spotlight of attention. 
+2 A KALMAN FILTER MODEL OF VISUAL RECOGNITION 
+We have previously introduced a hierarchical Kalman filter-based model of visual recognition 
+and have shown how this model can be used to explain neurophysiological effects such as end- 
+stopping and neural response suppression during free-viewing of natural images [ 12, 13]. The 
+Kalman filter [7] is essentially a linear dynamical system that attempts to mimic the behavior 
+of an observed natural process. At any time instant t, the filter assumes that the internal state 
+of the given natural process can be represented as a k x 1 vector r(t). Although not directly 
+accessible, this internal state vector is assumed to generate an n x 1 measurable and observable 
+output vector I(t) (for example, an image) according to: 
+I(t) = Ur(t) + n(t) (1) 
+where U is an n x k generatire (or measurement) rnatr/x, and n(t) is a Gaussian stochastic 
+noise process with mean zero and a covadance matrix given by E = E[nn T] (E denotes the 
+expectation operator and T denotes transpose). 
+In order to specify how the internal state r changes with time, the Kalman filter assumes that 
+the process of interest can be modeled as a Gauss-Markov random process [1]. Thus, given 
+the state r(t - 1) at time instant t - 1, the next state r(t) is given by: 
+r(t) = Vr(t- 1) + m(t- 1) (2) 
+where V is the state transition (orprediction) rnatr/x and m is white Gaussian noise with mean 
+ -- E[m] and covariance II -- E[(m - )(m - )T]. 
+Given the generafive model in Equation 1 and the dynamics in Equation 2, the goal is to op- 
+timally estimate the current internal state r(t) using only the measurable inputs I(t). An op- 
+timizafion function whose minimization yields an estimate of r is the weighted least-squares 
+criterion: 
+J = (I- Ur)rS- (I- Ur) + (r- )rM-X(r_ ) (3) 
+where (t) is the mean of the state vector before measurement of the input data I(t) and M = 
+E[(r - )(r - )T] is the corresponding covariance matrix. It is easy to show [1] that J is 
+simply the sum of the negative log-likelihood of generating the data I given the state r, and 
+the negative log of the prior probability of the state r. Thus, minimizing J is equivalent to 
+maximizing the posterior probability p(r[I) of the state r given the input data. 
+The optimization function J can be minimized by setting os 
+ -- 0 and solving for the minimum 
+value ? of the state r (note that F equals the mean of r after measurement of I). The resultant 
+Kalman filter equation is given by: 
+F(t) = (t) + N(t)UTS(t)-(I(t)-U(t)) (4) 
+= VF(t- 1) + m(t- 1) (5) 
+where N(t) = (UTE(t)-iU + M(t)-i) - is a "normalization" matrix that maintains the 
+covariance of the state r after measurement of I. The matrix M, which is the covariance before 
+82 R. P. N. Rao 
+measurement of I, is updated as M(t) = VN(t - 1)V ' + II(t - 1). Thus, the Kalman filter 
+predicts one step into the future using Equation 5, obtains the next sensory input I(t), and then 
+corrects its prediction (t) using the sensory residual error (I(t) - U(t)) and the Kalman 
+gain N(t)U ' E(t)-l. This yields the corrected estimate F(t) (Equation 4), which is then used 
+to make the next state prediction (t + 1). 
+The measurement (or generarive) matrix U and the state transition (or prediction) matrix V 
+used by the Kalman filter together encode an internal model of the observed dynamic pro- 
+cess. As suggested in [13], it is possible to learn an internal model of the input dynamics 
+from observed data. Let u and v denote the vectorized forms of the matrices U and V re- 
+spectively. For example, the n x k generative matfix U can be collapsed into an nk x I vector 
+u = [U  U2... un] '' where U i denotes the ith row of U. Note that (I - Ur) = (I - Ru) 
+where R is the n x nk matrix given by: 
+r T 0 ... 0 ] 
+0 r T ... 0 
+0 ... 0 r T 
+(6) 
+By minimizing an optimization function similar to J [ 13], one can derive a Kalman filter-like 
+"learning rule" for the generative matrix U: 
+= + Nu(t)R(t)rZ(t)-l(I(t) - -aNu(t)(t) (7) 
+where (t) - 6(t - 1), N,(t) - (N,(t - 1) - + + and I is the 
+nk x nk identity matrix. The constant a determines the decay rate of . 
+As in the case of U, an estimate of the prediction matrix V can be obtained via the following 
+learning rule for v [13]: 
+(t) = V(t) + N(t)(t) TM(t) - [r(t + 1) - (t + 1)] - 3N(t)V(t) (8) 
+'" 1 " T 1" 1 
+whereV(t)=v(t-1),Nv(t)= (Nv(t-1)- +R(t M(t)-R(t)+/I)- andRisakxk  
+ T T 
+matrix analogous to R (Equation 6) but with r = r . The constant/ determines the decay 
+rate for v while I denotes the k 2 x k 2 identity matrix. Note that in this case, the estimate of V is 
+corrected using the prediction residual error (r (t + 1) -g(t + 1)), which denotes the difference 
+between the actual state and the predicted state. One unresolved issue is the specification of 
+values for r(t) (comprising R(t)) in Equation 7 and r(t + 1) in Equation 8. The Expectation- 
+Maximization (EM) algorithm [4] suggests that in the case of static stimuli (g(t) = (t - 
+1)), one may use r(t) = F which is the converged optimal state estimate for the given static 
+input. In the case of dynamic stimuli, the EM algorithm prescribes r(t) = (tlN ), which is 
+the optimal temporally smoothed state estimate [ 1] for time t (_< N), given input data for each 
+of the time instants 1,..., N. Unfortunately, the smoothed estimate requires knowledge of 
+future inputs and is computationally quite expensive. For the experimental results, we used 
+the on-line estimates (t) when updating the matrices U and V during training. 
+3 ROBUST KALMAN FILTERING 
+The standard derivation of the Kalman filter minimizes Equation 3 but unfortunately does not 
+specify how the covariance E is to be obtained. A common choice is to use a constant matrix 
+or even a constant scalar. Making E constant however reduces the Kalman filter estimates to 
+standard least-squares estimates, which are highly susceptible to outliers or gross errors i.e. 
+data points that lie far away from the bulk of the observed or predicted data [6]. For example, 
+in the case where I represents an input image, occlusions and clutter will cause many pixels in 
+I to deviate significantly from corresponding pixels in the predicted image Ur. The problem 
+Correlates of Attention in a Model of Dynamic VsuaI Recognition 83 
+Sensory 
+Residual 
+I- ltd 
+Input I =  
+Inhibition 
+Gating [ Feedforward 
+Matrix = Matrix 
+G U w 
+Itd=U 
+Top-Down Prediction 
+of Expected Input 
+Feedback 
+Matrix 
+u 
+Normalization 
+N 
+Robust 
+Kalman Filter 
+Estimate 
+A 
+Predicted State  
+Prediction 
+Matrix 
+v 
+Figure 1: Recurrent Network Implementation of the Robust Kalman Filter. The gating matrix G is 
+a non-linear function of the current residual error between the input I and its top-down prediction UF. G 
+effectively filters out any high residuals, thereby preventing outliers in input data I from influencing the 
+robust Kalman filter estimate . Note that the entire filter can be implemented in a recurrent neural net- 
+work, with U, U T, and V represented by the synaptic weights of neurons with linear activation functions 
+and G being implemented by a set of threshold non-linear neurons with binary outputs. 
+of outliers can be tackled using robust estimation procedures [6] such as M-estimation, which 
+involves minimizing a function of the form: 
+d' = E p ( Ii - Uir) (9) 
+i=l 
+where I i and U i are the ith pixel and ith row of I and U respectively, and p is a function that 
+increases less rapidly than the square. This reduces the influence of large residual errors (which 
+correspond to outliers) on the optimization of J', thereby "rejecting" the outliers. A special 
+case of the above function is the following weighted least squares criterion: 
+J' = (! - Ur) TS(I - Ur) (10) 
+where S is a diagonal matrix whose diagonal entries S i'i determine the weight accorded to the 
+corresponding pixel error (I i - Ur). A simple but attxactive choice for these weights is the 
+non-linear function given by S'" = min { 1, c/(I' - U'r)  }, where c is a threshold parameter. 
+To understand the behavior of this function, note that S effectively clips the ith summand in 
+J' (F_xluation l0 above) to a constant value c whenever the ith squared residual (I i - Uir)  
+exceeds the threshold c; otherwise, the summand is set equal to the squared residual. 
+By substituting I] -1 = S in the optimization function J (F. quation 3), we can rederive the 
+following robust galman filter equation: 
+?(t) = F(t) + N(t)UrG(t)(I - UF(t)) (11) 
+where (t)= VF(t- 1))+ (t- 1), N(t)= (UTG(t)U + M(t)-l) -', M(t)= VN(t- 
+1)V T + II(t - 1), and G(t) is an n x n diagonal matrix whose diagonal entries at time instant 
+t are given by: 
+Gi,i { 0 if(Ii(t) - UiF(t)) 2 > c(t) 
+= 1 otherwise 
+G can be regarded as the sensory residual gain or "gating" matrix, which determines the (bi- 
+nary) gain on the various components of the incoming sensory residual error vector. By effec- 
+tively filtering out any high residuals, G allows the Kalman filter to ignore the corresponding 
+outliers in the input I, thereby enabling it to robustly estimate the state r. Figure 1 depicts an 
+implementation of the robust Kalman filter in the form of a recurrent network of linear and 
+threshold non-linear neurons. In particular, the feedforward, feedback and prediction neurons 
+possess linear activation functions while the gating neurons implementing G compute binary 
+outputs based on a threshold non-linearity. 
+84 R. P. N. Rao 
+Training Objects Input Image Robust Estimate Outliers 
+(a) (b) 
+Robust Robust Least Squares 
+Input Image Estimate 1 Outliers Estimate 2 Estimate 
+(c) 
+Figure 2: Correlates of Attention during Static Recognition. (a) Images of size 105 x õ5 used to train 
+a robust Kalman filter network. The generafive matrix U was õ825 x 5. (b) Occlusions and background 
+clutter are treated as outliers (white regions in the third image, depicting the diagonal of the gating matrix 
+G). This allows the network to "attend to" and recognize the training object, as indicated by the accurate 
+reconstruction (middle image) of the training image based on the final robust state estimate. (c) In the 
+more interesting case of the training objects occluding each other, the network converges to one of the 
+objects (the "dominant" one in the image - in this case, the object in the foreground). Having recognized 
+one object, the second object is attended to and recognized by taking the complement of the outliers (di- 
+agonal of G) and repeating the robust filtering process (third and fourth images). The fifth image is the 
+image reconstruction obtained from the standard (least squares derived) Kalman filter estimate, showing 
+an inability to resolve or recognize either of the two objects. 
+4 VISUAL ATTENTION IN A SIMULATED NETWORK 
+The gating matrix G allows the Kalman filter network to "selectively attend" to an object while 
+treating the remaining components of the sensory input as outliers. We demonstrate this capa- 
+bility of the network using three different examples. In the first example, a network was trained 
+on static grayscale images of a pair of 3D objects (Figure 2 (a)). For learning static inputs, the 
+prediction matrix V is unnecessary since we may use (t) = (t - 1) and M(t) = N(t - 1). 
+After training, the network was tested on images containing the training objects with varying 
+degrees of occlusion and clutter (Figure 2 (b) and (c)). The outlier threshold c was initialized 
+to the sum of the mean plus k standard deviations of the current distribution of squared residual 
+errors (I i - Uir) 2. The value of k was gradually decreased during each iteration in order to 
+allow the network to refine its robust estimate by gradually pruning away the outliers as it con- 
+verges to a single object estimate. After convergence, the diagonal of the matrix G contains 
+zeros in the image locations containing the outliers and ones in the remaining locations. As 
+shown in Figure 2 (b), the network was successful in recognizing the training object despite 
+occlusion and background clutter. 
+More interestingly, the outliers (white) produce a crude segmentation of the occluder and back- 
+ground clutter, which can subsequently ,be used to focus "attention" on these previously ig- 
+nored objects and recover their identity. In particular, an outlier mask m can be defined by 
+taking the complement of the diagonal of G (i.e. m i - 1 - Gi,). By replacing the diagonal of 
+G with m in Equation 11  and repeating the estimation process, the network can "attend to" 
+1 Although not implemented here, this "shifting of attentional focus" can be automated using a model 
+of neuronal fatigue and active decay (see, for example, [3]). 
+Correlates of Attention in a Model of Dynamic Visual Recognition 85 
+Training Sequence 
+t----O t= I t=2 t=3 t---4 t=5 
+Training Sequences 
+Prediction 
+Outliers 
+Inputs 
+(a) 
+ml 
+lima__. 
+Inputs 
+(b) 
+mall 
+I/a-__. 
+Predictions 
+Outlicrs 
+Predictions 
+OuUicrs 
+(c) (d) 
+Figure 3: Correlates of Attention during Dynamic Recognition. (a) A network was trained on a cyclic 
+image sequence of gestures (top), each image of size 75 x 75, with U and V of size õõ2õ x 1õ and 1õ x 1õ 
+respectively. The panels below show how the network can ignore various forms of occlusion and clutter 
+(outliers), "attending to" the sequence of gestures that it has been trained on. The outlier threshold ½ 
+was computed as the mean plus 0.3 standard deviations of the current distribution of squared residual 
+errors. Results shown are those obtained after õ cycles of exposure to the occluded images. (b) Three 
+image sequences used to train a network. (c) and (d) show the response of the network to ambiguous 
+stimuli comprised of images containing both a horizontal and a vertical bar. Note that the network was 
+trained on a horizontal bar moving downwards anda vertical bar moving rightwards (see (b)) but not both 
+simultaneously. Given ambiguous stimuli containing both these stimuli, the network interprets the input 
+differently depending on the initial "priming" input. When the initial input is a vertical bar as in (c), the 
+network interprets the sequence as a vertical bar moving rightwards (with some minor artifacts due to 
+the other training sequences). On the other hand, when the initial input is a horizontal bar as in (d), the 
+sequence is interpreted as a horizontal bar moving downwards, not paying "attention" to the extraneous 
+vertical bars, which are now treated as outliers. 
+the image region(s) that were previously ignored as outliers. Such a two-step serial recogni- 
+tion process is depicted in Figure 2 (c). The network first recognizes the "dominant" object, 
+which was generally observed to be the object occupying a larger area of the input image or 
+possessing regions with higher contrast. The outlier mask m is subsequently used for "switch- 
+ing attention" and extracting the identity of the second object (lower arrow). Figure 3 shows 
+examples of attention during recognition of dynamic stimuli. In particular, Figure 3 (c) and 
+(d) show how the same image sequence can be interpreted in two different ways depending on 
+which pan of the stimulus is "attended to," which in turn depends on the initial priming input. 
+5 CONCLUSIONS 
+The simulation results indicate that certain experimental observations that have previously 
+been interpreted using the metaphor of an attentional spotlight can also arise as a result of com- 
+petition and cooperation during visual recognition within networks of linear and non-linear 
+86 R. P. N. Rao 
+neurons. Although not explicitly designed to simulate attention, the robust Kalman filter net- 
+works nevertheless display some of the essential characteristics of visual attention, such as 
+the preferential processing of a subset of the input signals and the consequent "switching" of 
+attention to previously ignored stimuli. Given multiple objects or conflicting stimuli in their 
+receptive fields (Figures 2 and 3), the responses of the feedforward, feedback, and prediction 
+neurons in the simulated network were modulated according to the current object being "at- 
+tended to." The modulation in responses was mediated by the non-linear gating neurons G, 
+taking into account both bottom-up signals as well top-down feedback signals. This suggests a 
+network-level interpretation of similar forms of attentional response modulation in the primate 
+visual cortex [2, 8, 14], with the consequent prediction that the genesis of attentional modula- 
+tion in such cases may not necessarily lie within the recorded neurons themselves but within 
+the distributed circuitry that these neurons are an integral part of. 
+References 
+[10] 
+[11] 
+[12] 
+[13] 
+[14] 
+[15] 
+[ 1 ] A.E. Bryson and Y.-C. Ho. Applied Optimal Control. New York: John Wiley, 1975. 
+[2] L. Chelazzi, E.K. Miller, J. Duncan, and R. Desireone. A neural basis for visual search 
+in inferior temporal cortex. Nature, 363:345-347, 1993. 
+[3] P. Dayan. An hierarchical model of visual rivalry. In M. Mozer, M. Jordan, and 
+T. Petsche, editors, Advances in Neural Information Processing Systems 9, pages 48-54. 
+Cambridge, MA: MIT Press, 1997. 
+[4] A.P. Dempster, N.M. Laird, and D.B. Rubin. Maximum likelihood from incomplete data 
+via the EM algorithm. J. Royal Statistical Society Series B, 39:1-38, 1977. 
+[5] R. Desimone and J. Duncan. Neural mechanisms of selective visual attention. Annual 
+Review of Neuroscience, 18:193-222, 1995. 
+[6] P.J. Huber. Robust Statistics. New York: John Wiley, 1981. 
+[7] R.E. Kalman. A new approach to linear filtering and prediction theory. Trans. ASME J. 
+Basic Eng., 82:35-45, 1960. 
+[8] J. Moran and R. Desimone. Selective attention gates visual processing in the extrastriate 
+cortex. Science, 229:782-784, 1985. 
+[9] W.T Newsome. Spotlights, highlights and visual awareness. Current Biology, 6(4):357- 
+360, 1996. 
+E. Niebur and C. Koch. Control of selective visual attention: Modeling the "where" path- 
+way. In D. Touretzky, M. Mozer, and M. Hasselmo, editors, Advances in Neural Infor- 
+mation Processing Systems 8, pages 802-808. Cambridge, MA: MIT Press, 1996. 
+B.A. Olshausen, D.C. Van Essen, and C.H. Anderson. A neurobiological model of vi- 
+sual attention and invariant pattern recognition based on dynamic routing of information. 
+Journal of Neuroscience, 13:4700-4719, 1993. 
+R.P.N. Rao and D.H. Ballard. The visual cortex as a hierarchical predictor. Technical 
+Report 96.4, National Resource Laboratory for the Study of Brain and Behavior, Depart- 
+ment of Computer Science, University of Rochester, September 1996. 
+R.P.N. Rao and D.H. Ballard. Dynamic model of visual recognition predicts neural re- 
+sponse properties in the visual cortex. Neural Computation, 9(4):721-763, 1997. 
+S. Treue and J.H.R. Maunsell. Attentional modulation of visual motion processing in 
+cortical areas MT and MST. Nature, 382:539-541, 1996. 
+J.K. Tsotsos, S.M. Culhane, W.Y.K. Wai, Y. Lai, N. Davis, and F. Nuflo. Modeling visual 
+attention via selective tuning. Artificial Intelligence, 78:507-545, 1995. 

@@ -1,0 +1,328 @@
+Estimating Dependency Structure as a Hidden 
+Variable 
+Marina Mei15 and Michael I. Jordan 
+{mmp, jordan) @ai.mit.edu 
+Center for Biological & Computational Learning 
+Massachusetts Institute of Technology 
+45 Carleton St. E25-201 
+Cambridge, MA 02142 
+Abstract 
+This paper introduces a probability model, the mixture of trees that can 
+account for sparse, dynamically changing dependence relationships. We 
+present a family of efficient algorithms that use EM and the Minimum 
+Spanning Tree algorithm to find the ML and MAP mixture of trees for a 
+variety of priors, including the Dirichlet and the MDL priors. 
+1 INTRODUCTION 
+A fundamental feature of a good model is the ability to uncover and exploit independencies 
+in the data it is presented with. For many commonly used models, such as neural nets and 
+belief networks, the dependency structure encoded in the model is fixed, in the sense that it 
+is not allowed to vary depending on actual values of the variables or with the current case. 
+However, dependency structures that are conditional on values of variables abound in the 
+world around us. Consider for example bitmaps of handwritten digits. They obviously 
+contain many dependencies between pixels; however, the pattern of these dependencies 
+will vary across digits. Imagine a medical database recording the body weight and other 
+data for each patient. The body weight could be a function of age and height for a healthy 
+person, but it would depend on other conditions if the patient suffered from a disease or 
+was an athlete. 
+Models that are able to represent data conditioned dependencies are decision trees and 
+mixture models, including the soft counterpart of the decision tree, the mixture of experts. 
+Decision trees however can only represent certain patterns of dependecy, and in particular 
+are designed to represent a set of conditional probability tables and not a joint probability 
+distribution. Mixtures are more flexible and the rest of this paper will be focusing on one 
+special case called the mixtures of trees. 
+We will consider domains where the observed variables are related by pairwise dependencies 
+only and these dependencies are sparse enough to contain no cycles. Therefore they can 
+Estimating Dependency Structure as a Hidden Variable 585 
+be represented graphically as a tree. The structure of the dependencies may vary from 
+one instance to the next. We index the set of possible dependecy structures by a discrete 
+structure variable z (that can be observed or hidden) thereby obtaining a mixture. 
+In the framework of graphical probability models, tree distributions enjoy many properties 
+that make them attractive as modelling tools: they have a flexible topology, are intuitively 
+appealing, sampling and computing likelihoods are linear time, simple efficient algorithms 
+for marginalizing and conditioning (O([VI 2) or less) exist. Fitting the best tree to a given 
+distribution can be done exactly and efficiently (Chow and Liu, 1968). Trees can capture 
+simple pairwise interactions between variables but they can prove insufficient for more 
+complex distributions. Mixtures of trees enjoy most of the computational advantages of 
+trees and, in addition, they are universal approximators over the space of all distributions. 
+Therefore, they are fit for domains where the dependency patterns become tree like when a 
+possibly hidden variable is instantiated. 
+Mixture models have been extensively used in the statistics and neural network literature. 
+Of relevance to the present work are the mixtures of Gaussians, whose distribution space, in 
+the case of continuous variables overlaps with the space of mixtures of trees. Work on fitting 
+a tree to a distribution in a Maximum-Likelihood (ML) framework has been pioneered by 
+(Chow and Liu, 1968) and was extended to polytrees by (Pearl, 1988) and to mixtures 
+of trees with observed structure variable by (Geiger, 1992; Friedman and Goldszmidt, 
+1996). Mixtures of factorial distributions were studied by (Kontkanen et al., 1996) whereas 
+(Thiesson et al., 1997) discusses mixtures of general belief nets. Multinets (Geiger, 1996) 
+which are essentially mixtures of Bayes nets include mixtures of trees as a special case. 
+It is however worth studying mixtures of trees separately for their special computational 
+advantages. 
+This work presents efficient algorithms for learning mixture of trees models with unknown 
+or hidden structure variable. The following section introduces the model; section 3 develops 
+the basic algorithm for its estimation from data in the ML framework. Section 4 discusses 
+the introduction of priors over mixtures of trees models and presents several realistic 
+factorized priors for which the MAP estimate can be computed by a modified versions of 
+the basic algorithm. The properties of the model are verified by simulation in section 5 and 
+section 6 concludes the paper. 
+2 THE MIXTURE OF TREES MODEL 
+In this section we will introduce the mixture of trees model and the notation that will be 
+used throughout the paper. Let V denote the set of variables of interest. According to the 
+graphical model paradigm, each variable is viewed as a vertex of a graph. Let rv denote 
+the number of values of variable v E V, zv a particular value of V, ZA an assignment to the 
+variables in the subset A of V. To simplify notation zv will be denoted by z. 
+We use trees as graphical representations for families of probability distributions over V 
+that satisfy a common set of independence relationships encoded in the tree topology. In 
+this representation, an edge of the tree shows a direct dependence, or, more precisely, the 
+absence of an edge between two variables signifies that they are independent, conditioned 
+on all the other variables in V. We shall call a graph that has no cycles a tree I and shall 
+denote by E the set of its (undirected) edges. A probability distribution T that is conformal 
+with the tree (V, E) is a distribution that can be factorized as: 
+HvEV Tv(v) degv-I (1) 
+Here deg v denotes the degree of v, e.g. the number of edges incident to node v  V. The 
+In the graph theory literature, our definition corresponds to a forest. The connected components 
+of a forest are called trees. 
+586 M. Meiltt and M. L Jordan 
+factors Tuv and Tv are the marginal distributions under T: 
+Tv(x,xv) = 
+Xv-{,) 
+: (2) 
+The distribution itself will be called a tree when no confusion is possible. Note that a tree 
+distribution has for each edge (u, v) E E a factor depending on zu, z onlyl If the tree is 
+connected, e.g. it spans all the nodes in V, it is often called a spanning tree. 
+An equivalent representation for T in terms of conditional probabilities is 
+T(x) : H Tlpa()(axlXPa(v)) (3) 
+vEV 
+The form (3) can be obtained from (1) by choosing an arbitrary root in each connected 
+component and recursively substituting Tv{v) by Tvlpa(v ) starting from the root. pa(v) 
+T 
+represents the parent of v in the thus directed tree or the empty set if v is the root of 
+a connected component. The directed tree representation has the advantage of having 
+independent parameters. The total number of free parameters in either representation is 
+E(u,v)qr. fury - Evqv(degv - 1)rv. 
+Now we define a mixture of trees to be a distribution of the form 
+Q(z) = EAkT(z); Ak_>0, k= 1,...,m; EA = 1. (4) 
+k=l k=l 
+From the graphical models perspective, a mixture of trees can be viewed as a containing an 
+unobserved choice variable z, taking value k E { 1,... m} with probability A. Conditioned 
+on the value of z the distribution of the visible variables ;c is a tree. The m trees may have 
+different structures and different parameters. Note that because of the structure variable, 
+a mixture of trees is not properly a belief network, but most of the results here owe to the 
+belief network perspective. 
+3 THE BASIC ALGORITHM: ML FITTING OF MIXTURES OF 
+TREES 
+This section will show how a mixture of trees can be fit to an observed dataset in the Maxi- 
+mum Likelihood paradigm via the EM algorithm (Dempster et al., 1977). The observations 
+are denoted by {z, z2, ..., z2v}; the corresponding values of the structure variable are 
+{z i, i = 1,... N}. 
+Following a usual EM procedure for mixtures, the Expectation (E) step consists in estimating 
+the posterior probability of each tree to generate datapoint ;c i 
+Pr[z i --- klx I'""N, model] 
+ATk(x i) 
+= = (5) 
+Then the expected complete log-likelihood to be maximized by the M step of the algorithm 
+is 
+m N 
+E[llzl'"'V'mødel] = E Fk[løgk + E P'(zi)løgT:(zi)] (6) 
+k=l i=I 
+N 
+Fk = '7(a:i), k = 1,...m and P(c i) = 7(i)/F. 
+i=1 
+(7) 
+The maximizing values for the parameters A are A,w = Fk/N. To obtain the new 
+distributions T , we have to maximize for each k the expression that is the negative of the 
+Estimating Dependency Structure as a Hidden Variable 587 
+Figure 1: The Basic Algorithm: ML Fitting of a Mixture of Trees 
+Input:Dataset { z l,... z v } 
+Initialmodelra, T ', ,', k = l,...m 
+Procedure MST( weights ) that fits a maximum weight spanning tree over V 
+Iterate until convergence 
+E step: 
+M step: 
+M1. 
+M2. 
+M3. 
+M4. 
+MS. 
+compute 7, P'(z') for k = 1,...m, i = 1,... N by (5), (7) 
+,,k, *- F,/N, k = 1,... m 
+compute marginals Pp, P,,, u, v E V, k = 1,... m 
+compute mutual information I,, u, v  V, k = 1, ... m 
+call MST({ I,, }) to generate E.k for k = 1,... m 
+r, ,- P,, ; r ,- r for (u, v) {E E:r, , k= 1,...m 
+crossentropy between P: and T . 
+N 
+E V:(zi)1øgTk(z') (8) 
+i=1 
+This problem can be solved exactly as shown in (Chow and Liu, 1968). Here we will 
+give a brief description of the procedure. First, one has to compute the mutual information 
+between each pair of variables in V under the target distribution P 
+I,, = Ivy, = E Pv(z',z)løgp,(z,)p(z), u,v V, u7f:v. (9) 
+XXv 
+Sond, the optimal tree structure is found by a Maximum Spanning Tree (MST) algorithm 
+using I,v as the weight for edge (u, v), Vu, v  V.Once the tree is found, its marginals T,v 
+(or Tv), (u, v)  E e exactly ual to the coesponding mginals Pv of the tget 
+distribution P. ey e already comput  an inteediate step in the computation of 
+the mutual infoations Iv (9). 
+In our ce, the tget distribution for T  is represented by the posterio sple distribution 
+P. Note that although each tr fit to P is optimal, for the encompsing problem of 
+fitting a xture of trs to a sample distribution only a local optimum is guante to be 
+teachq. e algorithm is summz in figure 1. 
+is procure is bed on one important sumption that should be made explicit now. It 
+is the Parameter independence assumption: The distKbution Tlpv) for any k, v and 
+value of pa(v) is a multinomial ith rv - 1 free parameters that are independent of any 
+other parameters of the mixture. 
+It is possible to constrain the m trs to shoe the se structure, thus constructing a truly 
+Bayesian network. To achieve this, it is sucient to replace the weights in step M4 by 
+ Iv and mn the MST algorithm only once to obtn the common structure E. e 
+tree stuctures obtn by the bic algorithm e connote. e following stion will 
+give reons and ways to obtn disconnt tree structures. 
+4 OF TREES 
+In this stion we extend the basic algorithm to the problem of finding the Mimum a 
+Postefiofi (M) probability mixture of trees for a given datet. In other words, we will 
+consider a nonunifo prior P[model] and will be seching for the mixture of trees that 
+mimizes 
+logP[model[x = logP[x'"'[model] + logP[model] +constant. (10) 
+Factoz po e present mition problem differs from the  problem solv 
+in the previous section only by the addition of the te log P[model]. We can  well 
+588 M. Meil5 and M. L Jordan 
+approach it from the EM point of view, by iteratively maximizing 
+E [logP[modell x'""N z'""N]] : t[lc(x '""N z'"'Nlmodel)] + logP[model] (11) 
+It is easy to see that the added term does not have any influence on the E step,which 
+will proceed exactly as before. However, in the M step, we must be able to successfully 
+maximize the r.h.s. of (11). Therefore, we look for priors of the form 
+P[model] = P[A,...,] H P[T] (12) 
+k--I 
+This class of priors is in agreement with the parameter independence assumption and 
+includes the conjugate prior for the multinomial distribution which is the Dirichlet prior. A 
+Dirichlet prior over a tree can be represented as a table of fictitious marginal probabilities 
+P for each pair u, v of variables plus an equivalent sample size N' that gives the strength 
+of the prior (Heckerman et al., 1995). However, for Dirichlet priors, the maximization over 
+tree structures (corresponding to step M4) can only be performed iteratively (Meili et al., 
+1997). 
+MDL (Minimum Description Length) priors are less informative priors. They attempt 
+to balance the number of parameters that are estimated with the amount of data available, 
+usually by introducing a penalty on model complexity. For the experiments in section 5 
+we used edge pruning. More smoothing methods are presented in (Mei15 et al., 1997). To 
+penalize the number of parameters in each component we introduce a prior that penalizes 
+each edge that is added to a tree, thus encouraging the algorithm to produce disconnected 
+trees. The edge pruning prior is P[T] oc exp [-/ E,E &,,]' We choose a uniform 
+penalty A,, = 1. Another possible choice is &, = (r - 1)(r, - 1) which is the number 
+of parameters introduced by the presence of edge (u, v) w.r.t. a factorized distribution. 
+Using this prior is equivalent to maximizing the following expression in step M4 of the 
+Basic Algorithm (the index k being dropped for simplicity) 
+argmax E max[0'rIv-fA'v] = argmax E Wuv (13) 
+ET ET 
+5 EMPIRICAL RESULTS 
+We have tested our model and algorithms for their ability to retrieve the dependency 
+structure in the data, as classifiers and as density estimators. 
+For the first objective, we sampled 30,000 datapoints from a mixture of 5 trees over 30 
+variables with r, = 4 for all vertices. All the other parameters of the generating model 
+and the initial points for the algorithm were picked at random. The results on retrieving 
+the original trees were excellent: out of 10 trials, the algorithm failed to retrieve correctly 
+only 1 tree in 1 trial. This bad result can be accounted for by sampling noise. The tree that 
+wasn't recovered had a A of only 0.02. The difference between the log likelihood of the 
+samples of the generating tree and the approximating tree was 0.41 bits per example. 
+For classification, we investigated the performance of mixtures of trees on a the Australian 
+Credit dataset from the UCI repository 2. The data set has 690 instances of 14-dimensional 
+attribute vectors. Nine attributes are discrete ( 2 - 14 values) and 5 are continuous. The 
+class variable has 6 values. The continuous variables were discretized in 3 - 5 uniform bins 
+each. We tested mixtures with different values for m and for the edge pruning parameter fl. 
+For comparison we tried also mixtures of factorial distributions of different sizes. One tenth 
+of the data, picked randomly at each trial, was used for testing and the rest for training. In 
+the training phase, we learned a MT model of the joint distribution of all the 15 variables. 
+2 http://www. ics. uci. edu/~mlearn/MLRepository.html 
+Estimating Dependency Structure as a Hidden Variable 589 
+Figure 2: Performance of different algorithms on the Australian Credit dataset. - is mixture 
+of trees with  -- 10, - - is mixture of trees with beta = l/m, -.- is mixture of factorial 
+distributions. 
+5 10 15 20 25 30 
+m 
+87 
+86 
+.85 
+(D 
+o 8,4 
+ 83 
+82 
+81 
+Table I: a) Mixture of trees compression rates [log lte,t/Nte,t]. b) Compression rates 
+(bits/digit) for the single digit (Digit) and double digit (Pairs) datasets. MST is mixtures of 
+trees, MF is a mixture of factorial distributions, BR is base rate model, H-WS is Helmholtz 
+Machine trained with the wake-sleep algorithm (Frey et al., 1996), H-MF is Helmholtz 
+Machine trained with the Mean Field approximation, FV is a fully visible bayes net. 
+(*=best) 
+(a) (b) 
+rn Digits Pairs 
+16 *34.72 79.25 
+32 34.48 *78.99 
+64 34.84 79.70 
+128 34.88 81.26 
+Algorithm Digits Pairs 
+gzip 44.3 89.2 
+BR 59.2 118.4 
+MF 37.5 92.7 
+H-MF 39.5 80.7 
+H-WS 39.1 80.4 
+FV 35.9 *72.9 
+MT *34.7 79.0 
+In the testing phase, the output of our classifier was chosen to be the class value with the 
+largest posterior probability given the inputs. Figure 2 shows that the results obtained for 
+mixtures of trees are superior to those obtained for mixtures of factoffal distributions.For 
+comparison, correct classification rates obtained and cited in (Kontkanen et al., 1996) on 
+training/test sets of the same size are: 87.2next best model (a decision tree called Ca150). 
+We also tested the basic algorithm as a density estimator by running it on a subset of 
+binary vector representations of handwritten digits and measuring the compression rate. 
+One dataset contained images of single digits in 64 dimensions, the second contained 128 
+dimensional vectors representing randomly paired digit images. The training, validation and 
+test set contained 6000, 2000, and 5000 exemplars respectively. The data sets, the training 
+conditions and the algorithms we compared with are described in (Frey et al., 1996). We 
+tried mixtures of 16, 32, 64 and 128 trees, fitted by the basic algorithm. The results (shown 
+in tablel averaged over 3 runs) are very encouraging: the mixture of trees is the absolute 
+winner for compressing the simple digits and comes in second as a model for pairs of digits. 
+This suggests that our model (just like the mixture of factorized distributions) is able to 
+perform good compression of the digit data but is unable to discover the independency in 
+the double digit set. 
+590 M. Meiht and M. L Jordan 
+6 CONCLUSIONS 
+This paper has shown a method of modeling and exploiting sparse dependency structure 
+that is conditioned on values of the data. By using trees, our method avoids the exponential 
+computation demands that plague both inference and structure finding in wider classes of 
+belief nets. The algorithms presented here are linear in m and N and quadratic in IVI. 
+Each M step is performing exact maximization over the space of all the tree structures and 
+parameters. The possibility of pruning the edges of the components of a mixture of trees 
+can play a role in classification, as a means of automatically selecting the variables that are 
+relevant for the task. 
+The importance of using the right priors in constructing models for real-world problems 
+can hardly be understated. In this context, the present paper has presented a broad class of 
+priors that are efficiently handled in the framework of our algorithm and it has shown that 
+this class includes important priors like the MDL prior and the Dirichlet prior. 
+Acknowledgements 
+Thanks to Quaid Morris for running the digits and structure finding experiments and to 
+Brendan Frey for providing the digits datasets. 
+References 
+Chow, C. K. and Liu, C. N. (1968). Approximating discrete probability distributions with dependence 
+trees. "IEEE Transactions on Information Theory ", IT-14(3):462--467. 
+Dempster, A. P., Laird, N.M., and Rubin, D. B. (1977). Maximum likelihood from incomplete data 
+via the EM algorithm. Journal of the Royal Statistical Society, B, 39:1-38. 
+Frey, B. J., Hinton, G. E., and Dayan, P. (1996). Does the wake-sleep algorithm produce good density 
+estimators? In Touretsky, D., Mozer, M., and Hasselmo, M., editors, Neural Information 
+Processing Systems, number 8, pages 661-667. MIT Press. 
+Friedman, N. and Goldszmidt, M. (1996). Building classifiers using Bayesian networks. In Proceed- 
+ings of the National Conference on Artificial Intelligence (AAA196), pages 1277-1284, Menlo 
+Park, CA. AAAI Press. 
+Geiger, D. (1992). An entropy-based learning algorithm of bayesian conditional trees. In Proceedings 
+of the 8th Conference on Uncertainty in AL pages 92-97. Morgan Kaufmann Publishers. 
+Geiger, D. (1996). Knowledge representation and inference in similarity networks and bayesian 
+multinets. "Artificial Intelligence ", 82:45-74. 
+Heckerman, D., Geiger, D., and Chickering, D. M. (1995). Learning Bayesian networks: the 
+combination of knowledge and statistical data. Machine Leafining, 20(3): 197-243. 
+Kontkanen, P., Myllymaki, P., and Tin'i, H. (1996). Constructing bayesian finite mixture models by the 
+EM algorithm. Technical Report C-1996-9, Univeristy of Helsinky. Department of Computer 
+Science. 
+Meili, M., Jordan, M. I., and Morris, Q. D. (1997). Estimating dependency structure as a hidden 
+variable. Technical Report AIM-1611,CBCL-151, Massachusetts Institute of Technology, 
+Artificial Intelligence Laboratory. 
+Pearl, J. (1988). Probabilistic Reasoning in Intelligent Systems: Networks of Plausible Inference. 
+Morgan Kaufman Publishers, San Mateo, CA. 
+Thiesson, B., Meek, C., Chickering, D. M., and Heckerman, D. (1997). Learning mixtures of Bayes 
+networks. Technical Report MSR-POR-97-30, Microsoft Research. 

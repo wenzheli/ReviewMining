@@ -1,0 +1,339 @@
+Adaptive Mixture of Probabilistic Transducers 
+Yoram Singer 
+AT&T Bell Laboratories 
+singerresearch.att.com 
+Abstract 
+We introduce and analyze a mixture model for supervised learning of 
+probabilistic transducers. We devise an online learning algorithm that 
+efficiently infers the structure and estimates the parameters of each model 
+in the mixture. Theoretical analysis and comparative simulations indicate 
+that the learning algorithm tracks the best model from an arbitrarily large 
+(possibly infinite) pool of models. We also present an application of the 
+model for inducing a noun phrase recognizer. 
+1 Introduction 
+Supervised learning of a probabilistic mapping between temporal sequences is an important 
+goal of natural sequences analysis and classification with a broad range of applications such 
+as handwriting and speech recognition, natural language processing and DNA analysis. Re- 
+search efforts in supervised learning of probabilistic mappings have been almost exclusively 
+focused on estimating the parameters of a predefined model. For example, in [5] a second 
+order recurrent neural network was used to induce a finite state automata that classifies 
+input sequences and in [1] an input-output HMM architecture was used for similar tasks. 
+In this paper we introduce and analyze an alternative approach based on a mixture model 
+of a new subclass of probabilistic transducers, which we call suffix tree transducers. The 
+mixture of experts architecture has been proved to be a powerful approach both theoretically 
+and experimentally. See [4, 8, 6, 10, 2, 7] for analyses and applications of mixture models, 
+from different perspectives such as connectionism, Bayesian inference and computational 
+learning theory. By combining techniques used for compression [13] and unsupervised 
+learning [12], we devise an online algorithm that efficiently updates the mixture weights 
+and the parameters of all the possible models from an arbitrarily large (possibly infinite) 
+pool of suffix tree transducers. Moreover, we employ the mixture estimation paradigm to 
+the estimation of the parameters of each model in the pool and achieve an efficient estimate 
+of the free parameters of each model. We present theoretical analysis, simulations and 
+experiments with real data which show that the learning algorithm indeed tracks the best 
+model in a growing pool of models, yielding an accurate approximation of the source. All 
+proofs are omitted due to the lack of space 
+2 Mixture of Suffix Tree Transducers 
+Let Zi, and Zo,t be two finite alphabets. A Suffix Tree Transducer q- over (Zi,, Zoo, t) is a 
+rooted, IZi, I-ary tree where every internal node of q- has one child for each symbol in 
+The nodes of the tree are labeled by pairs (s, 7,), where s is the string associated with the path 
+(sequence of symbols in Z,) that leads from the root to that node, and 7, : Eo,t -- [0, 1] 
+is the output probability function. A suffix tree transducer (stochastically) maps arbitrarily 
+long input sequences over Z, to output sequences over Y'.out as follows. The probability 
+382 Y. SINGER 
+that 7. will output a string /1, ,..., /n in Eo, t given an input string Zl, z2,..., Z n in 
+n 
+E?,, denoted by Pr(/1, 2,...,lnlZ,z2,...,Zn), is ]-I,=t %k (/), where s t = zt, and 
+for 1 _< j _< n - 1, sJ is the string labeling the deepest node reached by taking the path 
+corresponding to zj, z_, z-2, .. ß starting at the root of 7-. A suffix tree transducer is 
+therefore a probabilistic mapping that induces a measure over the possible output strings 
+given an input string. Examples of suffix tree transducers are given in Fig. 1. 
+Figure 1: A suffix tree transducer (left) over (Ein, Eout ) = ({0, 1 }, { a, b, c} ) and two of its possible 
+sub-models (subtrees). The strings labeling the nodes are the suffixes of the input string used to predict 
+the output string. At each node there is an output probability function defined for each of the possible 
+output symbols. For instance, using the suffix tree transducer depicted on the left, the probability of 
+observing the symbol b given that the input sequence is ..., 0, 1,0, is 0.1. The probability of the 
+current output, when each transducer is associated with a weight (prior), is the weighted sum of the 
+predictions of each transducer. For example, assume that the weights of the trees are 0.7 (left tree), 0.2 
+(middle), and 0.1, then the probability that the output t, = a given that (a:,_2, a:,_, a:, ) -- (0, 1,0) 
+is 0.7- P(a1010) + 0.2. P(al10 ) + 0.1. P3(a10 ) = 0.7 ß 0.8 + 0.2 ß 0.7 + 0.1 ß 0.5 = 0.75. 
+Given a suffix tree transducer 7. we are interested in the prediction of the mixture of all 
+possible subtrees of 7'. We associate with each subtree (including 7') a weight which can be 
+interpreted as its prior probability. We later show how the learning algorithm of a mixture 
+of suffix tree transducers adapts these weights with accordance to the performance (the 
+evidence in Bayesian terms) of each subtree on past observations. Direct calculation of the 
+mixture probability is infeasible since there might be exponentially many such subtrees. 
+However, the technique introduced in [13] can be generalized and applied to our setting. 
+Let 7-' be a subtree of 7-. Denote by n the number of the internal nodes of 7-' and by 
+n2 the number of leaves of 7" which are not leaves of 7'. For example, nl - 2 and 
+n2 = 1, for the tree depicted on the right part of Fig. 1, assuming that 7' is the tree 
+depicted on the left part of the figure. The prior weight of a tree 7-', denoted by P0(7") is 
+defined to be (1 - a)ma n2, where a E (0, 1). Denote by Sub(7.) the set of all possible 
+subtrees of 7' including 7' itself. It can be easily verified that this definition of the weights 
+is a proper measure, i.e., Er, Es.b(r) Po(7.') = 1. This distribution over trees can be 
+extended to unbounded trees assuming that the largest tree is an infinite I]Ei. I-ary suffix tree 
+transducer and using the following randomized recursive process. We start with a suffix 
+tree that includes only the root node. With probability a we stop the process and with 
+probability 1 - a we add all the possible IZi. I sons of the node and continue the process 
+recursively for each of the sons. Using this recursive prior the suffix tree transducers, we 
+can calculate the prediction of the mixture at step n in time that is linear in n, as follows, 
+-'re(Y.) + (1--) (-?n(y.) + (1-,) (,?n_,(y.) + (1-,) ... 
+Therefore, the prediction time of a single symbol is bounded by the maximal depth of 7', 
+or the length of the input sequence if 7' is infinite. Denote by % (y) the prediction of the 
+mixture of subtrees rooted at s, and let Leaves(7.) be the set of leaves of 7'. The above 
+Adaptive Mixture of Probabilistic Transducers 383 
+sum equals to e(Yn), and can be evaluated recursively as follows, 1 
+{ 7s(Yn) s e Leaves(2.) 
+s(Yn) - "7s(Yn) q- (l -- O)(X._l,l,s)(yn) otherwise 
+(1) 
+For example, given that the input sequence is ..., 0, 1, 1,0, then the probabilities of the 
+mixtures of subtrees for the tree depicted on the left part of Fig. 1, for Yn - b and given 
+that a = 1/2, are, l0(b) = 0.4 , o(b) = 0.5 ß 70(b) q-0.5 ß 0.4 = 0.3 , 0(b) = 
+0.5 ß -r0(b) + 0.5 ß 0.3 = 0.25, %½) = 0.5 ß + 0.5 ß 0.25 = 0.25. 
+3 An Online Learning Algorithm 
+We now describe an efficient learning algorithm for a mixture of suffix tree transducers. 
+The learning algorithm uses the recursive priors and the evidence to efficiently update 
+the posterior weight of each possible subtree. In this section we assume that the output 
+probability functions are known. Hence, we need to evaluate the following, 
+P(YnlXl, . . .,Xn) 
+-- E 
+TiESub(T) 
+P(y, 12'')Pn (2'') , (2) 
+where Pn(2") is the posterior weight of 2-'. Direct calculation of the above sum requires 
+exponential time. However, using the idea of recursive calculation as in Equ. (1) we 
+can efficiently calculate the prediction of the mixture. Similar to the definition of the 
+recursive prior a, we define qn(s) to be the posterior weight of a node s compared to the 
+mixture of all nodes below s. We can compute the prediction of the mixture of suffix tree 
+transducers rooted at s by simply replacing the prior weight a with the posterior weight, 
+qn-1 (S), as follows, 
+7,(Yn) s e Leaves(2.) 
+/,(Yn) = qn_l(S)7s(yn) + (1 - qn_l(S))/(xn_l,l.s)(yn) otherwise , (3) 
+In order to update qn(S) we introduce one more variable, denoted by rn(s). Setting 
+to(s) = log(a/(1 - a)) for all s, rn(s) is updated as follows, 
+r,(s) = r,_(s) + 1og(%(yn)) - 1og(,,,_,,,, (yn)) (4) 
+Therefore, rn(S) is the log-likelihood ratio between the prediction of s and the prediction 
+of the mixture of all nodes below s in 2-. The new posterior weights qn(s) are calculated 
+from rn (s), 
+qn(s) = 1/(1 q- e -r"(')) (5) 
+In summary, for each new observation pair, we traverse the tree by following the path that 
+corresponds to the input sequence Zn Zn-- lZn--2.. ß The predictions of each sub-mixture are 
+calculated using Equ. (3). Given these predictions the posterior weights of each sub-mixture 
+are updated using Equ. (4) and Equ. (5). Finally, the probability of y, induced by the whole 
+mixture is the prediction propagated out of the root node, as stated by Lemma 3.1. 
+Lemma3.1 ET'es,b(T)P(ynl2-')P(2") - e(Yn). 
+Let Lossn (2-) be the logarithmic loss (negative log-likelihood) of a suffix tree transducer 2- 
+after n input-outputpairs. That is, Lossn(2') -- in=l -- log(P(yi [2-)). Similarly, the loss 
+A similar derivation still holds even if there is a different prior a at each node s of T. For the 
+sake of simplicity we assume that a is constant. 
+384 Y. SINGER 
+ß n 
+of the mixture is defined to be, Lossn '' = Y4= - log(5'e(/i)). The advantage of using 
+a mixture of suffix tree transducers over a single suffix tree is due to the robustness of the 
+solution, in the sense that the prediction of the mixture is almost as good as the prediction 
+of the best suffix tree in the mixture. 
+Theorem l Let 7' be a (possibly infinite) suffix tree transducer, and let 
+(a:, y),..., (a:,, Yn) be any possible sequence of input-output pairs. The loss of the 
+mixture is at most, Lossn (7'') - Iog(Po(7'')),for each possible subtree 7''. The running 
+time of the algorithm is D n where D is the maximal depth of 7' or n 2 when 7' is infinite. 
+The proof is based on a technique introduced in [4]. Note that the additional loss is constant, 
+1 
+hence the normalized loss per observation pair is, Po(7'')/n, which decreases like 0(7). 
+Given a long sequence of input-output pairs or many short sequences, the structure of the 
+suffix tree transducer is inferred as well. This is done by updating the output functions, as 
+described in the next section, while adding new branches to the tree whenever the suffix 
+of the input sequence does not appear in the current tree. The update of the weights, 
+the parameters, and the structure ends when the maximal depth is reached, or when the 
+beginning of the input sequence is encountered. 
+4 Parameter Estimation 
+In this section we describe how the output probability functions are estimated. Again, we 
+devise an online scheme. Denote by c,n(y) the number of times the output symbol /was 
+observed out of the n times the node s was visited. A commonly used estimator smoothes 
+each count by adding a constant e as follows, 
+s(Y) ' 'zn(Y) dej (csn(y) q- ()/(n q- (IZo.,I) (6) 
+The special case of e = « is termed Laplace's modified rule of succession or the add« 
+estimator. In [9], Krichevsky and Trofimov proved that the loss of the add« estimator, when 
+applied sequentially, has a bounded logarithmic loss compared to the best (maximum- 
+likelihood) estimator calculated after observing the entire input-output sequence. The 
+additional loss of the estimator after n observations is, 1/2(Izoutl - 1) 1..og(n) + IZou, I - 1. 
+When the output alphabet Zo,t is rather small, we approximate 7, (y) by 7, (Y) using Equ. (6) 
+and increment the count of the corresponding symbol every time the node s is visited. We 
+predict by replacing 7 with its estimate 5 in Equ. (3). The loss of the mixture with estimated 
+output probability functions, compared to any subtree 7'' with known parameters, is now 
+bounded as follows, 
+CossC 'x _< + 1/21T'l (Votl -1) log(,qlT'l) q- 
+where 17''l is the number of leaves in 7''. This bound is obtained by combining the bound 
+on the prediction of the mixture from Thm. 1 with the loss of the smoothed estimator while 
+applying Jensen's inequality [3]. 
+When II;o,tl is fairly large or the sample size if fairly small, the smoothing of the output 
+probabilities is too crude. However, in many real problems, only a small subset of the 
+output alphabet is observed in a given context (a node in the tree). For example, when 
+mapping phoneroes to phones [11], for a given sequence of input phonemes the phones that 
+can be pronounced is limited to a few possibilities. Therefore, we would like to devise an 
+estimation scheme that statistically depends on the effective local alphabet and not on the 
+whole alphabet. Such an estimation scheme can be devised by employing again a mixture 
+of models, one model for each possible subset ' 
+Zo,t of Zo,t. Although there are 2 Irø'"l 
+subsets of Zo,,, we next show that if the estimators depend only on the size of each subset 
+then the whole mixture can be maintained in time linear in IZo, t I. 
+Adaptive Mixture of Probabilistic Transducers 385 
+Denote by 57 (tl 17o,tl - i) the estimate of 7, (t) after n observations given that the 
+alphabet ' = 
+Zo,t is of size i. Using the add« estimator, 5(/l IZ'ou,I i) - (½?(y) + 
+1/2)/in + i/2). Let Zo%t(s) be the set of different output symbols observed at node s, i.e. 
+zu,(s) = { I = y,k, s = (x,_,+,,...,x,k),  _< k _< n} , 
+(Ir'ø"'l-lr'ø%'O)lN possible alphabets of 
+and define :Eøo,t(s) to be the empty set. There are  i-I:o%,(,)l J 
+size i. Thus, the prediction of the mixture of all possible subsets of Zo,t is, 
+ioO) I w? 57(1J) , (7) 
+where w? is the posterior probability of an alphabet of size i. Evaluation of this sum 
+requires O(IZo,t l) operations (and not O(21:o,,,I)). We can compute Equ. (7) in an online 
+fashion as follows. Let, 
+- % m Ii) (8) 
+IouOl J 1-I 
+k-1 
+Without loss of generity, let us sume a unifo prior for the possible phat sizes. 
+Iol i) dcf 
+Po(Zo) = = = wi = 
+us, for 1 i  (i) = 1 /IZot I.  + (i) is updat from  (i)  follows, 
+0 if ."+ 
+Infoly: If the number of different symbols ob so f excs a given size then 1 
+pham of is size e eliminat from the mixture by slhing their posterior probability 
+to zero. Otherwise, if the next symbol w obse fore, the output probability is the 
+pricfion of the add timator. Ltly, if the next symbol is entirely new, we n to sum 
+ß e prictions of 1 the phabets of size i which agr on the first IEt(s)l d gi,+, is 
+one of eir i - IZt(s)l (yet) unobserv symbols. Furthermore, we n to multiply by 
+ß e apriori probability of obseing Vi,+,. Assuming a unifo prior over the unobse 
+symbols this probability us to 1/([Zot[ - IZt(s)I). Applying Bayes rule agn, the 
+priction of the mixture of 1 possible subsets of the output phabet is, 
+i=1 i=1 
+Applying twice the online mixture esti'mation thnique, first for the sucture d then 
+for e peters, yields  efficient d robust online gofim. For a sple of size 
+n, the time complexity of the gorithm is DlZotln (or IZot[n  if T is infinite). e 
+prictions of the adaptive mixture is most  go  any suffix  sducer with any 
+set of peters. e logthmic loss of the mixture depends on the numar of non-zero 
+peters  follows, 
+Lo '  Lo(')- og(P0(')) + /2 tNZ ogO) + O(l'l Io1) , 
+where INZ is the numar of non-zero pmeters of e sducer T . If INZ  ITllZoutl 
+en e pefformce of the above scheme, when employing a mixture model for the 
+peters  well, is significtly better th using the add role with the full phat. 
+386 Y. SINGER 
+5 Evaluation and Applications 
+In this section we briefly present evaluation results of the model and its learning algorithm. 
+We also discuss and present results obtained from learning syntactic structure of noun 
+phrases. We start with an evaluation of the estimation scheme for a multinomial source. 
+In order to check the convergence of a mixture model for a multinomial source, we simulated 
+a source whose output symbols belong to an alphabet of size 10 mid set the probabilities of 
+observing any of the last five symbols to zero. Therefore, the actual alphabet is of size 5. 
+The posterior probabilities for the sum of all possible subsets of Zo,, of size i (1 < i < 10) 
+were calculated after each iteration. The results are plotted on the left part of Fig. 2. The 
+very first observations rule out alphabets of size lower than 5 by slashing their posterior 
+probability to zero. After few observations, the posterior probability is concentrated around 
+the actual size, yielding an accurate online estimate of the multinomial source. 
+The simplicity of the learning algorithm and the online update scheme enable evaluation of 
+the algorithm on millions of input-output pairs in few minutes. For example, the average 
+update time for a suffix tree transducer of a maximal depth 10 when the output alphabet 
+is of size 4 is about 0.2 millisecond on a Silicon Graphics workstation. A typical result is 
+shown in Fig. 2 on the right. In the example, Zo,t = Zi, = {1,2, 3,4}. The description 
+of the source is as follows. If z, _> 3 then /, is uniformly distributed over Zo,,, otherwise 
+(z, _< 2) /, = z,_s with probability 0.9 and /,_s = 4 - z,_s with probability 0.1. The 
+input sequence z, z2,... was created entirely at random. This source can be implemented 
+by a sparse suffix tree transducer of maximal depth 5. Note that the actual size of the 
+alphabet is only 2 at half of the leaves of the tree. We used a suffix tree transducer of 
+maximal depth 20 to learn the source. The negative of the logarithm of the predictions 
+(normalized per symbol) are shown for (a) the true source, (b) a mixture of suffix tree 
+transducers and their parameters, (c) a mixture of only the possible suffix tree transducers 
+(the parameters are estimated using the add« scheme), and (d) a single (overestimated) 
+model of depth 8. Clearly, the mixture modelconverge to the entropy of the source much 
+faster than the single model. Moreover, employing twice the mixture estimation technique 
+results in an even faster convergence. 
+o o  , o o 1.8 
+oa o.4 04 0.4 o4 o4 J 1.6 
+0.,I .....,I .-...,I .--..,I :. 0,1 .--. 0,1 .-.. 
+ß ß ß 
+&.:-/.4.:- .L.: .L.:- .4.-: o4.  ,. 
+04 o4 o.4 
+..,I .'-..,I-'...,I-'...,I-'..,I "..,I ". 
+0.8 
+0'1 ' 0'1 # 0'1 
+ (d) Single Overestimated Model 
+(c) Mixture of Models 
+.... l Mixture of Models and Parameters 
+........ Source 
+50 100 150 200 250 300 350 400 450 500 
+Number of Examples 
+Figure 2: Left: Example of the convergence of the posterior probability of a mixture model for 
+a multinomial source with large number of possible outcomes when the actual number of observed 
+symbols is small. Right: performance comparison of the predictions of a single model, two mixture 
+models and the true underlying transducer. 
+We are currently exploring the applicative possibilities of the algorithm. Here we briefly 
+discuss and demonstrate how to induce an English noun phrase recognizer. Recognizing 
+noun phrases is an important task in automatic natural text processing, for applications 
+such as information retrieval, translation tools and data extraction from texts. A common 
+practice is to recognize noun phrases by first analyzing the text with a part-of-speech tagger, 
+which assigns the appropriate part-of-speech (verb, noun, adjective etc.) for each word in 
+Adaptive Mixture of Probabilistic Transducers 387 
+context. Then, noun phrases are identified by manually defined regular expression patterns 
+that are matched against the part-of-speech sequences. We took an alternative route by 
+building a suffix tree transducer based on a labeled data set from the UPENN tree-bank 
+corpus. We defined Y'-i, to be the set of possible part-of-speech tags and set Y. out- {0, 1}, 
+where the output symbol given its corresponding input symbol (the part-of-speech tag of 
+the current word) is 1 iff the word is part of a noun phrase. We used over 250,000 marked 
+tags and tested the performance on more than 37,000 tags. The test phase was performed 
+by freezing the model structure, the mixture weights and the estimated parameters. The 
+suffix tree transducer was of maximal depth 15 hence very long phrases can be statistically 
+identified. By tresholding the output probability we classified the tags in the test data 
+and found that less than 2.4% of the words were misclassified. A typical result is given 
+in Table 1. We are currently investigating methods to incorporate linguistic knowledge 
+into the model and its learning algorithm and compare the performance of the model with 
+traditional technic ues. 
+Scnlm Torn Smith . group cJf cxcutivu of U.K. rmtals 
+POS tag PNP PNP NN NN NN IN PNP NNS 
+Class 1 1  1 1 1 0 1 1 
+Prediction 0.99 0.99 0.01 0.98 0.98 0.98 0.02 0.99 0.99 
+Sentence nd industrl materiala maker , will  chairman 
+POS tag CC JJ NNS NN MD VB NN 
+Class 1 1 1 1 $ 0 0 1 $ 
+Prediction 0.67 0.96 0.99 0.96 0.03 0.03 0.01 0.87 0.01 
+Table 1: Extraction of noun phrases using a suffix tree transducer. In this typical example, two long 
+noun phrases were identified correctly with high confidence. 
+Acknowledgments 
+Thanks to Y. Bengio, Y. Freund, F. Peteira, D. Ron, R. Schapire, and N. Tishby for helpful discussions. 
+The work on syntactic structure induction is done in collaboration with I. Dagan and S. Engelson. 
+This work was done while the author was at the Hebrew University of Jerusalem. 
+References 
+[1] 
+[2] 
+[3] 
+[41 
+[5] 
+[6] 
+[7] 
+[8] 
+[91 
+[101 
+[111 
+[12] 
+[13] 
+Y. Bengio and R Fransconi. An input output HMM architecture. InNIPS-7, 1994. 
+N. Cesa-Bianchi, Y. Freund, D. Haussler, D.P. Helmbold, R.E. Schapire, and M. K. Warrnuth. 
+How to use expert advice. In STOC-24, 1993. 
+T.M. Cover and J.A. Thomas. Elements of information theory. Wiley, 1991. 
+A. DeSantis, G. Markowski, and M.N. Wegman. Learning probabilistic prediction functions. 
+In Proc. of the 1st Wksp. on Comp. Learning Theory, pages 312-328, 1988. 
+C.L. Giles, C.B. Miller, D. Chen, G.Z. Sun, H.H. Chen, and Y.C. Lee. Learning and extracting 
+finite state automata with second-order recurrent neural networks. Neural Computation, 4:393- 
+405, 1992. 
+D. H aussler and A. Barron. How well do B ayes methods work for on-line prediction of { + 1, - 1 } 
+values ? In The 3rd NEC Syrup. on Cornput. and Cogn., 1993. 
+D.P. Helmbold and R.E. Schapire. Predicting nearly as well as the best pruning of a decision 
+txee. In COLT-& 1995. 
+R.A. Jacobs, M.I. Jordan, S.J. Nowlan, and G.E. Hinton. Adaptive mixture of local experts. 
+Neural Computation, 3:79-87, 1991. 
+R.E. Krichevsky and V.K. Trofimov. The performance of universal encoding. IEEE Trans. on 
+Inform. Theory, 1981. 
+Nick Littlestone and Manfred K. Warmuth. The weighted majority algorithm. Information and 
+Computation, 108:212-261, 1994. 
+M.D. Riley. A statistical model for generating pronounication networks. In Proc. oflEEE Conf. 
+on Acoustics, Speech and Signal Processing, pages 737-740, 1991. 
+D. Ron, Y. Singer, and N. Tishby. The power of amnesia. InNIPS-6, 1993. 
+F.M.J. Willems, Y.M. Shtarkov, aaM T.J. Tjalkens. The context tree weighting method: Basic 
+properties. IEEE Trans. Inform. Theory, 41(3):653-664, 1995. 

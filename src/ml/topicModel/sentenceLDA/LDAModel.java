@@ -79,8 +79,7 @@ public class LDAModel {
                 nSentimentTopicWordWords[l[i][j]][randTopic][d.getToken(j)]++;
                 nDocSentimentTopicWords[i][l[i][j]][randTopic]++;
                 nDocSentimentWords[i][l[i][j]]++;
-                nDocWords[i]++;
-                
+                nDocWords[i]++;   
             }
         }   
     }
@@ -102,27 +101,12 @@ public class LDAModel {
         Document d = dataset.getDocument(i);
         int oldTopic = z[i][j];
         int oldSentiment = l[i][j];
-        nSentimentTopicWords[oldSentiment][oldTopic]--;
-        if (nSentimentTopicWords[oldSentiment][oldTopic] < 0){
-            int aa =1;
-        }
-            
-        nSentimentTopicWordWords[oldSentiment][oldTopic][d.getToken(j)]--;
-        if (nSentimentTopicWordWords[oldSentiment][oldTopic][d.getToken(j)] < 0){
-            int aa =1;
-        }
-        nDocSentimentTopicWords[i][oldSentiment][oldTopic]--;
-        if ( nDocSentimentTopicWords[i][oldSentiment][oldTopic] < 0){
-            int aa =1;
-        }
-        nDocSentimentWords[i][oldSentiment]--;
-        if (nDocSentimentWords[i][oldSentiment] < 0){
-            int aa =1;
-        }
+        
+        nSentimentTopicWords[oldSentiment][oldTopic]--;           
+        nSentimentTopicWordWords[oldSentiment][oldTopic][d.getToken(j)]--;      
+        nDocSentimentTopicWords[i][oldSentiment][oldTopic]--;      
+        nDocSentimentWords[i][oldSentiment]--;       
         nDocWords[i]--;
-        if (nDocWords[i] < 0){
-            int aa =1;
-        }
         
         // compute p(z[i][j]|*)
         double[][] p = new double[S][K];

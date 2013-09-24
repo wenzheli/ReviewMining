@@ -1,0 +1,314 @@
+A Multiscale Attentional Framework for 
+Relaxation Neural Networks 
+Dimitris I. Tsioutsias 
+Dept. of Electrical Engineering 
+Yale University 
+New Haven, CT 06520-8285 
+t sioutsiascs. yale. edu 
+Eric Mjolsness 
+Dept. of Computer Science &; Engineering 
+University of California, San Diego 
+La Jolla, CA 92093-0114 
+emj cs. ucsd. edu 
+Abstract 
+We investigate the optimization of neural networks governed by 
+general objective functions. Practical formulations of such objec- 
+tives are notoriously difficult to solve; a common problem is the 
+poor local extrema that result by any of the applied methods. In 
+this paper, a novel framework is introduced for the solution of large- 
+scale optimization problems. It assumes little about the objective 
+function and can be applied to general nonlinear, non-convex func- 
+tions; objectives in thousand of variables are thus efficiently min- 
+imized by a combination of techniques - deterministic annealing, 
+multiscale optimization, attention mechanisms and trust region op- 
+timization methods. 
+1 INTRODUCTION 
+Many practical problems in computer vision, pattern recognition, robotics and other 
+areas can be described in terms of constrained optimization. In the past decade, 
+researchers have proposed means of solving such problems with the use of neural 
+networks [Hopfield & Tank, 1985; Koch et al., 1986], which are thus derived as 
+relaxation dynamics for the objective functions codifying the optimization task. 
+One disturbing aspect of the approach soon became obvious, namely the appar- 
+ent inability of the methods to scale up to practical problems, the principal reason 
+being the rapid increase in the number of local minima present in the objectives as 
+the dimension of the problem increases. Moreover most objectives, E(v), are highly 
+nonlinear, non-convex functions of v, and simple techniques (e.g. steepest descent) 
+634 D.I. TSIOUTSIAS, E. MJOLSNESS 
+will, in general, locate the first minimum from the starting point. 
+In this work, we propose a framework for solving large-scale instances of such opti- 
+mization problems. We discuss several techniques which assist in avoiding spurious 
+minima and whose combined result is an objective function solution that is compu- 
+tationally efficient, while at the same time being globally convergent. In section 2.1 
+we discuss the use of deterministic annealing as a means of avoiding getting trapped 
+into local minima. Section 2.2 describes multiscale representations of the original 
+objective in reduced spatial domains. In section 2.3 we present a scheme for reduc- 
+ing the computational requirements of the optimization method used, by means of 
+a focus of attention mechanism. Then, in section 2.4 we introduce a trust region 
+method for the relaxation phase of the framework, which uses second order informa- 
+tion (i.e. curvature) of the objective function. In section 3 we present experimental 
+results on the application of our framework to a 2-D region segmentation objective 
+with discontinuities. Finally, section 4 summarizes our presentation. 
+2 THEORETICAL FRAMEWORK 
+Our optimization framework takes the form of a list of nested loops indicating the 
+order of conceptual (and computational) phases that occur: from the outer to the 
+inner loop we make use of deterministic annealing, a multiscale representation, an 
+attentional mechanism and a trust region optimization method. 
+2.1 ANNEALING NETS 
+The usefulness of statistical mechanics for designing optimization procedures has 
+recently been established; prime examples are simulated annealing and its various 
+mean field theory approximations [Hopfield & Tank, 1985; Durbin & Willshaw, 
+1987]. The success of such methods is primarily due to entropic terms included in 
+the objective (i.e. syntactic terms), but the price to pay is their highly nonlinear 
+form. Interestingly, those terms can effectively be convexified by the use of a "tem- 
+perature" parameter, T, allowing for a reduction in the number of minima and the 
+ability to track the solution through "temperature". 
+2.2 MULTISCALE REPRESENTATION 
+To solve large-scale problems in thousands of variables, we need to speed up the 
+convergence of the method while still retaining valid state-space trajectories. To 
+accomplish this we introduce smaller, approximate versions of the problem at coarser 
+spatial scales [Mjolsness et al., 1991]; the nonlinearity of the original objective is 
+maintained at all scales, as opposed to other approaches where the objectives and 
+their derivatives are either approximated by the use of finite difference methods, 
+or solved for by multigrid techniques where a quadratic objective is still assumed. 
+Consequently, the multiscale representation exploits the effective smoothness in the 
+objectives: by alternating relaxation phases between coatset and finer scales, we 
+use the former to identify extrema and the latter to localise them. 
+2.3 FOCUS OF ATTENTION 
+To further reduce the computational requirements of large-scale optimization (and 
+indirectly control its temporal behavior), we use a focus of attention (FoA) mecha- 
+nism [Mjolsness & Miranker, 1993], reminiscent of the spotlight hypothesis argued 
+A Multiscale Attentional Framework for Relaxation Neural Networks 635 
+to exist in early vision systems [Koch & Ullman, 1985; Olshausen et al., 1993]. The 
+effect of a FoA is to support efficient, responsive analysis: it allows resources to be 
+focused on selected areas of a computation and can rapidly redirect them as the 
+task requirements evolve. 
+Specifically, the FoA becomes a characteristic function, 7r(X), determining which 
+of the N neurons are active and which are clamped during relaxation, by use of a 
+discrete-valued vector, X, and by the rule: 7ri(X) = 1 if neuron vi is in the FoA, and 
+zero otherwise. Moreover, a limited number, n, of neurons vi are active at any given 
+instant: i 7ri(X) = n, with n<<N and n chosen as an optimal FoA size. To tie the 
+attentional mechanism to the multiscale representation, we introduce a partition 
+of the neurons vi into blocks indexed by a (corresponding to coarse-scale block- 
+neurons), via a sparse rectangular matrix Bia ß {0, 1} such that a Bi = 1, Vi, 
+with i - 1,...,N, a = 1,...,K and K<<N. Then ri(x) = aBiaXa, and we use 
+each component of X for switching a different block of the partition; thus, a neuron 
+vi is in the FoA iff its coarse scale block a is in the FoA, as indicated by X. As 
+a result, our FoA need not necessarily have a single region of activity: it may well 
+have a distributed activity pattern as determined by the partitions Bia. 1 
+Clocked objective function notation [Mjolsness & Miranker, 1993] makes the task 
+more apparent: during the active- X phase the FoA is computed for the next active- 
+v phase, determining the subset of neurons vi on which optimization is to be carried 
+dv  
+out. We introduce the quantity E;i[v] _--  at. (ri is a time axis for vi) [Mjolsness 
+& Miranker, 1993] as an estimate of the predicted AE arising from each vi if it joins 
+the FoA. For Hopfield/Grossberg dynamics this measure becomes: 
+: -- (1) 
+with /,i de____f 7iE ' and gi the transfer function for neuron vi (e.g. a sigmoid func- 
+tion). Eq. (1) is used here analogously to saliency measures introduced into neu- 
+rophysiological work [Koch & Ullman, 1985]; we propose it as a global measure 
+of conspicuousness. As a result, attention becomes a k-winner-take-all (kWTA) 
+network: 
+bock ;, ) + ½ E(V(0 )), 
+a i a 
+(2) 
+where l refers to the scale for which the FoA is being determined (l = 1,..., L), ½ 
+conforms with the clocked objective notation, and the last summand corresponds 
+to the subspace on which optimization is to be performed, as determined by the 
+current FoA. 9' Periodically, an analogous FoA through spatial scales is run, allowing 
+re-direction of system resources to the scale which seems to be having the largest 
+combined benefit and cost effect on the optimization [Tsioutsias & Mjolsness, 1995]. 
+The combined effect of multiscale optimization and FoA is depicted schematically in 
+Fig. 1: reduced-dimension functionals are created and a FoA beam "shines" through 
+scales picking the neurons to work on. 
+ Preferably, Bia will be chosen to minimize the number of inter-block connections. 
+2 Before computing a new FoA we update the neighbors of all neurons that were included 
+in the last focus; this has a similar effect to an implicit spreading of activation. 
+636 D.I. TSIOUTSIAS, E. MJOLSNESS 
+Layer3 
+Focus Of 
+Aaention 
+Neighbors Of 
+FoA-neurons 
+Layer 2 
+Layer 1 
+Figure 1: Multiscale Attentional Neural Nets: FoA on a layer (e.g. L=i) competes 
+with another FoA (e.g. L-2) to determine both preferable scale and subspace. 
+2.4 OPTIMIZATION PHASE 
+To overcome the problems generally associated with the steepest descent method, 
+other techniques have been devised. Newton's method, although successful in small 
+to medium-sized problems, does not scale well in large non-convex instances and is 
+computationally intensive. Quasi-Newton methods are efficient to compute, have 
+quadratic termination but are not globally convergent for general nonlinear, non- 
+convex functions. A method that guarantees global convergence is the trust region 
+method [Connet al., 1993]. The idea is summarized as follows: Newton's method 
+suffers from non-positive definite Hessians; in such a case, the underlying function 
+m(k)() obtained from the 2nd order Taylor expansion of E(vk + ) does not have 
+a minimum and the method is not defined, or equivalently, the region around the 
+current point v in which the Taylor series is adequate does not include a minimizing 
+point of m()(). To resolve this, we can define a neighborhood  of v such that 
+rn(k)() agrees with E(v + ) in some sense; then, we pick v+ - v + , where 
+ minimizes m(k)(), V(v + ) E . Thus, we seek a solution to the resulting 
+subproblem: 
+min rn()() s.t. [[[[p _< A (3) 
+where I1' lip is any kind of norm (for instance, the L. norm leads to the Levenberg- 
+Marquardt methods), and Ak is the radius of , adaptively modified based on an 
+accuracy ratio r = (AE()/Am()) = (E(k) - E(v + ))/(m()(0) - m(a)()); 
+AE( ¸ is the "actual reduction" in E () when step  is taken, and Am() the 
+"predicted reduction". The closer r is to unity, the better the agreement between 
+the local quadratic model of E © and the objective itself is, and A is modified 
+adaptively to reflect this [Connet al., 1993]. 
+We need to make some brief points here (a complete discussion will be given else- 
+where [Tsioutsias & Mjolsness, 1995]): 
+A Multiscale Attentional Framework for Relaxation Neural Networks 63 7 
+At each spatial scale of our multiscale representation, we optimize the corre- 
+sponding objective by applying a trust region method. To obtain sufficient 
+relaxation progress as we move through scales we have to maintain mean- 
+ingful region sizes, Ak; to that end we use a criterion based on the curvature 
+of the functionals along a searching direction. 
+The dominant relaxation computation within the algorithm is the solution 
+of eq. (3). We have chosen to solve this subproblem with a preconditioned 
+conjugate gradient method (PC'G) that uses a truncated Newton step to 
+speed up the computation; steps are accepted when a sufficiently good 
+approximation to the quasi-Newton step is found. 3 In our case, the norm 
+in eq. (3) becomes the elliptical norm IIllc = *to*, where a diagonal 
+preconditioner to the Hessian is used as the scaling matrix C. 
+If the neuronal connectivity pattern of the original objective is sparse (as 
+happens for most practical combinatorial optimization problems), the pat- 
+tern of the resulting Hessian can readily be represented by sparse static data 
+structures, 4 as we have done within our framework. Moreover, the partition 
+matrices, Bia, introduce a moderate fill-in in the coarser objectives and the 
+sparsity of the corresponding Hessians is again taken into account. 
+3 EXPERIMENTS 
+We have applied our proposed optimization framework to a spatially structured 
+objective from low-level vision, namely smooth 2-D region segmentation with the 
+inclusion of discontinuity detection processes: 
+E[y, tv,t hI 
+= - + - 
+ij ij 
++ B(fij-di)  +C(l 5 +l)+T((lb)+(l) ) (4) 
+ij ij ij 
+where d is the set of image intensities, f is the real-valued smooth surface to be fit to 
+the data, I v and I h are the discrete-valued line processes indicating a non-zero value 
+in the intensity gradient, and b(x)= -(2g0)-[ln x + ln(1- x)] is a barrier function 
+restricting each variable into (0,1) by infinite barriers at the borders. Eq. (4) is 
+a mixed-nonlinear objective involving both continuous and binary variables; our 
+framework optimizes vectors f, l  and l  simultaneously at any given scale as con- 
+tinuous variables, instead of earlier two-step, alternate continuous/discrete-phase 
+approaches [Terzopoulos, 1986]. 
+We have tested our method on gradually increasing objectives, from a "small" size 
+of N--12,288 variables for a 64x64 image, up to a large size of N-786,432 variables 
+for a 512x512 image; the results seem to coincide with our theoretical expectations: 
+a significant reduction in computational cost was observed and consistent conver- 
+gence towards the optimum of the objective was found for various numbers of coarse 
+scales and FoA sizes. The dimension of the objective at any scale 1 was chosen via 
+a power law: N( L-l+i)/œ, where L is the total number of scales and N the size of 
+The algorithm can also handle directions of negative curvature. 
+This property becomes important in a neural net implementation. 
+638 D.I. TSIOUTSIAS, E. MJOLSNESS 
+the original objective. 
+The effect of our multiscale optimization with and without a FoA is shown in Fig. 2 
+for the 128x128 and the 512x512 nets, where E(v*) is the best final configuration 
+with a one-level no-FoA net, and cumulative cost is an accumulated measure in the 
+number of connection updates at each scale; a consistent scale-up in computational 
+efficiency can be noted when L > 1, while the cost measure also reflects the relative 
+total wall-clock times needed for convergence. Fig. 3 shows part of a comparative 
+study we made for saliency measures alternative to eq. (1) (e.g. g[E,il), in order 
+to investigate the validity of eq. (1) as a predictor of AE: the more prominent 
+"linearity" in the left scatterplot seems to justify our choice of sMiency. 
+10 4 
+10 3 
+lO t 
+10-a 
+10 -a 
+10-o 
+MS/AT Nets (12852): L=1,2,3 
+10  
+10 s __ 
+10 4 
+10 :t 
+10 t 
+10 ø 
+' 10 - 
+10-0 
+10-3 
+10 -4 
+10-3 
+MS/AT Nets (512'2): L=1,2,3,4 
+3 2 
+10-3 
+500 1000 1500 2000 0 10000 20000 30000 40000 
+Cumulative Coat Cumulative Cost 
+Figure 2: Multiscale Optimization (curves labeled by number of scales used): X- 
+numbered curves correspond to nets without a FoA, simp]y-numbered ones to nets 
+with a FoA used at all scales. The lowest costs result from the combined use of 
+multiscale optimization and FoA. 
+50000 
+4 CONCLUSION 
+We have presented a framework for the optimization of large-scale objective func- 
+tions using neural networks that incorporate a multiscale attentional mechanism. 
+Our method allows for a continuous adaptation of the system resources to the com- 
+putational requirements of the relaxation problem through the combined use of 
+several techniques. The framework was applied to a 2-D image segmentation ob- 
+jective with discontinuities; formulations of this problem with tens to hundreds of 
+thousands of variables were then successfully solved. 
+Acknowledgement s 
+This work was supported partly by AFOSR-F49620-92-J-0465 and the Yale Center 
+of Theoretical and Applied Neuroscience. 
+A Multiscale Attentional Framework for Relaxation Neural Networks 639 
+10 0 
+10 t 
+10 0 
+10- 
+10 - 
+10-0 
+(12872) : Focus on 1St level - proposed saliency 
+o 
+o 
+o 
+o 
+o 
+o 
+o 
+o 
+o 
+o 
+o 
+o 
+o 
+o 
+o o , o8 Roøo 
+oo ø 
+g o ø o 
+_?. ,lnul i ,,,,,I , ,,,,.d , 
+10- 10- 10-4 10- 
+(Average Delt-E per block) 
+12872) : Focus on 1st level - absolute gradient 
+oO o 
+i-? 10- 10 - 10-4 10 -a 10-z 10 - i0 ø 
+(Average Delta--E per block) 
+Figure 3: Saliency Comparison: (left), saliency as in eq. (1); (right), the absolute 
+gradient was used instead. 
+References 
+A. Conn, N. Gould, A. Sartanaer,  Ph. Toint. (1993) Global Convergence of a 
+Class of Trust Region Algorithms for Optimization Using Inexact Projections on 
+Convex Constraints. SIAM Y. of Optimization, 3(1):164-221. 
+R. Durbin & D. Willshaw. (1987) An Analogue Approach to the TSP Problem 
+Using an Elastic Net Method. Nature, 326:689-691. 
+J. Hopfield & D. W. Tank. (1985) Neural Computation of Decisions in Optimization 
+Problems. Biol. Cyberne., 52:141-152. 
+C. Koch, J. Marroquin z A. Yuille. (1986) Analog 'Neuronal' Networks in Early 
+Vision. Proc. of the National Academy of Sciences USA, 83:4263-4267. 
+C. Koch, & S. Ullman. (1985) Shifts in Selective Visual Attention: Towards the 
+Underlying Neural Circuitry. Human Neurobiology, 4:219-227. 
+E. Mjolsness, C. Garrett, & W. Miranker. (1991) Multiscale Optimization in Neural 
+Nets. IEEE Trans. on Neural Networks, 2(2):263-274. 
+E. Mjolsness & W. Miranker. (1993) Greedy Lagrangians for Neural Networks: 
+Three Levels of Optimization in Relaxation Dynamics. YALEU/DC$/TR-9J5. 
+(URL file://cs .ucsd. edu/pub/emj/papers/yale-TR-945 .ps. Z) 
+B. Olshausen, C. Anderson, & D. Van Essen. (1993) A Neurobiological Model of 
+Visual Attention and Invariant Pattern Recognition Based on Dynamic Routing of 
+Information. The Journal o/Neuroscience, 13(11):4700-4719. 
+D. Terzopoulos. (1986) Regularization of Inverse Visual Problems Involving Dis- 
+continuities. IEEE Trans. PAMI, 8:419-429. 
+D. I. Tsioutsias & E. Mjolsness. (1995) Global Optimization in Neural Nets: A 
+Novel Relaxation Framework. To appear as a UCSD-CSE-TR, Dec. 1995. 

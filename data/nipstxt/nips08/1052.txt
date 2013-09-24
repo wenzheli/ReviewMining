@@ -1,0 +1,280 @@
+Stable Fitted Reinforcement Learning 
+Geoffrey J. Gordon 
+Computer Science Department 
+Carnegie Mellon University 
+Pittsburgh PA 15213 
+ggordon@cs.cmu.edu 
+Abstract 
+We describe the reinforcement learning problem, motivate algo- 
+rithms which seek an approximation to the Q function, and present 
+new convergence results for two such algorithms. 
+I INTRODUCTION AND BACKGROUND 
+Imagine an agent acting in some environment. At time t, the environment is in some 
+state xt chosen from a finite set of states. The agent perceives xt, and is allowed to 
+choose an action at from some finite set of actions. The environment then changes 
+state, so that at time (t + 1) it is in a new state Xt+l chosen from a probability 
+distribution which depends only on xt and at. Meanwhile, the agent experiences a 
+real-valued cost ct, chosen from a distribution which also depends only on xt and 
+at and which has finite mean and variance. 
+Such an environment is called a Markov decision process, or MDP. The reinforce- 
+ment learning problem is to control an MDP to minimize the expected discounted 
+cost '-t "/tct for some discount factor -/ E [0, 1]. Define the function Q so that 
+Q(x, a) is the cost for being in state x at time 0, choosing action a, and behaving 
+optimally from then on. If we can discover Q, we have solved the problem: at each 
+step, we may simply choose at to minimize Q(xt,at). For more information about 
+MDPs, see (Watkins, 1989, Bertsekas and Tsitsiklis, 1989). 
+We may distinguish two classes of problems, online and offline. In the offline prob- 
+lem, we have a full model of the MDP: given a state and an action, we can describe 
+the distributions of the cost and the next state. We will be concerned with the 
+online problem, in which our knowledge of the MDP is limited to what we can dis- 
+cover by interacting with it. To solve an online problem, we may approximate the 
+transition and cost functions, then proceed as for an offline problem (the indirect 
+approach); or we may try to learn the Q function without the intermediate step 
+(the direct approach). Either approach may work better for any given problem: the 
+Stable Fitted Reinforcement Learning 1053 
+direct approach may not extract as much information from each observation, but 
+the indirect approach may introduce additional errors with its extra approximation 
+step. We will be concerned here only with direct algorithms. 
+Watkins' (1989) Q-learning algorithm can find the Q function for small MDPs, 
+either online or offline. Convergence with probability I in the online case 
+was proven in (Jaakkola et al., 1994, Tsitsiklis, 1994). For large MDPs, ex- 
+act Q-learning is too expensive: representing the Q function requires too much 
+space. To overcome this difficulty, we may look for an inexpensive approxima- 
+tion to the Q function. In the offline case, several algorithms for this purpose 
+have been proven to converge (Gordon, 1995a, Tsitsiklis and Van Roy, 1994, 
+Baird, 1995). For the online case, there are many fewer provably convergent al- 
+gorithms. As Baird (1995) points out, we cannot even rely on gradient descent for 
+large, stochastic problems, since we must observe two independent transitions from 
+a given state before we can compute an unbiased estimate of the gradient. One 
+of the algorithms in (Tsitsiklis and Van Roy, 1994), which uses state aggregation 
+to approximate the Q function, can be modified to apply to online problems; the 
+resulting algorithm, unlike Q-learning, must make repeated small updates to its 
+control policy, interleaved with comparatively lengthy periods of evaluation of the 
+changes. After submitting this paper, we were advised of the paper (Singh et al., 
+1995), which contains a different algorithm for solving online MDPs. In addition, 
+our newer paper (Gordon, 1995b) proves results for a larger class of approximators. 
+There are several algorithms which can handle restricted versions of the online 
+problem. In the case of a Markov chain (an MDP where only one action is available 
+at any time step), Sutton's TD(A) has been proven to converge for arbitrary linear 
+approximators (Sutton, 1988, Dayan, 1992). For decision processes with linear 
+transition functions and quadratic cost functions (the so-called linear quadratic 
+regulation problem), the algorithm of (Bradtke, 1993) is guaranteed to converge. 
+In practice, researchers have had mixed success with approximate reinforcement 
+learning (Tesauro, 1990, Boyan and Moore, 1995, Singh and Sutton, 1996). 
+The remainder of the paper is divided into four sections. In section 2, we summarize 
+convergence results for offline Q-learning, and prove some contraction properties 
+which will be useful later. Section 3 extends the convergence results to online 
+algorithms based on TD(0) and simple function approximators. Section 4 treats 
+nondiscounted problems, and section 5 wraps up. 
+2 OFFLINE DISCOUNTED PROBLEMS 
+Standard offline Q-learning begins with an MDP M and an initial Q function q(0). 
+Its goal is to learn q(n), a good approximation to the optimal Q function for M. To 
+accomplish this goal, it performs the series of updates q(i+l) _ TM(q(i)), where the 
+component of Tq (q(i)) corresponding to state x and action a is defined to be 
+[Tq(q(i))]a -- Ca + "/E Pray nn "(i) 
+yb 
+Y 
+Here ca is the expected cost of performing action a in state x; Pau is the probability 
+that action a from state x will lead to state y; and ff is the discount factor. 
+Oine Q-learning converges for discounted MDPs because T is a contraction in 
+max norm. That is, for all vectors q and r, 
+II TM(q) - TM(r)l 5 11 q -- r l[ 
+where ]] q II  mx, I I, Therefore, by the contraction mapping theorem, TM 
+has a unique fixed point q*, and the sequence q(i) converges linearly to q*. 
+1054 G.J. GORDON 
+It is worth noting that a weighted version of offline Q-learning is also guaranteed 
+to converge. Consider the iteration 
+q(i+) _ (I + aD(TM - I))(q(i)) 
+where a is a positive learning rate and D is an arbitrary fixed nonsingular diagonal 
+matrix of weights. In this iteration, we update some Q values more rapidly than 
+others, as might occur if for instance we visited some states more frequently than 
+others. (We will come back to this possibility later.) This weighted iteration is a 
+max norm contraction, for sufficiently small a: take two Q functions q and r, with 
+[[ q - r ][ = 1. Suppose a is small enough that the largest element of aD is B < 1, 
+and let b > 0 be the smallest diagonal element of aD. Consider any state x and 
+action a, and write da for the corresponding element of aD. We then have 
+_ (1 - da)l 
+< 
+_ (1 - b(1 - -/))/ 
+so (I - aD + aDTM) is a max norm contraction with factor (1 - b(1 - -/)). The 
+fixed point of weighted Q-learning is the same as the fixed point of unweighted 
+Q-learning: TM(q*) = q* is equivalent to aD(TM - I)q* = O. 
+The difficulty with standard (weighted or unweighted) Q-learning is that, for MDPs 
+with many states, it may be completely infeasible to compute TM(q) for even one 
+value of q. One way to avoid this difficulty is fitted Q-learning: if we can find 
+some function MA so that MA o TM is much cheaper to compute than TM, we can 
+perform the fitted iteration q(i+l) = MA (TM (q(i))) instead of the standard offline Q- 
+learning iteration. The mapping MA implements a function approximation scheme 
+(see (Gordon, 1995a)); we assume that q(0) can be represented as MA(q) for some 
+q. The fitted offline Q-learning iteration is guaranteed to converge to a unique fixed 
+point if MA is a nonexpansion in max norm, and to have bounded error if 
+is near q* (Gordon, 1995a). 
+Finally, we can define a fitted weighted Q-learning iteration: 
+q(i+l) = (! + aMAD(TM -- I))(q ©) 
+If MA is a max norm nonexpansion and M = MA (these conditions are satisfied, 
+for example, by state aggregation), then fitted weighted Q-learning is guaranteed 
+to converge: 
+(I+ aMAD(TM - I))q = 
+((I- MA) + MA(I + aD(TM - I)))q 
+MA(I + aD(TM - I)))q 
+since MAq = q for q in the range of MA. (Note that q(i+) is guaranteed to be in the 
+range of MA if q(i) is.) The last line is the composition of a max norm nonexpansion 
+with a max norm contraction, and so is a max norm contraction. 
+The fixed point of fitted weighted Q-learning is not necessarily the same as the fixed 
+point of fitted Q-learning, unless MA can represent q* exactly. However, if MA is 
+linear, we have that 
+(I + aMAD(TM - I))(q + c) = c + MA(I + aD(TM - I)))(q + c) 
+for any q in the range of MA and c perpendicular to the range of MA. In particular, 
+if we take c so that q* - c is in the range of MA, and let q = MAq be a fixed point 
+Stable Fitted Reinforcement Learning 1055 
+of the weighted fitted iteration, then we have 
+[Iq*-q[[ = I[(I+aMAD(TM--I))q*--(I+aMAD(TM--I))q[[ 
+- II c 4. MA(I 4- D(TM - I)))q* - MA(I + aD(TM - I)))q II 
+< 
+Ilq*-qll < b(1- -/) 
+That is, if MA is linear in addition to the conditions for convergence, we can bound 
+the error for fitted weighted Q-learning. 
+For ofline problems, the weighted version of fitted Q-learning is not as useful  the 
+unweighted version: it involves about the same amount of work per iteration, the 
+contraction factor may not be  good, the error bound may not be as tight, and it 
+requires M = MA in addition to the conditions for convergence of the unweighted 
+iteration. On the other hand,  we shall see in the next section, the weighted 
+algorithm can be applied to online problems. 
+3 ONLINE DISCOUNTED PROBLEMS 
+Consider the following algorithm, which is a natural generalization of TD(0) (Sut- 
+ton, 1988) to Markov decision problems. (This algorithm has been called 
+"sarsa" (Singh and Sutton, 1996).) Start with some initial Q function q(0). Re- 
+peat the following steps for i from 0 onwards. Let r (i) be a policy chosen according 
+to some predetermined tradeoff between exploration and exploitation for the Q 
+function q(i). Now, put the agent in M's start state and allow it to follow the policy 
+r (i) for a random number of steps L (i). If at step t of the resulting trajectory the 
+agent moves from the state xt under action at with cost ct to a state yt for which 
+the action bt appears optimal, compute the estimated Bellman error 
+et = (ct + '[q(i)]y,b,) -[q(i)],a, 
+After observing the entire trajectory, define e © to be the vector whose xa-th com- 
+ponent is the sum of et for all t such that xt = x and at ---- a. Then compute the 
+next weight vector according to the TD(O)-like update rule with learning rate a(i) 
+q(i+l) _ q(i) 4- a(i) MAe(i) 
+See (Gordon, 1995b) for a comment on the types of mappings MA which are ap- 
+propriate for online algorithms. 
+We will assume that L © has the same distribution for all i and is independent of 
+all other events related to the i-th and subsequent trajectories, and that E(L (i)) is 
+bounded. Define d (i) to be the expected number of times the agent visited state x 
+and chose action a during the i-th trajectory, given r (i). We will assume that the 
+policies are such that d (i) 
+xa > e for some positive e and for all i, x, and a. Let D © 
+be the diagonal matrix with elements ,(i) With this notation, we can write the 
+txa. 
+expected update for the sarsa algorithm in matrix form: 
+E(q(i+l) [ q (i)) -- (I + (0 MAD(O(T M _ I))q(O 
+With the exception of the fact that D (i) changes from iteration to iteration, this 
+equation looks very similar to the offline weighted fitted Q-learning update. How- 
+ever, the sarsa algorithm is not guaranteed to converge even in the benign case 
+1056 G.J. GORDON 
+(a) (b) 
+Figure 1: A counterexample to sarsa. (a) An MDP: from the start state, the agent 
+may choose the upper or the lower path, but from then on its decisions are forced. 
+Next to each arc is its expected cost; the actual costs are randomized on each step. 
+Boxed pairs of arcs are aggregated, so that the agent must learn identical Q values 
+for arcs in the same box. We used a discount ' - .9 and a learning rate c = .1. 
+To ensure sucient exploration, the agent chose an apparently suboptimal action 
+10% of the time. (Any other parameters would have resulted in similar behavior. 
+In particular, annealing c to zero wouldn't have helped.) (b) The learned Q value 
+for the right-hand box during the first 2000 steps. 
+where the Q-function is approximated by state aggregation: when we apply sarsa 
+to the MDP in figure 1, one of the learned Q values oscillates forever. This problem 
+happens because the frequency-of-update matrix D © can change discontinuously 
+when the Q function fluctuates slightly: when, by luck, the upper path through the 
+MDP appears better, the cost-1 arc into the goal will be followed more often and 
+the learned Q value will decrease, while when the lower path appears better the 
+cost-2 arc will be weighted more heavily and the Q value will increase. Since the 
+two arcs out of the initial state always have the same expected backed-up Q value 
+(because the states they lead to are constrained to have the same value), each path 
+will appear better infinitely often and the oscillation will continue forever. 
+On the other hand, if we can represent the optimal Q function q*, then no matter 
+what D © is, the expected sarsa update has its fixed point at q*. Since the smallest 
+diagonal element of D (i) is bounded away from zero and the largest is bounded 
+above, we can choose an a and a ,t ( I so that (I + aMAD (i)(TM - I)) is a 
+contraction with fixed point q* and factor 't for all i. Now if we let the learning 
+rates satisfy -i c(i) - oe and -i(c(i)) 2  oe, convergence w.p.1 to q* is guaranteed 
+by a theorem of (Jaakkola et al., 1994). (See also the theorem in (Tsitsiklis, 1994).) 
+More generally, if MA is linear and can represent q* - c for some vector c, we can 
+bound the error between q* and the fixed point of the expected sarsa update on 
+iteration i: if we choose an a and a ? ( I as in the previous paragraph, 
+II E(q(i+l) lq(i)) - q* II r'11 q(i) _ q, II + 211 c II 
+for all i. A minor modification of the theorem of (Jaakkola et al., 1994) shows that 
+the distance from q(i) to the region 
+/ 1) 
+q Ilq-q* II 211c111_ 
+converges w.p.1 to zero. That is, while the sequence q(i) may not converge, the 
+worst it will do is oscillate in a region around q* whose size is determined by how 
+Stable Fitted Reinforcement Learning 1057 
+accurately we can represent q* and how frequently we visit the least frequent (state, 
+action) pair. 
+Finally, if we follow a fixed exploration policy on every trajectory, the matrix D (i) 
+will be the same for every i; in this case, because of the contraction property 
+proved in the previous section, convergence w.p.1 for appropriate learning rates is 
+guaranteed again by the theorem of (Jaakkola et al., 1994). 
+4 NONDISCOUNTED PROBLEMS 
+When M is not discounted, the Q-learning backup operator TM is no longer a max 
+norm contraction. Instead, as long as every policy guarantees absorption w.p.1 into 
+some set of cost-free terminal states, TM is a contraction in some weighted max 
+norm. The proofs of the previous sections still go through, if we substitute this 
+weighted max norm for the unweighted one in every case. In addition, the random 
+variables L © which determine when each trial ends may be set to the first step t 
+so that xt is terminal, since this and all subsequent steps will have Bellman errors 
+of zero. This choice of L (i) is not independent of the i-th trial, but it does have a 
+finite mean and it does result in a constant D (i) . 
+5 DISCUSSION 
+We have proven new convergence theorems for two online fitted reinforcement learn- 
+ing algorithms based on Watkins' (1989) Q-learning algorithm. These algorithms, 
+sarsa and sarsa with a fixed exploration policy, allow the use of function approxi- 
+mators whose mappings MA are max norm nonexpansions and satisfy M -- MA. 
+The prototypical example of such a function approximator is state aggregation. For 
+similar results on a larger class of approximators, see (Gordon, 1995b). 
+Acknowledgements 
+This material is based on work supported under a National Science Foundation 
+Graduate Research Fellowship and by ARPA grant number F33615-93-1-1330. Any 
+opinions, findings, conclusions, or recommendations expressed in this publication 
+are those of the author and do not necessarily reflect the views of the National 
+Science Foundation, ARPA, or the United States government. 
+References 
+L. Baird. Residual algorithms: Reinforcement learning with function approxima- 
+tion. In Machine Learning (proceedings of the twelfth international conference), 
+San Francisco, CA, 1995. Morgan Kaufmann. 
+D. P. Bertsekas and J. N. Tsitsiklis. Parallel and Distributed Computation: Numer- 
+ical Methods. Prentice Hall, 1989. 
+J. A. Boyan and A. W. Moore. Generalization in reinforcement learning: safely 
+approximating the value function. In G. Tesauro and D. Touretzky, editors, Ad- 
+vances in Neural Information Processing Systems, volume 7. Morgan Kaufmann, 
+1995. 
+$. J. Bradtke. Reinforcement learning applied to linear quadratic regulation. In S. J. 
+Hanson, J. D. Cowan, and C. L. Giles, editors, Advances in Neural Information 
+Processing Systems, volume 5. Morgan Kaufmann, 1993. 
+P. Dayan. The convergence of TD(A) for general lambda. Machine Learning, 8(3- 
+4):341-362, 1992. 
+1058 G.J. GORDON 
+G. J. Gordon. Stable function approximation in dynamic programming. In Machine 
+Learning (proceedings of the twelfth international conference), San Francisco, CA, 
+1995. Morgan Kaufmann. 
+G. J. Gordon. Online fitted reinforcement learning. In J. A. Boyan, A. W. Moore, 
+and R. S. Sutton, editors, Proceedings of the Workshop on Value Function Ap- 
+proximation, 1995. Proceedings are available as tech report CMU-CS-95-206. 
+T. Jaakkola, M. I. Jordan, and S. P. Singh. On the convergence of stochastic iterative 
+dynamic programming algorithms. Neural Computation, 6(6):1185-1201, 1994. 
+S. P. Singh, T. Jaakkola, and M. I. Jordan. Reinforcement learning with soft state 
+aggregation. In G. Tesauro and D. Touretzky, editors, Advances in Neural Infor- 
+mation Processing Systems, volume 7. Morgan Kaufmann, 1995. 
+S. P. Singh and R. S. Sutton. Reinforcement learning with replacing eligibility 
+traces. Machine Learning, 1996. 
+R. S. Sutton. Learning to predict by the methods of temporal differences. Machine 
+Learning, 3(1):9-44, 1988. 
+G. Tesauro. Neurogammon: a neural network backgammon program. In IJCNN 
+Proceedings III, pages 33-39, 1990. 
+J. N. Tsitsiklis and B. Van Roy. Feature-based methods for large-scale dynamic 
+programming. Technical Report P-2277, Laboratory for Information and Decision 
+Systems, 1994. 
+J. N. Tsitsiklis. Asynchronous stochastic approximation and Q-learning. Machine 
+Learning, 16(3):185-202, 1994. 
+C. J. C. H. Watkins. Learning from Delayed Rewards. PhD thesis, King's College, 
+Cambridge, England, 1989. 

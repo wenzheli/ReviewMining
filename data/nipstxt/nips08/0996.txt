@@ -1,0 +1,288 @@
+Parallel Optimization of Motion 
+Controllers via Policy Iteration 
+J. A. Coelho Jr., R. Sitaraman, and R. A. (rupen 
+Department of Computer Science 
+University of Massachusetts, Amherst, 01003 
+Abstract 
+This paper describes a policy iteration algorithm for optimizing the 
+performance of a harmonic function-based controller with respect 
+to a user-defined index. Value functions are represented as poten- 
+tial distributions over the problem domain, being control policies 
+represented as gradient fields over the same domain. All interme- 
+diate policies are intrinsically safe, i.e. collisions are not promoted 
+during the adaptation process. The algorithm has efficient imple- 
+mentation in parallel SIMD architectures. One potential applica- 
+tion - travel distance minimization - illustrates its usefulness. 
+I INTRODUCTION 
+Harmonic functions have been proposed as a uniform framework for the solu- 
+tion of several versions of the motion planning problem. Connolly and Gru- 
+pen [Connolly and Grupen, 1993] have demonstrated how harmonic functions 
+can be used to construct smooth, complete artificial potentials with no lo- 
+cal minima. In addition, these potentials meet the criteria established in 
+[Rimon and Koditschek, 1990] for navigation functions. This implies that the gra- 
+dient of harmonic functions yields smooth ("realizable") motion controllers. 
+By construction, harmonic function-based motion controllers will always command 
+the robot from any initial configuration to a goal configuration. The intermediate 
+configurations adopted by the robot are determined by the boundary constraints 
+and conductance properties set for the domain. Therefore, it is possible to tune 
+both factors so as to extremize user-specified performance indices (e.g. travel time 
+or energy) without affecting controller completeness. 
+Based on this idea, Singh et al. [Singh et al., 1994] devised a policy iteration method 
+for combining two harmonic function-based control policies into a controller that 
+minimized travel time on a given environment. The two initial control policies were 
+Parallel Optimization of Motion Controllers via Policy Iteration 997 
+derived from solutions to two distinct boundary constraints (Neumann and Dirichlet 
+constraints). The policy space spawned by the two control policies was parameter- 
+ized by a mixing coefficient, that ultimately determined the obstacle avoidance be- 
+havior adopted by the robot. The resulting controller preserved obstacle avoidance, 
+ensuring safety at every iteration of the learning procedure. 
+This paper addresses the question of how to adjust the conductance properties as- 
+sociated with the problem domain f, such as to extremize an user-specified perfor- 
+mance index. Initially, conductance properties are homogeneous across f, and the 
+resulting controller is optimal in the sense that it minimizes collision probabilities at 
+every step [Connolly, 1994] 1. The method proposed is a policy iteration algorithm, 
+in which the policy space is paxameterized by the set of node conductances. 
+2 PROBLEM CHARACTERIZATION 
+The problem consists in constructing a path controller f0 that maximizes an integral 
+performance index  defined over the set of all possible paths on a lattice for a closed 
+domain f C ?n, subjected to boundary constraints. The controller f0 is responsible 
+for generating the sequence of configurations from an initial configuration q0 on the 
+lattice to the goal configuration qa, therefore determining the performance index 
+7 . In formal terms, the performance index 7  can be defined as follows: 
+Del. 1 
+Performance indez  : 
+7 =  7,, for all q  L(f), where 
+q 
+qG 
+qo, =  f(q)' 
+q--qo 
+L(f) is a lattice over the domain f, qo denotes an arbitrary configuration on L(f), 
+qa is the goal configuration, and f(q) is a .function of the configuration q. 
+For example, one can define f(q) to be the available joint range associated with the 
+configuration q of a manipulator; in this case, 7  would be measuring the available 
+joint range associated with all paths generated within a given domain. 
+2.1 DERIVATION OF REFERENCE CONTROLLER 
+The derivation of f0 is very laborious, requiring the exploration of the set of all 
+possible paths. Out of this set, one is primarily interested in the subset of smooth 
+paths. We propose to solve a simpler problem, in which the derived controller 
+f is a numerical approximation to the optimal controller fro, and (1) generates 
+smooth paths, (2) is admissible, and (3) locally maximizes 7 . To guarantee (1) and 
+(2), it is assumed that the control actions of f are proportional to the gradient of a 
+harmonic function b, represented as the voltage distribution across a resistive lattice 
+that tessellates the domain fl. The condition (3) is achieved through incremental 
+changes in the set G of internodal conductances; such changes maximize 7  locally. 
+Necessary condition for optimality: Note that 7qo, defines a scalar field over 
+It is assumed that there exists a well-defined neighborhood N'(q) for node q; 
+in fact, it is assumed that every node q has two neighbors across each dimension. 
+Therefore, it is possible to compute the gradient over the scalar field 7qo, by locally 
+approximating its rate of change across all dimensions. The gradient 77qo defines 
+iThis is exactly the control policy derived by the TD(0) reinforcement learning method, 
+for the particular case of an agent travelling in a grid world with absorbing obstacle and 
+goal states, and being rewarded only for getting to the goal states (see [Connolly, 1994]). 
+998 J.A. COELHO Jr., R. SITARAMAN, R. A. GRUPEN 
+a reference controller; in the optimal situation, the actions of the controller 7 will 
+parallel the actions of the reference controller. One can now formulate a policy 
+iteration algorithm for the synthesis of the reference controller: 
+1. Compute ff = -qS, given conductances G; 
+œ. Evaluate V7q ß 
+- for each cell, compute 
+-for each cell, compute X77 q. 
+$. Change G incrementally, minimizing the approz. error e = f(ff , F7 q); 
+4. Ire is below a threshold e ø, stop. Otherwise, return to (1). 
+On convergence, the policy iteration algorithm will have derived a control policy 
+that maximizes 7  globally, and is capable of generating smooth paths to the goal 
+configuration. The key step on the algorithm is step (3), or how to reduce the 
+current approximation error by changing the conductances G. 
+3 APPROXIMATION ALGORITHM 
+Given a set of internodal conductances, the approximation error e is defined as 
+, = - cos(Z, 
+or the sum over œ(fl) of the cosine of the angle between vectors 7 and V7 . The 
+approfimation error e is therefore a function of the set G of internod conductances. 
+There est O(n) conductances in a n-dimension grid, where d is the discretia- 
+tion adopted for each dimension. Discrete sech methods for the set of conductance 
+values that minimizes e e ruled out by the cdinty of the search space: O(kndn), 
+if k is the number of distinct vMues each conductance can assume. We w represent 
+conductances as real vMues and use gradient descent to minimize e, according to 
+the appromation algorithm below: 
+1. Evaluate the approzimation error 
+œ. Compute the gradient e 
+= aG; 
+3. Update conductances, making G = G - e; 
+3. Normalize conductances, such that minimum conductance grnin = 1; 
+Step (4) guarantees that every conductance g  G will be strictly positive. The 
+conductances in a resistive grid can be normMized without constraining the volt- 
+age distribution across it, due to the linear nature of the underlying circuit. The 
+complexity of the approximation algorithm is dominated by the computation of the 
+gradient e(G). Each component of the vector VeG) can be expressed as 
+o cos(g, 
+og-;.--- og, ' 
+qEL(fl) 
+By assumption, 7 is itself the gradient of a harmonic function b that describes 
+the voltage distribution across a resistive lattice. Therefore, the calculation of o 
+involves the evaluation of  over all domain L(f]) or how the voltage bq is affected 
+by changes in a certain conductance g. 
+For n-dimensional ids,  is a matr with  rows and O(nd ) columns. We posit 
+that the computation of every element of  is unnecessary: the effects of changing 
+Parallel Optimization of Motion Controllers via Policy Iteration 999 
+gi will be more pronounced in a certain grid neighborhood of it, and essentially 
+negligible for nodes beyond that neighborhood. Furthermore, this simplification 
+allows for breaking up the original problem into smaller, independent sub-problems 
+suitable to simultaneous solution in parallel architectures. 
+3.1 THE LOCALITY ASSUMPTION 
+The first simplifying assumption considered in this work establishes bounds on 
+the neighborhood affected by changes on conductances at node i; specifically, 
+we will assume that changes in elements of gi affect only the voltage at nodes 
+in N'(i), being A/'(i) the set composed of node i and its direct neighbors. See 
+[Coelho Jr. et al., 1995] for a discussion on the validity of this assumption. In 
+particular, it is demonstrated that the effects of changing one conductance decay 
+exponentially with grid distance, for infinite 2D grids. Local changes in resistive 
+grids with higher dimensionality will be confined to even smaller neighborhoods. 
+The locality assumption simplifies the calculation of  to 
+q6.hf(i) 
+But 
+Og, Ili-l - I11Xfl LOg' ( ' 
+Note that in the derivation above it is assumed that changes in G affects primarily 
+the control policy 5, leaving 7  relatively unaffected, at least in a first order 
+approximation. 
+Given that ff = -b, it follows that the component r i at node q can be ap- 
+proximated by the change of potential across the dimension j, as measured by the 
+potential on the corresponding neighboring nodes: 
+2A2 
+, and Orj_ 1 
+Ogi 2A2 
+'O4q- O4q+] 
+Ogi Ogi ' 
+where A is the internodal distance on the lattice L(fl). 
+3.2 DERIVATION OF 
+The derivation of o_p_ involves computing the Thvenin equivalent circuit for the 
+resistive lattice, when every conductance g connected to node i is removed. For 
+clarity, a 2D resistive grid was chosen to illustrate the procedure. Figure 1 depicts 
+the equivalence warranted by Thvenin's theorem [Chua et al., 1987] and the rel- 
+evant variables for the derivation of  As shown, the equivalent circuit for the 
+Ogl ' 
+resistive grid consists of a four-port resistor, driven by four independent voltage 
+sources. The relation between the voltage vector  = [4x ... 44] T and the current 
+vector = [i ... i4] T is expressed as 
+(3) 
+where R is the impedance matrix for the grid equivalent circuit and 07 is the vector 
+of open-circuit voltage sources. The grid equivalent circuit behaves exactly like the 
+whole resistive grid; there is no approximation error. 
+1000 J.A. COELHO Jr., R. SITARAMAN, R. A. GRUPEN 
+Grid Equivalent 
+Circuit 
+il i2 i3 i4 
+gl g27 g37 g4 
+,o 
+Figure 1: Equivalence established by Thvenin's theorem. 
+The derivation of the 20 parameters (the elements of R and 07) of the equivalent 
+circuit is detailed in [Coelho Jr. et al., 1995]; it involves a series of relaxation opera- 
+tions that can be efficiently implemented in SIMD architectures. The total number 
+of relaxations for a grid with n 2 nodes is exactly 6n- 12, or an average of 1/2n 
+relaxations per link. In the context of this paper, it is assumed that R and 07 are 
+known. Our primary interest is to compute how changes in conductances gk affect 
+the voltage vector , or the matrix 
+, for I j = 1,...,4 
+k = 1,...,4. 
+The elements of  can be computed by derivating each of the four equality relations 
+in Equation 3 with respect to gk, resulting in a system of 16 linear equations, and 16 
+variables - the elements of  Notice that each element of/'can be expressed as a 
+linear function of the potentials , by applying Kirchhoff's laws [Chua et al., 1987]: 
+4 APPLICATION EXAMPLE 
+A robot moves repeatedly toward a goal configuration. Its initial configuration is 
+not known in advance, and every configuration is equally likely of being the initial 
+configuration. The problem is to construct a motion controller that minimizes the 
+overall travel distance for the whole configuration space. If the configuration space 
+fl is discretized into a number of cells, define the combined travel distance D(ff) as 
+D() -  dq,e, (4) 
+qEL(n) 
+where dq, is the travel distance from cell q to the goal configuration qG, and robot 
+displacements are determined by the controller 7. Figure 2 depicts an instance 
+of the travel distance minimization problem, and the paths corresponding to its 
+optimal solution, given the obstacle distribution and the goal configuration shown. 
+A resistive grid with 17 x 17 nodes was chosen to represent the control policies 
+generated by our algorithm. Initially, the resistive grid is homogeneous, with all 
+internodal resistances set to lfi. Figure 3 indicates the paths the robot takes when 
+commanded by o, the initial control policy derived from an homogeneous resistive 
+grid. 
+Parallel Optimization of Motion Controllers via Policy Iteration 1001 
+16 ,  , 16   
+12 12 
+4 8 12 16 
+Figure 2: Paths for optimal solution of 
+the travel distance minimization prob- 
+lem. 
+Figure 3: Paths for the initial solution 
+of the same problem. 
+The conductances in the resistive grid were then adjusted over 400 steps of the policy 
+iteration algorithm, and Figure 4 is a plot of the overall travel distance as a function 
+of the number of steps. It also shows the optimal travel distance (horizontal line), 
+corresponding to the optimal solution depicted in Figure 2. The plot shows that 
+convergence is initially fast; in fact, the first 140 iterations axe responsible for 90% 
+of the overall improvement. After 400 iterations, the travel distance is within 2.8% 
+of its optimal value. This residual error may be explained by the approximation 
+incurred in using a discrete resistive grid to represent the potential distribution. 
+Figure 5 shows the paths taken by the robot after convergence. The final paths axe 
+straightened versions of the paths in Figure 3. Notice also that some of the final 
+paths originating on the left of the I-shaped obstacle take the robot south of the 
+obstacle, resembling the optimal paths depicted in Figure 2. 
+5 CONCLUSION 
+This paper presented a policy iteration algorithm for the synthesis of provably cor- 
+rect navigation functions that also extremize user-specified performance indices. 
+The algorithm proposed solves the optimal feedback control problem, in which the 
+final control policy optimizes the performance index over the whole domain, assum- 
+ing that every state in the domain is as likely of being the initial state as any other 
+state. 
+The algorithm modifies an existing haxmonic function-based path controller by in- 
+erementally changing the conductances in a resistive grid. Depaxting from an homo- 
+geneous grid, the algorithm transforms an optimal controller (i.e. a controller that 
+minimizes collision probabilities) into another optimal controller, that extremizes 
+locally the performance index of interest. The tradeoff may require reducing the 
+safety maxgin between the robot and obstacles, but collision avoidance is preserved 
+at each step of the algorithm. 
+Other Applications: The algorithm presented can be used (1) in the synthesis 
+of time-optimal velocity controllers, and (2) in the optimization of non-holonomic 
+path controllers. The algorithm can also be a component technology for Intelligent 
+Vehicle Highway Systems (IVHS), by combining (1) and (2). 
+1002 J.A. COELHO Jr., R. SITARAMAN, R. A. GRUPEN 
+1710 
+1680 
+1650 
+I I I 
+100 200 300 400 
+12 
+0 
+0 4 8 12 16 
+Figure 4: Overall travel distance, as a 
+function of iteration steps. 
+Figure 5: Final paths, after 800 policy 
+iteration steps. 
+Performance on Parallel Architectures: The proposed algorithm is computa- 
+tionally demanding; however, it is suitable for implementation on parallel architec- 
+tures. Its sequential implementation on a SPARC 10 workstation requires  30 sec. 
+per iteration, for the example presented. We estimate that a parallel implementa- 
+tion of the proposed example would require  4.3 ms per iteration, or 1.7 seconds 
+for 400 iterations, given conservative speedups available on parallel architectures 
+[Coelho Jr. et al., 1995]. 
+A cknowle dgement s 
+This work was supported in part by grants NSF CCR-9410077, IRI-9116297, IRI- 
+9208920, and CNPq 202107/90.6. 
+References 
+[Chua et al., 1987] Chua, L., Desocr, C., and Kuh, E. (1987). Linear and Nonlinear 
+Circuits. McGraw-Hill, Inc., New York, NY. 
+[Coelho Jr. et al., 1995] Coelho Jr., J., Sitaraman, R., and Grupen, R. (1995). 
+Control-oriented tuning of harmonic functions. Technical Report CMPSCI Tech- 
+nical Report 95-112, Dept. Computer Science, University of Massachusetts. 
+[Connolly, 1994] Conholly, C. I. (1994). Harmonic functions and collision proba- 
+bilities. In Proc. 1994 IEEE Int. Conf. Robotics Automat., pages 3015-3019. 
+IEEE. 
+[Connolly and Grupcn, 1993] Connolly, C. I. and Grupcn, R. (1993). The applica- 
+tions of harmonic functions to robotics. Journal of Robotic Systems, 10(7):931- 
+946. 
+[Rimon and Koditschek, 1990] Rimon, E. and Koditschek, D. (1990). Exact robot 
+navigation in geometrically complicated but topologically simple spaces. In Proc. 
+1990 IEEE Int. Conf. Robotics Automat., volume 3, pages 1937-1942, Cincinnati, 
+OH. 
+[Singh et al., 1994] Singh, S., Barto, A., Grupen, R., and Conholly, C. (1994). Ro- 
+bust reinforcement learning in motion planning. In Advances in Neural Informa- 
+tion Processing Systems 6, pages 655-662, San Francisco, CA. Morgan Kaufmann 
+Publishers. 

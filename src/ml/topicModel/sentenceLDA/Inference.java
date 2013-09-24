@@ -45,17 +45,20 @@ public class Inference {
         int predicted = 0;
         int actual = 0;
         for (int i = 0; i < dataset.getDocumentCount(); i++){
-            total++;
+            
             double rating = dataset.getDocument(i).getRating();
+            if (rating >= 2.5 && rating <= 3.5)
+                continue;
+            total++;
             if (pi[i][0] > pi[i][1])
                 predicted = 0;
             else
                 predicted = 1;
             
-            if (rating >= 2.5)
-                actual = 0;
-            else
+            if (rating < 2.5)
                 actual = 1;
+            else 
+                actual = 0;
             
             if (predicted == actual)
                 correct++;
@@ -143,7 +146,7 @@ public class Inference {
         Options opt = new Options();
         opt.alpha = 1;
         opt.beta = 0.01;
-        opt.niters = 4000;
+        opt.niters = 10000;
         opt.K = 50;
         opt.tWords = 20;
         

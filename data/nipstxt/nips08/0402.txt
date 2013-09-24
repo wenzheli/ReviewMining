@@ -1,0 +1,286 @@
+Family Discovery 
+Stephen M. Omohundro 
+NEC Research Institute 
+4 Independence Way, Princeton, NJ 08540 
+om@research.nj.nec.com 
+Abstract 
+"Family discovery" is the task of learning the dimension and struc- 
+ture of a parameterized family of stochastic models. It is espe- 
+cially appropriate when the training examples are partitioned into 
+"episodes" of samples drawn from a single parameter value. We 
+present three family discovery algorithms based on surface learn- 
+ing and show that they significantly improve performance over two 
+alternatives on a parameterized classification task. 
+I INTRODUCTION 
+Human listeners improve their ability to recognize speech by identifying the accent 
+of the speaker. "Might" in an American accent is similar to "mate" in an Australian 
+accent. By first identifying the accent, discrimination between these two words is 
+improved. We can imagine locating a speaker in a "space of accents" parameterized 
+by features like pitch, vowel formants, "r"-strength, etc. This paper considers the 
+task of learning such parameterized models from data. 
+Most speech recognition systems train hidden Markov models on labelled speech 
+data. Speaker-dependent systems train on speech from a single speaker. Speaker- 
+independent systems are usually similar, but are trained on speech from many 
+different speakers in the hope that they will then recognize them all. This kind of 
+training ignores speaker identity and is likely to result in confusion between pairs of 
+words which are given the same pronunciation by speakers with different accents. 
+Speaker-independent recognition systems could more closely mimic the human ap- 
+proach by using a learning paradigm we call "family discovery". The system would 
+be trained on speech data partitioned into "episodes" for each speaker. From this 
+data, the system would construct a parameterized family of models representing dif- 
+Family Discovery 403 
+aussian 
+Affine Affine Patch Coupled Map 
+Family Family Family 
+Figure 1: The structure of the three family discovery algorithms. 
+ferent accents. The learning algorithms presented in this paper could determine the 
+dimension and structure of the parameterization. Given a sample of new speech, 
+the best-fitting accent model would be used for recognition. 
+The same paradigm applies to many other recognition tasks. For example, an OCR 
+system could learn a parameterized family of font models (Revow, et. al., 1994). 
+Given new text, the system would identify the document's font parameters and use 
+the corresponding character recognizer. 
+In general, we use "family discovery" to refer to the task of learning the dimension 
+and structure of a parameterized family of stochastic models. The methods we 
+present are equally applicable to parameterized density estimation, classification, 
+regression, manifold learning, reinforcement learning, clustering, stochastic gram- 
+mar learning, and other stochastic settings. Here we only discuss classification and 
+primarily consider training examples which are explicitly partitioned into episodes. 
+This approach fits naturally into the neural network literature on "meta-learning" 
+(Schmidhuber, 1995) and "network transfer" (Pratt, 1994). It may also be consid- 
+ered as a particular case of the "bias learning" framework proposed by Baxter at 
+this conference (Baxter, 1996). 
+There are two primary alternatives to family discovery: 1) try to fit a single model 
+to the data from all episodes or 2) use separate models for each episode. The first 
+approach ignores the information that the different training sets came from distinct 
+models. The second approach eliminates the possibility of inductive generalization 
+from one set to another. 
+In Section 2, we present three algorithms for family discovery based on techniques 
+for "surface learning" (Bregler and Omohundro, 1994 and 1995). As shown in Figure 
+1, the three alternative representations of the family are: 1) a single affine subspace 
+of the parameter space, 2) a set of local affine patches smoothly blended together, 
+and 3) a pair of coupled maps from the parameter space into the model space and 
+back. In Section 3, we compare these three approaches to the two alternatives on a 
+parameterized classification task. 
+404 S.M. OMOHUNDRO 
+2 THE FIVE ALGORITHMS 
+Let the space of all classifiers under consideration be parameterized by/ and assume 
+that different values of t} correspond to different classifiers (ie. it is identifiable). For 
+example, t} might represent the means, covariances, and class priors of a classifier 
+with normal class-conditional densities. /-space will typically have a much higher 
+dimension than the parameterized family we are seeking. We write Po (x) for the 
+total probability that the classifier/ assigns to a labelled or unlabelled example x. 
+The true models are drawn from a d-dimensional family parameterized by if. Let the 
+training set be partitioned into N episodes where episode i consists of Ni training 
+examples tij, I _< j _< Ni drawn from a single underlying model with parameter 
+0. A family discovery learning algorithm uses this training data to estimate the 
+underlying parameterized family. 
+From a parameterized family, we may define the projection operator P from 0-space 
+to itself which takes each 0 to the closest member of the family. Using this projection 
+operator, we may define a "family prior" on tLspace which dies off exponentially 
+with the square distance of a model from the family mp(t) (x e -(0-P(0))2. Each 
+of the family discovery algorithms chooses a family so as to maximize the posterior 
+probability of the training data with respect to this prior. If the data is very 
+sparse, this MAP approximation to a full Bayesian solution can be supplemented 
+by "Occam" terms (MacKay, 1995) or by using a Monte Carlo approximation. 
+The outer loop of each of the algorithms performs the optimization of the fit of the 
+data by re-estimation in a manner similar to the Expectation Maximization (EM) 
+approach (Jordan and Jacobs, 1994). First, the training data in each episode i is 
+independently fit by a model Oi. Then the dimension of the family is determined 
+as described later and the family projection operator P is chosen to maximize the 
+probability that the episode models Oi came from that family I-Ii mP(ti)' The 
+episode models t}i are then re-estimated including the new prior probability top. 
+These newly re-estimated models are influenced by the other episodes through mp 
+and so exhibit training set "transfer". The re-estimation loop is repeated until 
+nothing changes. 
+The learned family can then be used to classify a set of Ntest unlabelled test exam- 
+ples xk, I _ k _ Ntest drawn from a model tt*es t in the family. First, the parameter 
+)test is estimated by selecting the member of the family with the highest likelihood 
+on the test samples. This model is then used to perform the classification. A good 
+approximation to the best-fit family member is often to take the image of the best-fit 
+model in the entire/-space under the projection operator P. 
+In the next five sections, we describe the two alternative approaches and the three 
+family discovery algorithms. They differ only in their choice of family representation 
+as encoded in the projection operator P. 
+2.1 The Single Model Approach 
+The first alternative approach is to train a single model on all of the training data. 
+It selects /) to maximize the total likelihood L(/)) -- 1-[/N= 1-[v= po(tij). New test 
+data is classified by this single selected model. 
+Family Discovery 405 
+2.2 The Separate Models Approach 
+The second alternative approach fits separate models for each training eisode. It 
+chooses 0 i for 1 < i < N to maximize the episode likelihood Li(Di) = rI';=il po(tij). 
+Given new test data, it determines which of the individual models /)i fit best and 
+classifies the data with it. 
+2.3 The Affine Algorithm 
+The affine model represents the underlying model family as an affine subspace of 
+the model parameter space. The projection operator Pal fine projects a parameter 
+vector 0 orthogonally onto the affine subspace. The subspace is determined by 
+selecting the top principal vectors in a principal components analysis of the best- 
+fit episode model parameters. As described in (Bregler & Omohundro, 1994) the 
+dimension is chosen by looking for a gap in the principal values. 
+2.4 The Affine Patch Algorithm 
+The second family discovery algorithm is based on the "surface learning" proce- 
+dure described in (Bregler and Omohundro, 1994). The family is represented by 
+a collection of local affine patches which are blended together using Gaussian in- 
+fluence functions. The projection mapping Ppatch is a smooth convex combination 
+of projections onto the affine patches Ppatch(D) -- am=l Ia(O)Aa (/)) where Aa is 
+G (0) is a normalized 
+the projection operator for an affine patch and Ia(/)) -- -. G(0) 
+Gaussian blending function. 
+The patches are initialized using k-means clustering on the episode models to choose 
+k patch centers. A local principal components analysis is performed on the episode 
+models which are closest to each center. The family dimension is determined by 
+examining how the principal values scale as successive nearest neighbors are consid- 
+ered. Each patch may be thought of as a "pancake" lying in the surface. Dimensions 
+which belong to the surface grow quickly as more neighbors are considered while 
+dimensions across the surface grow only because of the curvature of the surface. 
+The Gaussian influence functions and the affine patches are then updated by the 
+EM algorithm (Jordan and Jacobs, 1994). With the affine patches held fixed, the 
+Gaussians Ca are refit to the errors each patch makes in approximating the episode 
+models. Then with the Gaussians held fixed, the affine patches Aa are refit to the 
+epsiode models weighted by the the corresponding Gaussian Ga. Similar patches 
+may be merged together to form a more parsimonious model. 
+2.5 The Coupled Map Algorithm 
+The afiqne patch approach has the virtue that it can represent topologically complex 
+families (eg. families representing physical objects might naturally be parameterized 
+by the rotation group which is topologically a projective plane). It cannot, however, 
+provide an explicit parameterization of the family which is useful in some applica- 
+tions (eg. optimization searches). The third family discovery algorithm therefore 
+attempts to directly learn a parameterization of the model family. 
+Recall that the model parameters define/)-space, while the family parameters de- 
+406 S.M. OMOHUNDRO 
+fine ?-space. We represent a family by a mapping G from O-space to 7-space to- 
+gether with a mapping F from 7-space back to O-space. The projection operation 
+is Pmap(O) - F(G(O)). The map (7(0) defines the family parameter 7 on the full 
+0-space. 
+This representation is similar to an "auto-associator" network in which we attempt 
+to "encode" the best-fit episode parameters 0 i in the lower dimensional 7-space 
+by the mapping G in such a way that they can be correctly reconstructed by the 
+function F. Unfortunately, if we try to train F and G using back-propagation on 
+the identity error function, we get no training data away from the family. There is 
+no reason for G to project points away from the family to the closest family member. 
+We can rectify this by training F and G iteratively. First an arbitrary G is chosen 
+and F is trained to send the images 7i -- G(Oi) back to 0 i. G is trained, however, 
+on images under F corrupted by additive spherical Gaussian noise! This provides 
+samples away from the family and on average the training signal sends each point 
+in 0 space to the closest family member. 
+To avoid iterative training, our experiments used a simpler approach. G was taken to 
+be the affine projection operator defined by a global principal components analysis 
+of the best-fit episode model parameters. Once G is defined, F is chosen to minimize 
+the difference between F(G(Oi)) and Oi for each best-fit episode parameter Oi. 
+Any form of trainable nonlinear mapping could be used for F (eg. backprop neural 
+networks or radial basis function networks). We represent F as a mixture of experts 
+(Jordan and Jacobs, 1994) where each expert is an affine mapping and the mixture 
+coefficients are Gaussians. The mapping is trained by the EM algorithm. 
+3 ALGORITHM COMPARISON 
+To compare these five algorithms, we consider a two-class classification task with 
+unit-variance normal class-conditional distributions on a 5-dimensional feature 
+space. The means of the class distributions are parameterized by a nonlinear two- 
+parameter family: 
+1 
+m ---- (7 + ]cosb)i + (72 + «sinb)i 
+1 
+m2 -- (7 -  cos b)e + (72 - « sin b)i2. 
+where 0 _< 7,72 < 10 and ½ = (7 + 72)/3. The class means are kept at a unit 
+distance apart, ensuring significant class overlap over the whole family. The angie 
+b varies with the parameters so that the correct classification boundary changes 
+orientation over the family. This choice of parameters introduces sufficient non- 
+linearity in the task to distinguish the non-linear algorithms from the linear one. 
+Figure 1 shows the comparative performance of the 5 algorithms. The x-axis is the 
+total number of training examples. Each set of examples consisted of approximately 
+N = V  episodes of approximately Ni = V  examples each. The classifier param- 
+eters for an episode were drawn uniformly from the classifier family. The episode 
+training examples were then sampled from the chosen classifier according to the 
+classifier's distribution. Each of the 5 algorithms was then trained on these exam- 
+ples. The number of patches in the surface patch algorithm and the number of affine 
+components in the surface map algorithm were both taken to be the square-root of 
+Family Discovery 
+0.52 
+4O7 
+0.5 
+0.48 
+0.46 
+E 0.44 
+' 0.42 
+o 
+u. 0.4 
+0.38 
+0.36 
+0.34 
+0.32 
+200 
+. Single model o 
+/ \ Separate models ---- 
+/ \ Affine family -n-- 
+/ \  Arline Patch family --- ..... 
+', ,.; .. a. ,, _ ..... . 
+.:.:. ', , 
+ .... . ' ',, _. -. ,, 
+........ .& ".... ' .......... '---.;" ' ...... B.. '-. / 
+,.. ..... -..: ... .... 
+I I I I I ':'-.,- .....  ........ '- ';;;..,.- ................ 
+400 600 800 1000 12 1400 1600 1800 2000 
+Number of Examples 
+Figure 2: A comparison of the 5 family discovery algorithms on the classification 
+task. 
+the number of training episodes. 
+The y-axis shows the percentage correct for each algorithm on an independent test 
+set. Each test set consisted of 50 episodes of 50 examples each. The algorithms 
+were presented with unlabelled data and their classification predictions were then 
+compared with the correct classification label. 
+The results show significant improvement through the use of family discovery for 
+this classification task. The single model approach performed significantly worse 
+than any of the other approaches, especially for larger numbers of episodes (where 
+the family discovery becomes possible). The separate model approach improves with 
+the number of episodes, but is nearly always bested by the approaches which take 
+explicit account of the underlying parameterized family. Because of the nonlinearity 
+in this task, the simple affine model performs more poorly than the two nonlinear 
+methods. It is simple to implement, however, and may well be the method of choice 
+when the parameters aren't so nonlinear. From this data, there is not a clear winner 
+between the surface patch and surface map approaches. 
+4 TRAINING SET DISCOVERY 
+Throughout this paper, we have assumed that the training set was partitioned into 
+episodes by the teacher. Agents interacting with the world may not be given this 
+explicit information. For example, a speech recognition system may not be told 
+when it is conversing with a new speaker. Similarly, a character recognition system 
+408 S.M. OMOHUNDRO 
+would probably not be given explicit information about font changes. Learners can 
+sometimes use the data itself to detect these changes, however. In many situations 
+there is a strong prior that successive events are likely to have come from a single 
+model with only occasional model changes. The EM algorithm is often used for 
+segmenting unlabelled speech. It may be used in a similar manner to find the 
+training set episode boundaries. First, a clustering algorithm is used to partition 
+the training examples into episodes. A parameterized family is then fit to these 
+episodes. The data is then repartitioned according to the similarity of the induced 
+family parameters and the process is repeated until it converges. A similar approach 
+may be applied when the model parameters vary slowly with time rather than 
+occasionally jumping discontinously. 
+Acknowledgements 
+I'd like to thank Chris Bregler for work on the affine patch approach to surface 
+learning, Alexander Linden for suggesting coupled maps for surface learning, and 
+Peter Blicher for discussions. 
+References 
+Baxter, J. (1995) Learning model bias. This volume. 
+Bregler, C. & Omohundro, S. (1994) Surface learning with applications to lipread- 
+ing. In J. Cowan, G. Tesauro and J. Alspector (eds.), Advances in Neural Infor- 
+mation Processing Systems 6, pp. 43-50. San Francisco, CA: Morgan Kaufmann 
+Publishers. 
+Bregler, C. Fz Omohundro, S. (1995) Nonlinear image interpolation using manifold 
+learning. In G. Tesauro, D. Touretzky and T. Leen (eds.), Advances in Neural 
+Information Processing Systems Z Cambridge, MA: MIT Press. 
+Bregler, C. & Omohundro, S. (1995) Nonlinear manifold learning for visual speech 
+recognition. In W. Grimson (ed.), Proceedings of the Fifth International Conference 
+on Computer Vision. 
+Jordan, M. & Jacobs, R. (1994) Hierarchical mixtures of experts and the EM algo- 
+rithm. Neural Computation, 6:181-214. 
+MacKay, D. (1995) Probable networks and plausible predictions - a review of prac- 
+tical Bayesian methods for supervised neural networks. Network, to appear. 
+Pratt, L. (1994) Experiments on the transfer of knowledge between neural networks. 
+In S. Hanson, G. Drastal, and R. Rivest (eds.), Computational Learning Theory and 
+Natural Learning Systems, Constraints and Prospects, pp. 523-560. Cambridge, 
+MA: MIT Press. 
+Revow, M., Williams, C. and Hinton, G. (1994) Using generative models for hand- 
+written digit recognition. Technical report, University of Toronto. 
+Schmidhuber, J. (1995) On learning how to learn learning strategies. Technical 
+Report FKI-198-94, Fakult/it ffir Informatik, Technische Universit/it Mfinchen. 

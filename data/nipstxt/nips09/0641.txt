@@ -1,0 +1,338 @@
+Training Algorithms for Hidden Markov Models 
+Using Entropy Based Distance Functions 
+Yoram Singer 
+AT&T Laboratories 
+600 Mountain Avenue 
+Murray Hill, NJ 07974 
+singer @ research.att.com 
+Manfred K. Warmuth 
+Computer Science Department 
+University of California 
+Santa Cruz, CA 95064 
+manfred @ cse.ucsc .edu 
+Abstract 
+We present new algorithms for parameter estimation of HMMs. By 
+adapting a framework used for supervised learning, we construct iterative 
+algorithms that maximize the likelihood of the observations while also 
+attempting to stay "close" to the current estimated parameters. We use a 
+bound on the relative entropy between the two HMMs as a distance mea- 
+sure between them. The result is new iterative training algorithms which 
+are similar to the EM (Baum-Welch) algorithm for training HMMs. The 
+proposed algorithms are composed of a step similar to the expectation 
+step of Baum-Welch and a new update of the parameters which replaces 
+the maximization (re-estimation) step. The algorithm takes only negligi- 
+bly more time per iteration and an approximated version uses the same 
+expectation step as Baum-Welch. We evaluate experimentally the new 
+algorithms on synthetic and natural speech pronunciation data. For sparse 
+models, i.e. models with relatively small number of non-zero parameters, 
+the proposed algorithms require significantly fewer iterations. 
+1 Preliminaries 
+We use the numbers from 0 to N to name the states of an HMM. State 0 is a special initial 
+state and state N is a special final state. Any state sequence, denoted by s, starts with the 
+initial state but never returns to it and ends in the final state. Observations symbols are also 
+numbers in { 1,..., M} and observation sequences are denoted by x. A discrete output 
+hidden Markov model (HMM) is parameterized by two matrices A and B. The first matrix 
+is of dimension [N, N] and ai,j (0 _< i _< N - 1,1 _< j _< N) denotes the probability of 
+moving from state i to state j. The second matrix is of dimension [N + 1, M] and bi,l is the 
+probability of outputting symbol k at state i. The set of parameters of an HMM is denoted 
+by t9 = (A, B). (The initial state distribution vector is represented by the first row of A.) 
+An HMM is a probabilistic generator of sequences. It starts in the initial state 0. It then 
+iteratively does the following until the final state is reached. If i is the current state then a 
+next state j is chosen according to the transition probabilities out of the current state (row i of 
+matrix A). After arriving at state j a symbol is output according to the output probabilities 
+of that state (row j of matrix B). Let P(x, s 119) denote the probability (likelihood) that an 
+HMM 19 generates the observation sequence x on the path s starting at state 0 and ending 
+at state N: P(x, slls I: Ixl + 1,s0 -- 0, Sis I - N, 19) de=f i-i[x__llast_t,stbst,xt. For the 
+sake of brevity we omit the conditions on s and x. Throughout the paper we assume that 
+the HMMs are absorbing, that is from every state there is a path to the final state with a 
+642 Y. Singer and M. K. Warmuth 
+non-zero probability. Similar parameter estimation algorithms can be derived for ergodic 
+HMMs. Absorbing HMMs induce a probability over all state-observation sequences, 
+i.e. Ex,s P(x, s119 ) -- 1. The likelihood of an observation sequence x is obtained by 
+summing over all possible hidden paths (state sequences), P(x119 ) -- Es P(x, s119 ). To 
+obtain the likelihood for a set R' of observations we simply multiply the likelihood values 
+for the individual sequences. We seek an HMM t9 that maximizes the likelihood for a 
+given set of observations R', or equivalently, maximizes the log-likelihood, LL(XI19 ) = 
+1 
+IXl --xx In P(x[O). 
+To simplify our notation we denote the generic parameter in O by Oi, where i ranges 
+from 1 to the total number of parameters in A and B (There might be less if some are 
+clamped to zero). We denote the total number of parameters of O by 27 and leave the (fixed) 
+correspondence between the Oi and the entries of A and B unspecified. The indices are 
+naturally partitioned into classes corresponding to the rows of the matrices. We denote by 
+[i] the class of parameters to which 0i belongs and by 0ill the vector of all Oj s.t. j  [i]. If 
+j G [i] then both Oi and Oj are parameters from the same row of one of the two matrices. 
+Whenever it is clear from the context, we will use [i] to denote both a class of parameters 
+and the row number (i.e. state) associated with the class. We now can rewrite P(x, s[O) as 
+I-I/Z= 0 '(x's), where rti(x, s) is the number of times parameter i is used along the path s 
+with observation sequence x. (Note that this value does not depend on the actual parameters 
+19.) We next compute partial derivatives of the likelihood and the log-likelihood using this 
+notation. 
+0 
+OOgP(x, sl O) 
+0LL(XI19) 
+OOi 
+= n(x,)o7 ß 
+i=1 
+1 o p(x, slO) 
+xx s P(xlO) 
+1 ng(x, s) P(slx, 19) 
+X6X S 
+: n(x,s) P(x, s119). (1) 
+1 hi(X, P(x, s10) 
+IXl   0g P(x119) 
+XX S 
+= Exx (xI0) (2) 
+Here fii(x10 ) de__f ES m(x,s)P(slx, 0) is the expected number of occurrences of the 
+transition/output that corresponds to Oi over all paths that produce x in 19. These val- 
+ues are calculated in the expectation step of the Expectation-Maximization (EM) train- 
+ing algorithm for HMMs [7], also known as the Baum-Welch [2] or the Forward- 
+Backward algorithm. In the next sections we use the additional following expectations, 
+i(O) dej EX,S ni(x,s)P(x, slO) and fi[i](O) dej Ej6[i] j(O). Note that the summation 
+here is over all legal x and s of arbitrary length and fiji] (19) is the expected number of times 
+the state [i] was visited. 
+2 Entropic distance functions for HMMs 
+Our training algorithms are based on the following framework of Kivinen and Warmuth 
+for motivating iterative updates [6]. Assume we have already done a number of iterations 
+and our current parameters are 19. Assume further that R' is the set of observations to 
+be processed in the current iteration. In the batch case this set never changes and in the 
+on-line case X is typically a single observation. The new parameters 19 should stay close 
+to 19, which incorporates all the knowledge obtained in past iterations, but it should also 
+maximize the log-likelihood on the current date set R'. Thus, instead of maximizing the log- 
+likelihood we maximize, U() -- r/LL(R'I ) - d(, 19) (see [6, 51 for further motivation). 
+Training Algorithms for Hidden Markov Models 643 
+Here d measures the distance between the old and new parameters and r/> 0 is a trade-off 
+factor. Maximizing U(_) is usually difficult since both the distance function and the log- 
+likelihood depend on t9. As in [6, 5], we approximate the log-likelihood by a first order 
+Taylor expansion around  -- 19 and add Lagrange multipliers for the constraints that the 
+parameters of each class must sum to one: 
+[i] 5 6 [i] 
+A commonly used distance function is the relative entropy. To calculate the relative entropy 
+between two HMMs we need to sum over all possible hidden state sequence which leads to 
+the following definition, 
+dRE(O, 19) deal E P(xl0) In p(--l) = E P(x, sl0) In Es P(x, slY)) 
+x x 
+However, the above divergence is very difficult to calculate and is not a convex function in 
+19. To avoid the computational difficulties and the non-convexity of dRE we upper bound 
+the relative entropy using the log sum inequality [3]: 
+P(x, s10) 
+da(O,O) _< ':t(O,o) de=f E P(x, sIO) lnp(x,s-  
+= E P(x, sl ) ,n f I-I/z=l 0:'(x's)) z 
+x,s I-I/Z= 07 '(x's--- =  P(x, sl)  ni(x,s) In 0 
+X,S i--1 
+-- Eln //E P(x, slO ) ni(x,s): Ehi(0) ln 
+i=1 X,S i--1 
+Note that for the distance function E(O, 19) an HMM is viewed as a joint distribution 
+between observation sequences and hidden state sequences. We can further simplify the 
+bound on the relative entropy using the following lemma (proof omitted). 
+Lemma 1 For any absorbing HMM, O, andany parameterOi  O, (0) = Oifi[il(O). 
+This gives the following new formula, E(,0) = -4Z=l [i]()[0i In 0], which can 
+be rewritten as, &E(0, 0) = -[i] [i1(0)d(b[q, 0[1) = E[q In  
+Equation (3) is still difficult to solve since the vmables [i]() depend on the new set of 
+pmeters (which e not known). We therefore fuher approximate (, 0) by the 
+distance function, &(, 0) = [i1 fi[i](0) [i10i In . 
+3 New Parameter Updates 
+We now would like to use the distce functions discuss in previous section in U(). We 
+first derive our mn update using this distce function. is is done by replacing d(, 0) 
+in U () with d(b, 0) and setting the derivatives of the resulting U () w.r.t i to 0. s 
+gives the following set of equations (i E { 1,..., Z}), 
+mxm0 - h[i](o)(ln 1) + = 0 
+ - A[i] , 
+which e equivent to 
+v , 
+I10g - in  +A[i] = 0 . 
+644 Y. Singer and M. K. Warmuth 
+! 
+We now can solve for ti and replace A[i] by a normalization factor which ensures that the 
+sum of the parameters in [i] is 1' 
+The above re-estimation rule is the entropic update for HMMs.  
+We now derive an alternate to the update of (4). The mixture weights fi[i] (0) (which approx- 
+imate the original mixture weights [i1 (b) in 'j:(, 0)) lead to a state dependent learning 
+rate of ' for the parameters of class [i]. If computation time is limited (see discussion 
+below) then the expectations fiji] (19) can be approximated by values that are readily available. 
+One possible choice is to use the sample based expectations j 
+an approximation for fi[il (19)- These weights are needed for calculating the gradient and are 
+evaluated in the expectation step of Baum-Welch. Let, [il(xl0) dej Zje[i] hj(xl0)' then 
+this approximation leads to the following distance function 
+E Ex,v fi[i](x119) E J In J (5) 
+[q IX I ' 
+which results in an update which we call the approximated entropic update for HMMs: 
+, 
+Oi exp xEx'/'l (x119) 
+= ) 
+-]j[i] Oj eocp -]XEx,ul(Xi19) 
+(6) 
+Given a current set of parameters t9 and a learning rate r/we obtain a new set of parameters 
+ by iteratively evaluating the right-hand-side of the entropic update or the approximated 
+entropic update. We calculate the expectations i(x119 ) as done in the expectation step 
+of Baum-Welch. The weights fiji](x[19) are obtained by averaging fi./(x[19) for j  [i]. 
+This lets us evaluate the right-hand-side of the approximated entropic update. The entropic 
+update is slightly more involved and requires an additional calculation of fi[il (19)' (Recall 
+that h[q (19) is the expected number of times state [i] is visited, unconditionedon the data). To 
+compute these expectations we need to sum over all possible sequences of state-observation 
+pairs. Since the probability of outputting the possible symbols at a given state sum to one, 
+calculating [i] (19) reduces to evaluating the probability of reaching a state for each possible 
+time and sequence length. For absorbing HMMs fiji I (19) can be approximated efficiently 
+using dynamic programming; we compute [i] (19) by summing the probabilities of all legal 
+state sequences s of up to length C'N (typically C' -- 3 proved to be sufficient to obtain very 
+accurate approximations of fi[q (19)). Therefore, the time complexity of calculating fi[q (19) 
+depends only on the number of states, regardless of the dimension of the output vector M 
+and the training data 
+A subtle improvement is possible over the update (4) by treating the transition probabilities and 
+output probabilities differently. First the transition probabilities are updated based on (4). Then 
+the state probabilities h[/l(O) = h[il() are recomputed based on the new parameters .. This is 
+possible since the state probabilities depend only on the transition probabilities and not on the output 
+probabilities. Finally the output probabilities are updated with (4) where the fib] () are used in place 
+of the [il (0). 
+Training Algorithms for Hidden Markov Models 645 
+4 The relation to EM and convergence properties 
+We first show that the EM algorithm for HMMs can be derived using our framework. To 
+do so, we approximate the relative entropy by the X 2 distance (see [3]), dRE(, p)  
+dx2(} p) def I (/5'-P')2 and use this distance to approximate 'RE(, 0)' 
+ -  Ei p ' 
+'RE(, 0) , X2(, 0) de E [i]() dx2([i], 01il) 
+[i1 
+%1(o ) dx2([gl,0ril) %l(xl o) dx(rgl,0rl) 
+ (L-0,?. By minimizing U() with the last version of the X 2 
+Heredx([i], 01i1) =  J[il 
+distance function and following the same derivation steps as for the approximated entropic 
+update we arrive at what we call the approximated X 2 update for HMMs: 
+XX 
+Setting / - 1 results in the update, i - Yxx fii(x[)/Yxx [i](x[), which is the 
+maximization (re-estimation) step of the EM algorithm. 
+Although omitted from this paper due to the lack of space, it is can be shown that for 
+r/ (0, 1] the entropic updates and the X  update improve the likelihood on each iteration. 
+Therefore, these updates belong to the family of Generalized EM (GEM) algorithms which 
+are guaranteed to converge to a local maximum given some additional conditions [4]. 
+Furthermore, using infinitesimal analysis and second order approximation of the likelihood 
+function at the (local) maximum similar to [ 10], it can be shown that the approximated X  
+update is a contraction mapping and close to the local maximum there exists a learning rate 
+r/ 1 which results in a faster rate of convergence than when using /- 1. 
+Experiments ith Artificial anti Natural Data 
+In order to test the actual convergence rate of the algorithms and to compare them to 
+Baum-Welch we created synthetic data using HMMs. In our experiments we mainly used 
+sparse models, that is, models with many parameters clamped to zero. Previous work 
+(e.g., [, 6]) might suggest that the entropic updates will perform better on sparse models. 
+(Indeed, when we used dense models to generate the data, the algorithms showed almost 
+the same performance). The training algorithms, however, were started from a randomly 
+chosen dense model. When comparing the algorithms we used the same initial model. 
+Due to different trajectories in parameter space, each algorithm may converge to a different 
+(local) maximum. For the clarity of presentation we show here results for cases where all 
+updates converged to the same maximum, which often occur when the HMM generating the 
+data is sparse and there are enough examples (typically tens of observations per non-zero 
+parameter). We tested both the entropic updates and the X  updates. Learning rates greater 
+than one speed up convergence. The two entropic updates converge almost equally fast 
+on synthetic data generated by an HMM. For natural data the entropic update converges 
+slightly faster than the approximated version. The X  update also benefits from learning 
+rates larger than one. However, the X-update need to be used carefully since it does not 
+necessarily ensure non-negativeness of the new parameters for /  1. This problems is 
+exaggerated when the data is not generated by an HMM. We therefore used the entropic 
+updates in our experiments with natural data. In order to have a fair comparison, we did not 
+tune the learning rate r/and set it to 1 .. In Figure 1 we give a comparison of the entropic 
+update, the approximated entropic update, and Baum-Welch (left figure), using an HMM 
+to generate the random observation sequences, where N - M - 40 but only 2% (10 
+parameters on the average for each transition/observation vector) of the parameters of the 
+646 Y. Singer and M. K. Warmuth 
+HMM are non-zero. The performance of the entropic update and the approximated entropic 
+update are practically the same and both updates clearly outperform Baum-Welch. One 
+reason the performance of the two entropic updates is the same is that the observations were 
+indeed generated by an HMM. In this case, approximating the expectations fiji] (0) by the 
+sample based expectations seems reasonable. These results suggest a valuable alternative 
+to using Baum-Welch with a predetermined sparse, potentially biased, HMM where a large 
+number of parameters is clamped to zero. Instead, we suggest starting with a full model and 
+let one of the entropic updates find the relevant parameters. This approach is demonstrated 
+on the right part of Figure 1. In this example the data was generated by a sparse HMM with 
+100 states and 100 possible output symbols. Only 10% of the HMM's parameters were non- 
+zero. Three log-likelihood curves are given in the figure. One is the log-likelihood achieved 
+by Baum-Welch when only those parameters that are non-zero in the HMM generating the 
+data are initialized to random non-zero values. The other two are the log-likelihood of the 
+entropic update and Baum-Welch when all the parameters are initialized randomly. The 
+curves show that the entropic update compensates for its inferior initialization in less than 
+10 iterations (see horizontal line in Figure 1) and from this point on it requires only 23 
+more iterations to converge compared to Baum-Welch which is given prior knowledge of 
+the non-zero parameters. In contrast, when Baum-Welch is started with a full model then 
+its convergence is much slower than the entropic update. 
+-0.4 
+-1.$ 
+ox. Entropic Update 
+ -- Entropic Update 
+ EM (Baum-Welch) ---- 
+Iteration # Iteration # 
+Figure 1: Comparison of the entropic updates and Baum-Welch. 
+We next tested the updates on speech pronunciation data. In natural speech, a word might 
+be pronounced differently by different speakers. A common practice is to construct a 
+set of stochastic models in order to capture the variability of the possible pronunciations. 
+alternative pronunciations of a given word. This problem was studied previously in [9] 
+using a state merging algorithm for HMMs and in [8] using a subclass of probabilistic 
+finite automata. The purpose of the experiments discussed here is not to compare the above 
+algorithms to the entropic updates but rather compare the entropic updates to Baum-Welch. 
+Nevertheless, the resulting HMM pronunciation models are usually sparse. Typically, only 
+two or three phonemes have a non zero output probability at a given state and the average 
+number of states that in practice can follow a states is about 2. Therefore, the entropic 
+updates may provide a good alternative to the algorithms presented in [8, 9]. 
+We used the TIMIT (Texas Instruments-MIT) database as in [8, 9]. This database contains 
+the acoustic waveforms of continuous speech with phone labels from an alphabet of 62 
+phones which constitute a temporally aligned phonetic transcription to the uttered words. 
+For the purpose of building pronunciation models, the acoustic data was ignored and we 
+partitioned the phonetic labels according to the words that appeared in the data. The data 
+was filtered and partitioned so that words occurring between 20 and 100 times in the dataset 
+were used for training and evaluation according to the following partition. 75% of the 
+occurrences of each word were used as training data for the learning algorithm and the 
+remaining 25% were used for evaluation. We then built for each word three pronunciation 
+models by training a fully connected HMM whose number of states was set to 1, 1.5 and 
+1.75 times the longest sample (denoted by N,). The models were evaluated by calculating 
+Training Algorithms for Hidden Markov Models 647 
+the log-likelihood (averaged over 10 different random parameter initializations) of each 
+HMM on the phonetic transcription of each word in the test set. In Table 1 we give 
+the negative log-likelihood achieved on the test data together with the average number of 
+iterations needed for training. Overall the differences in the log-likelihood are small which 
+means that the results should be interpreted with some caution. Nevertheless, the entropic 
+update obtained the highest likelihood on the test data while needing the least number of 
+iterations. The approximated entropic update and Baum-Welch achieve similar results on 
+the test data but the latter requires more iterations. Checking the resulting models reveals 
+one reason why the entropic update achieves higher likelihood values, namely, it does a 
+better job in setting the irrelevant parameters to zero (and it does it faster). 
+Negative Log-Likelihood # Iterations 
+# States 1.0Nm 1.5N, 1.75 N, 1.0N, 1.5N, 1.75 N, 
+B aum-Welch 2448 2388 2425 27.4 36.1 41.1 
+Approx. EU 2440 2389 2426 25.5 35.0 37.0 
+Entropic Update 2418 2352 2405 23.1 30.9 32.6 
+Table 1: Comparison of the entropic updates and Baum-Welch on speech pronunciation data. 
+6 Conclusions and future research 
+In this paper we have showed how the framework of Kivinen and Warmuth [6] can be used 
+to derive parameter updates algorithms for HMMs. We view an HMM as a joint distribution 
+between the observation sequences and hidden state sequences and use a bound on relative 
+entropy as a distance between the new and old parameter settings. If we approximate of the 
+relative entropy by the X 2 distance, replace the exact state expectations by a sample based 
+approximation, and fix the learning rate to one then the framework yields an alternative 
+derivation of the EM algorithm for HMMs. Since the EM update uses sample based 
+estimates of the state expectations it is hard to use it in an on-line setting. In contrast, the 
+on-line versions of our updates can be easily derived using only one observation sequence 
+at a time. Also, there are alternative gradient descent based methods for estimating the 
+parameters of HMMs. Such methods usually employ an exponential parameterization 
+(such as soft-max) of the parameters (see [1]). For the case of learning one set of mixture 
+coefficients an exponential parameterization led to an algorithm with a slower convergence 
+rate compared to algorithms derived using entropic distances [5]. However, it is not clear 
+whether this is still the case for HMMs. Our future goals is to perform a comparative study 
+of the different updates with emphasis on the on-line versions. 
+Acknowledgments 
+We thank Anders Krogh for showing us the simple derivative calculations used in this paper and thank 
+Fernando Peteira and Yasubumi Sakakibara for interesting discussions. 
+References 
+[ 1 ] P. Baldi and Y. Chauvin. Smooth on-line learning algorithms for Hidden Markov Models. Neural Computation, 6(2), 1994. 
+[2] L.E. Baum and T. Pelrie. Statistical inference for probabilistic functionsof finite state markovchains. Annals of Mathematical 
+Statisitics, 37, 1966. 
+[3] T. Cover and J. Thomas. Elements oflnformation Theor)'. Wiley, 1991. 
+[4] A.P. Dempster, N.M. Laird, and D. B. Rubin. Maximum-likelihood from incomplete data via the EM algorithm. Journal 
+of the Royal Statistical Society, B39:1-38, 1977. 
+[5] D. P. Helmbold, R. E. Schapire, Y. Singer, and M. K. Warmuth. A comparison of new and old algorithms for a mixture 
+estimation problem. In Proceedingsof the Eighth Annual Workshop on Computationai Learning Theory, pages 69-78, 1995. 
+[6] J. Kivinen and Mo K. Warmuth. Exponentiated gradient versus gradient descent for linear predictors. Informationa and 
+Computation, 1997. To appear. 
+[7] L.R. Rabiner and B. H. Juang. An introduction to hidden markov models. 1EEEASSP Magazine, 3(1 ):4-16, 1986. 
+[8] D. Ron, Y. Singer, and N. Tishby. On the learnability and usage of acyclic probabilistic finite automata. In Proc. of the 
+Eighth Annual Workshop on Computational Learning Theor),, 1995. 
+[9] A. Stolcke and S. Omohundro. Hidden Markov model induction by Bayesian model merging. In Advances in Neural 
+Information Processing Systems, volume 5. Morgan Kaufmann, 1993. 
+[10] L. Xu and M.I. Jordan. On convergence properties of the EM algorithm for Gaussian mixtures. Neural Computation, 
+8:129-151, 1996. 

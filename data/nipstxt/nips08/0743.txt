@@ -1,0 +1,321 @@
+Forward-backward retraining of recurrent 
+neural networks 
+Andrew Senior * Tony Robinson 
+Cambridge University Engineering Department 
+Trumpington Street, Cambridge, England 
+Abstract 
+This paper describes the training of a recurrent neural network 
+as the letter posterior probability estimator for a hidden Markov 
+model, off-line handwriting recognition system. The network esti- 
+mates posterior distributions for each of a series of frames repre- 
+senting sections of a handwritten word. The supervised training 
+algorithm, backpropagation through time, requires target outputs 
+to be provided for each frame. Three methods for deriving these 
+targets are presented. A novel method based upon the forward- 
+backward algorithm is found to result in the recognizer with the 
+lowest error rate. 
+I Introduction 
+In the field of off-line handwriting recognition, the goal is to read a handwritten 
+document and produce a machine transcription. Such a system could be used 
+for a variety of purposes, from cheque processing and postal sorting to personal 
+correspondence reading for the blind or historical document reading. In a previous 
+publication (Senior 1994) we have described a system based on a recurrent neural 
+network (Robinson 1994) which can transcribe a handwritten document. 
+The recurrent neural network is used to estimate posterior probabilities for char- 
+acter classes, given frames of data which represent the handwritten word. These 
+probabilities are combined in a hidden Markov model framework, using the Viterbi 
+algorithm to find the most probable state sequence. 
+To train the network, a series of targets must be given. This paper describes three 
+methods that have been used to derive these probabilities. The first is a naive boot- 
+strap method, allocating equal lengths to all characters, used to start the training 
+procedure. The second is a simple Viterbi-style segmentation method that assigns a 
+single class label to each of the frames of data. Such a scheme has been used before 
+in speech recognition using recurrent networks (Robinson 1994). This representa- 
+tion, is found to inadequately represent some frames which can represent two letters, 
+or the ligatures between letters. Thus, by analogy with the forward-backward algo- 
+rithm (Rabiner and Juang 1986) for HMM speech recognizers, we have developed a 
+*Now at IBM T.J.Watson Research Center, Yorktown Heights NY10598, USA. 
+744 A. SENIOR, T. ROBINSON 
+forward-backward method for retraining the recurrent neural network. This assigns 
+a probability distribution across the output classes for each frame of training data, 
+and training on these 'soft labels' results in improved performance of the recognition 
+system. 
+This paper is organized in four sections. The following section outlines the system 
+in which the neural network is used, then section 3 describes the recurrent network 
+in more detail. Section 4 explains the different methods of target estimation and 
+presents the results of experiments before conclusions are presented in the final 
+section. 
+2 System background 
+The recurrent network is the central part of the handwriting recognition system. 
+The other parts are summarized here and described in more detail in another pub- 
+lication (Senior 1994). The first stage of processing converts the raw data into 
+an invariant representation used as an input to the neural network. The network 
+outputs are used to calculate word probabilities in a hidden Markov model. 
+First, the scanned page image is automatically segmented into words and then nor- 
+malized. Normalization removes variations in the word appearance that do not 
+affect its identity, such as rotation, scale, slant, slope and stroke thickness. The 
+height of the letters forming the words is estimated, and magnifications, shear and 
+thinning transforms are applied, resulting in a more robust representation of the 
+word. The normalized word is represented in a compact canonical form encoding 
+both the shape and salient features. All those features falling within a narrow ver- 
+tical strip across the word are termed a frame. The representation derived consists 
+of around 80 values for each of the frames, denoted xt. The r frames (x,...,xr) 
+for a whole word are written x. Five frames would typically be enough to repre- 
+sent a single character. The recurrent network takes these frames sequentially and 
+estimates the posterior character probability distribution given the data: P(Ailx), 
+for each of the letters, a,..,z, denoted A0,..., A25. These posterior probabilities are 
+scaled by the prior class probabilities, and are treated as the emission probabilities 
+in a hidden Markov model. 
+A separate model is created for each word in the vocabulary, with one state per 
+letter. Transitions are allowed only from a state to itself or to the next letter in the 
+word. The set of states in the models is denoted Q - {q,..., qv) and the letter 
+represented by qi is given by L(qi), L: Q - A0,..., A2s. 
+Word error rates are presented for experiments on a single-writer task tested with 
+a 1330 word vocabulary . Statistical significance of the results is evaluated using 
+Student's t-test, comparing word recognition rates taken from a number of networks 
+trained under the same conditions but with different random initializations. The 
+results of the /-test are written: T(degrees of freedom) and the tabulated values: 
+tsignificance (degrees of freedom). 
+3 Recurrent networks 
+This section describes the recurrent error propagation network which has been used 
+as the probability distribution estimator for the handwriting recognition system. 
+Recurrent networks have been successfully applied to speech recognition (Robin- 
+son 1994) but have not previously been used for handwriting recognition, on-line 
+or off-line. Here a left-to-right scanning process is adopted to map the frames of 
+a word into a sequence, so adjacent frames are considered in consecutive instants. 
+XThe experimental data are available in ftp://svr-ftp.eng.cam.ac.uk/pub/data 
+Forward-backward Retraining of Recurrent Neural Networks 745 
+A recurrent network is well suited to the recognition of patterns occurring in a 
+time-series because series of arbitrary length can be processed, with the same pro- 
+cessing being performed on each section of the input stream. Thus a letter 'a' 
+can be recognized by the same process, wherever it occurs in a word. In addi- 
+tion, internal 'state' units are available to encode multi-frame context information 
+so letters spread over several frames can be recognized. The recurrent network 
+Input Frames Network Output 
+......... 'i (Characlcr probablhlles) 
+Umt Time Delay 
+Figure 1: A schematic of the recurrent error propagation network. 
+For clarity only a few of the units and links are shown. 
+architecture used here is a single layer of standard percepttons with nonlinear ac- 
+tivation functions. The output o of a unit i is a function of the inputs aj and 
+the network parameters, which are the weights of the links wj with a bias b: 
+o, -- -- b, + (2) 
+The network is fully connected -- that is, each input is connected to every out- 
+put. However, some of the input units receive no external input and are con- 
+nected one-to-one to corresponding output units through a unit time-delay (fig- 
+ure 1). The remaining input units accept a single frame of parametrized in- 
+put and the remaining 26 output units estimate letter probabilities for the 26 
+character classes. The feedback units have a standard sigmoid activation func- 
+tion (3), but the character outputs have a 'softmax' activation function (4). 
+f(.[aj)) - (1 -t-e-a') -1 (3) f(Ierj}) -- Eje,,, (4) 
+During recognition ('forward propagation'), the first frame is presented at the input 
+and the feedback units are initialized to activations of 0.5. The outputs are calcu- 
+lated (1 and 2) and read off for use in the Markov model. In the next iteration, the 
+outputs of the feedback units are copied to the feedback inputs, and the next frame 
+presented to the inputs. Outputs are again calculated, and the cycle is repeated for 
+each frame of input, with a probability distribution being generated for each frame. 
+To allow the network to assimilate context information, several frames of data are 
+passed through the network before the probabilities for the first frame are read 
+off, previous output probabilities being discarded. This input/output latency is 
+maintained throughout the input sequence, with extra, empty frames of inputs 
+being presented at the end to give probability distributions for the last frames of 
+true inputs. A latency of two frames has been found to be most satisfactory in 
+experiments to date. 
+3.1 Training 
+To be able to train the network the target values ((t) desired for the outputs 
+oj (xt) j = 0,..., 25 for frame xt must be specified. The target specification is dealt 
+746 A. SENIOR, T. ROBINSON 
+with in the next section. It is the discrepancy between the actual outputs and these 
+targets which make up the objective function to be maximized by adjusting the 
+internal weights of the network. The usual objective function is the mean squared 
+error, but here the relative entropy, G, of the target and output distributions is 
+used: 
+= 
+t s os(xt)' 
+At the end of a word, the errors between the network's outputs and the targets 
+are propagated back using the generalized delta rule (Rumelhart et al. 1986) and 
+changes to the network weights are calculated. The network at successive time 
+steps is treated as adjacent layers of a multi-layer network. This process is gener- 
+ally known as 'back-propagation through time' (Werbos 1990). After processing v' 
+frames of data with an input/output latency, the network is equivalent to a (v' + 
+latency) layer perceptron sharing weights between layers. For a detailed description 
+of the training procedure, the reader is referred elsewhere (Rumelhart et al. 1986; 
+Robinson 1994). 
+4 Target re-estimation 
+The data used for training are only labelled by word. That is, each image represents 
+a single word, whose identity is known, but the frames representing that word are 
+not labelled to indicate which part of the word they represent. To train the network, 
+a label for each frame's identity must be provided. Labels are indicated by the state 
+St E Q and the corresponding letter L(S) of which a frame xt is part. 
+4.1 A simple solution 
+To bootstrap the network, a naive method was used, which simply divided the word 
+up into sections of equal length, one for each letter in the word. Thus, for an N- 
+letter word of r frames, x, the first letter was assumed to be represented by frames 
+x, the next by xr+ and so on. The segmentation is mapped into a set of targets 
+as follows: 
+lifœ(St)=A s 
+Q(t) = 0 otherwise. (6) 
+Figure 2a shows such a segmentation for a single word. Each line, representing 
+S (t) for some j, has a broad peak for the frames representing letter A s. Such a 
+segmentation is inaccurate, but can be improved by adding prior knowledge. It 
+is clear that some letters are generally longer than others, and some shorter. By 
+weighting letters according to their a priori lengths it is possible to give a better, 
+ß l'  and 
+but still very simple, segmentation. The letters 'z, are given a length of  
+, a relative o other letters. Thus in the word 'wig', the first half 
+m, w'a length  
+of the frames would be signed the label '', the next sixth 'i' and the last third 
+the label 'g'. While this segmentation is constructed with no regard for the data 
+being segmented, it is found o provide a good initial approximation from which it 
+is possible o train the network o recognize words, albeit with high error rates. 
+4.2 Viterbi re-estimation 
+Having trained the network to some accuracy, it can be used to calculate a good 
+estimate of the probability of each frame belonging to any letter. The probability 
+of any state sequence can then be calculated in the hidden Markov model, and 
+the most likely state sequence through the correct word S* found using dynamic 
+programming. This best state sequence S* represents a new segmentation giving a 
+label for each frame. For a network which models the probability distributions well, 
+this segmentation will be better than the automatic segmentation of section 4.1 
+Forward-backward Retraining of Recurrent Neural Networks 74 7 
+(a) 
+(b) (½) 
+Figure 2: Segmentations of the word 'butler'. Each line represents 
+P(S = AilS) for one letter Ai and is high for frame t when S - A. 
+(a) is the equal-length segmentation discussed in section 4.1 (b) is 
+a segmentation of an untrained network. (c) is the segmentation 
+re-estimated with a trained network. 
+since it takes the data into account. Finding the most probable state sequence S* is 
+termed a forced alignment. Since only the correct word model need be considered, 
+such an alignment is faster than the search through the whole lexicon that is required 
+for recognition. Training on this automatic segmentation gives a better recognition 
+rate, but still avoids the necessity of manually segmenting any of the database. 
+Figure 2 shows two Viterbi segmentations of the word 'butler'. First, figure 2b 
+shows the segmentation arrived at by taking the most likely state sequence before 
+training the network. Since the emission probability distributions are random, there 
+is nothing to distinguish between the state sequences, except slight variations due 
+to initial asymmetry in the network, so a poor segmentation results. After train- 
+ing the network (2c), the durations deviate from the prior assumed durations to 
+match the observed data. This re-estimated segmentation represents the data more 
+accurately, so gives better targets towards which to train. A further improvement 
+in recognition accuracy can be obtained by using the targets determined by the re- 
+estimated segmentation. This cycle can be repeated until the segmentations do not 
+change and performance ceases to improve. For speed, the network is not trained 
+to convergence at each iteration. 
+It can be shown (Santini and Del Bimbo 1995) that, assuming that the network has 
+enough parameters, the network outputs after convergence will approximate the 
+posterior probabilities P(Ai[x). Further, the approximation P(Ailx) 
+is made. The posteriors are scaled by the class priors P(Ai) (Boutlard and Morgan 
+1993), and these scaled posteriors are used in the hidden Markov model in place of 
+data likelihoods since, by Bayes' rule, 
+P(xtlS) P(AIx) (?) 
+P(5) 
+Table 1 shows word recognition error rates for three 80-unit networks trained to- 
+wards fixed targets estimated by another network, and then refrained, re-estimating 
+the targets at each iteration. The retraining improves the recognition performance 
+(T(2) = 3.91, t.95(2)= 2.92). 
+4.3 Forward-backward re-estimation 
+The system described above performs well and is the method used in previous recur- 
+rent network systems, but examining the speech recognition literature, a potential 
+method of improvement can be seen. Viterbi frame alignment has so far been used 
+to determine targets for training. This assigns one class to each frame, based on 
+the most likely state sequence. A better approach might be to allow a distribu- 
+tion across all the classes indicating which are likely and which are not, avoiding a 
+748 A. SENIOR, T. ROBINSON 
+Table 1: Error rates for 3 networks with 80 units trained with fixed 
+alignments, and refrained with re-estimated alignments. 
+Training Error (%) 
+method f 8 
+Fixed targets 21.2 1.73 
+Retraining 17.0 0.68 
+'hard' classification at points where a frame may indeed represent more than one 
+class (such as where slanting characters overlap), or none (as in a ligature). A 'soft' 
+classification would give a more accurate portrayal of the frame identities. 
+Such a distribution, 7p(t) -- P(S = qplx, W), can be calculated with the forward- 
+backward algorithm (Rabiner and Juang 1986). To obtain 7p (t), the forward prob- 
+abilities de(t) = P(St = qp,x) must be combined with the backward probabilities 
+p(t) = P(& = The forward and backward probabilities are calculated 
+recursively in the same manner. 
+ct,(t + 1) : 
+/3(t - 1) = 
+ op(t)P(xtlL(qr))ar,r, (8) 
+ ap,,.P(xtl$: q,)fl, (t). (9) 
+Suitable initial distributions c,(0) = r, and (r + 1) = p are chosen, e.g. r and 
+p are one for respectively the first and last character in the word, and zero for the 
+others. The likelihood of observing the data x and being in state q, at time t is 
+then given by: 
+((t) = a(t)13(t). (10) 
+Then the probabilities y (t) of being in state qp at time t are obtained by normal- 
+ization and used as the targets <j (t) for the recurrent network character probability 
+outputs: (p(t) (11) (j (t) :  7p(t). (12) 
+Figure 3a shows the initial estimate of the class probabilities for a sample of the 
+word 'butler'. The probabilities shown are those estimated by the forward-backward 
+algorithm when using an untrained network, for which the P(xtISt = qp) will be 
+independent of class. Despite the lack of information, the probability distributions 
+can be seen to take reasonable shapes. The first frame must belong to the first 
+letter, and the last frame must belong to the last letter, of course, but it can also 
+be seen that half way through the word, the most likely letters are those in the 
+middle of the word. Several class probabilities are non-zero at a time, reflecting 
+the uncertainty caused since the network is untrained. Nevertheless, this limited 
+information is enough to train a recurrent network, because as the network begins 
+to approximate these probabilities, the segmentations become more definite. In 
+contrast, using Viterbi segmentations from an untrained network, the most likely 
+alignment can be very different from the true alignment (figure 2b). The segmen- 
+tation is very definite though, and the network is trained towards the incorrect 
+targets, reinforcing its error. Finally, a trained network gives a much more rigid 
+segmentation (figure 3b), with most of the probabilities being zero or one, but with 
+a boundary of uncertainty at the transitions between letters. This uncertainty, 
+where a frame might truly represent parts of two letters, or a ligature between 
+two, represents the data better. Just as with Viterbi training, the segmentations 
+can be re-estimated after training and retraining results in improved performance. 
+The final probabilistic segmentation can be stored with the data and used when 
+subsequent networks are trained on the same data. Training is then significantly 
+quicker than when training towards the approximate bootstrap segmentations and 
+re-estimating the targets. 
+Forward-backward Retraining of Recurrent Neural Networks 749 
+(a) 
+(b) 
+Figure 3: Forward-backward segmentations of the word 'butler'. 
+(a) is the segmentation of an untrained network with a uniform 
+class prior. (b) shows the segmentation after training. 
+The better models obtained with the forward-backward algorithm give improved 
+recognition results over a network trained with Viterbi alignments. The improve- 
+ment is shown in table 2. It can be seen that the error rates for the networks 
+trained with forward-backward targets are lower than those trained on Viterbi tar- 
+gets (T(2) = 5.24, t.97s(2)= 4.30). 
+Table 2: Error rates for networks with 80 units trained with Viterbi 
+or Forward-Backward alignments. 
+Training Error (%) 
+method / b 
+Viterbi 17.0 0.68 
+Forward-Backward 15.4 0.74 
+5 Conclusions 
+This paper has reviewed the training methods used for a recurrent network, applied 
+to the problem of off-line handwriting recognition. Three methods of deriving tar- 
+get probabilities for the network have been described, and experiments conducted 
+using all three. The third method is that of the forward-backward procedure, which 
+has not previously been applied to recurrent neural network training. This method 
+is found to improve the performance of the network, leading to reduced word error 
+rates. Other improvements not detailed here (including duration models and sto- 
+chastic language modelling) allow the error rate for this task to be brought below 
+10%. 
+Acknowledgment s 
+The authors would like to thank Mike Hochberg for assistance in preparing this 
+paper. 
+References 
+BOURLARD, H. and MORGAN, N. (1993) Connectionist Speech Recognition: A Hybrid 
+Approach. Kluwer. 
+RABINER, L. R. and JUANG, B. H. (1986) An introduction to hidden Markov models. 
+IEEE ASSP magazine 3 (1): 4-16. 
+ROBINSON, A. (994) The application of recurrent nets to phone probability estimation. 
+IEEE Transactions on Neural Networks. 
+RUMELHART, D. E., HINTON, G. E. and WILLIAMS, R. J. (1986) Learning internal 
+representations by error propagation. In Parallel Distributed Processing: Explorations 
+in the Microstructure of Cognition, ed. by D. E. Rumelhart and J. L. McClelland, 
+volume 1, chapter 8, pp. 318-362. Bradford Books. 
+SANTINI, S. and DEL BIMBO, A. (1995) Recurrent neural networks can be trained to 
+be maximum a posterior. i probability classifiers. Neural Networks 8 (1): 25-29. 
+SENIOR, A. W., (1994) Off-line Curslye Handwriting Recognition using Recurrent 
+Neural Networks. Cambridge University Engineering Department Ph.D. thesis. URL: 
+://svr-tp. eng. cam. ac. uk/pub/reports/senior_thesis. ps. gz. 
+RBOS, P. J. (1990) Backpropagation through time: What it does and how to do it. 
+Proceedings of the IEEE 78: 1550-60. 

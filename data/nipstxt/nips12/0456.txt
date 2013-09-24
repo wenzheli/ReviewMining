@@ -1,0 +1,294 @@
+Bayesian Transduction 
+Thore Graepel, Ralf Herbrich and Klaus Obermayer 
+Department of Computer Science 
+Technical University of Berlin 
+Franklinstr. 28/29, 10587 Berlin, Germany 
+{ graepe12, ralfh, oby} @cs. tu-berlin. de 
+Abstract 
+Transduction is an inference principle that takes a training sam- 
+ple and aims at estimating the values of a function at given points 
+contained in the so-called working sample as opposed to the whole 
+of input space for induction. Transduction provides a confidence 
+measure on single predictions rather than classifiers -- a feature 
+particularly important for risk-sensitive applications. The possibly 
+infinite number of functions is reduced to a finite number of equiv- 
+alence classes on the working sample. A rigorous Bayesian analysis 
+reveals that for standard classification loss we cannot benefit from 
+considering more than one test point at a time. The probability 
+of the label of a given test point is determined as the posterior 
+measure of the corresponding subset of hypothesis space. We con- 
+sider the PAC setting of binary classification by linear discriminant 
+functions (perceptrons) in kernel space such that the probability of 
+labels is determined by the volume ratio in version space. We 
+suggest to sample this region by an ergodic billiard. Experimen- 
+tal results on real world data indicate that Bayesian Transduction 
+compares fa-vourably to the well-known Support Vector Machine, 
+in particular if the posterior probability of labellings is used as a 
+confidence measure to exclude test points of low confidence. 
+I Introduction 
+According to Vapnik [9], when solving a given problem one should avoid solving a 
+more 9eneral problem as an intermediate step. The reasoning behind this principle is 
+that in order to solve the more general task resources may be wasted or compromises 
+may have to be made which would not have been necessary for the solution of the 
+problem at hand. A direct application of this common-sense principle reduces the 
+more general problem of inferring a functional dependency on the whole of input 
+space to the problem of estimating the values of a function at given points (working 
+sample), a paradigm referred to as transductive inference. More formally, given a 
+probability measure Px¾ on the space of data l' x y = 2c' x {-1, +1}, a training 
+sample $ = {(x, y),..., (xt, yt)} is generated i.i.d. according to Px¾. Additional 
+m data points W - {xl+,... ,xl+,} are drawn: the working sample. The goal 
+is to label the objects of the working sample W using a fixed set 7/ of functions 
+Bayesian Transduction 457 
+f : A'  {-1,+1} so as to minimise a predefined loss. In.contrast, inductive 
+inference, aims at choosing a single function ft 7-I best suited to capture the 
+dependency expressed by the unknown Px¾. Obviously, if we have a transductive 
+algorithm .A (W, S, 7/) that assigns to each working sample W a set of labels given 
+the training sample $ and the set 7/of functions, we can define a function fs: 2  
+{- 1, + 1 } by fs (x) = A ({x}, $, 7/) as a result of the transduction algorithm. There 
+are two crucial differences to induction, however: i) A ({x}, S, 7/) is not restricted 
+to select a single decision function f E 7/for each x, ii) a transduction algorithm 
+can give performance guarantees on particular labellings instead of functions. In 
+practical applications this difference may be of great importance. 
+After all, in risk sensitive applications (medical diagnosis, financial and critical 
+control applications) it often matters to know how confident we are about a given 
+prediction. In this case a general confidence measure of the classifier w.r.t. the 
+whole input distribution would not provide the desired warranty at all. Note that 
+for linear classifiers some guarantee can be obtained by the margin [7] which in 
+Section 4 we will demonstrate to be too coarse a confidence measure. The idea of 
+transduction was put forward in [8], where also first algorithmic ideas can be found. 
+Later [1] suggested an algorithm for transduction based on linear programming and 
+[3] highlighted the need for confidence measures in transduction. 
+The paper is structured as follows: A Bayesian approach to transduction is formu- 
+lated in Section 2. In Section 3 the function class of kernel perceptrons is introduced 
+to which the Bayesian transduction scheme is applied. For the estimation of volumes 
+in parameter space we present a kernel billiard as an efficient sampling technique. 
+Finally, we demonstrate experimentally in Section 4 how the confidence measure 
+for labellings helps Bayesian Transduction to achieve low generalisation error at a 
+low rejection rate of test points and thus to outperform Support Vector Machines 
+(SVMs). 
+2 Bayesian Transductive Classification 
+Suppose we are given a training sample $ = { (Xl, Vl),..., (xl, yl) ) drawn i.i.d. from 
+Px¾ and a working sample W = {Xt+l,... ,xt+,} drawn i.i.d. from Px. Given 
+a prior PH over the set 7 of functions and a likelihood P(x¾)tlH=! we obtain a 
+def 
+posterior probability PHi(X¾)t=S = PHIS by Bayes' rule. This posterior measure 
+induces a probability measure on labellings b E {-1, +1} " of the working sample 
+by I 
+PY'"IS,W (b) dej PHIS ({f' Vx+i  W f (x+i) = hi}) ß 
+(1) 
+For the sake of simplicity let us assume a PAC style setting, i.e. there exists a 
+function f* in the space 7 such that P¾1x=x (Y) = 5 (y - f* (x)). In this case one 
+can define the so-called version-space as the set of functions that is consistent with 
+the training sample 
+V($)={f:V(xi,yi)eS f(xi)=yi}, (2) 
+outside which the posterior Psis vanishes. Then PY"lS,W (b) represents the prior 
+measure of functions consistent with the training sample $ and the labelling b 
+on the working sample W normalised by the prior measure of functions consistent 
+with $ alone. The measure PH can be used to incorporate prior knowledge into 
+Note that the number of different labellings b implementable by 7/is bounded above 
+by the value of the growth function IIt (IWl) [8, p. 321]. 
+458 T. Graepel, R. Herbrich and K. Obermayer 
+the inference process. If no such knowledge is available, considerations of symmetry 
+may lead to "uninformative" priors. 
+Given the measure P¾,qs,w over labellings, in order to arrive at a risk minimal 
+decision w.r.t. the labelling we need to define a loss function I: ym x ym  IR+ 
+between labellings and minimise its expectation, 
+/ (b, $, W) - EYlS,W It (b, Y")] =  l (b, b') PYlS,W (b'), (3) 
+{b'} 
+where the summation runs over all the 2 " possible labellings b  of the working 
+sample. Let us consider two scenarios: 
+1. A 0-I-loss on the exact labelling b, i.e. for two labellings b and b  
+/½(b,b')=l-l-IS(bi-b)  R½(b,S,W)= l-P¾.s,w(b) . (4) 
+i=1 
+In this case choosing the labelling be = argmin b Re (b, $, W) of the highest 
+joint probability P¾"lS,W (b) minimises the risk. This non-labelwise loss is 
+appropriate if the goal is to exactly identify a combination of labels, e.g. the 
+combination of handwritten digits defining a postal zip code. Note that 
+classical SVM transduction (see, e.g. [8, 1]) by maximising the margin on 
+the combined training and working sample approximates this strategy and 
+hence does not minimise the standard classification risk on single instances 
+as intended. 
+2. A 0-i-loss on the single labels bi, i.e. for two labellings b and b  
+m 
+/,(b,b') = ly(1-(bi-b)), (5) 
+i=1 
+m 
+(b,S, W) = ñ - (0, - o',)) (b') 
+i=1 {b,} 
+- 
+i=1 
+Due to the independent treatment of the loss at working sample points the 
+risk R, (b, S, W) is minimised by the labelling of highest marginal proba- 
+bility of the labels, i.e. 
+b = argmaxvey P.lS ({f: f (xt+i) = y)). 
+Thus in the case of the labelwise loss (5) a working sample of m > 1 
+point does not offer any advantages over larger working samples w.r.t. the 
+Bayes-optimal decision. Since this corresponds to the standard classifica- 
+tion setting, we will restrict ourselves to working samples of size m = 1, 
+i.e. to one working point xt+l. 
+3 Bayesian Transduction by Volume 
+3.1 The Kernel Perceptron 
+We consider transductive inference for the class of kernel perceptrons. The decision 
+functions are given by 
+f (x) = sign ((w,b (x))j,) = sign ctik (xi,x) w =  climb (xi) e ', 
+i=1 i=1 
+Bayesian Transduction 459 
+Figure 1: Schematic view of data space (left) and parameter space (right) for a 
+classification toy example. Using the duality given by (w, b (x)}y = 0 data points 
+on the left correspond to hyperplanes on the right, while hyperplanes on the left 
+can be thought of as points on the right. 
+where the mapping b: X  Y maps from input space X to a feature space  
+completely determined by the inner product function (kernel) k : 2 x 2d   
+(see [9, 10]). Given a training sample $ = {(xi,yi)}i=l we can define the version 
+space -- the set of all perceptrons compatible with the training data -- as in (2) 
+having the additional constraint Ilwll - i ensuring uniqueness. In order to obtain 
+a prediction on the label bl of the working point Xl+l we note that Xl+l may 
+bisects the volume V of version space into two sub-volumes V + and V-, where the 
+perceptrons in V + would classify Xl+l as b = +1 and those in V- as b = -1. 
+The ratio p+ = V+/V is the probability of the labelling b = +1 given a uniform 
+prior P, over w and the class of kernel perceptrons, accordingly for bl = -1 (see 
+Figure 1). Already Vapnik in [8, p. 323] noticed that it is troublesome to estimate 
+sub-volumes of version space. As the solution to this problem we suggest to use a 
+billiard algorithm. 
+3.2 Kernel Billiard for Volume Estimation 
+The method of playing billiard in version space was first introduced by Rujan [6] 
+for the purpose of estimating its centre of mass and consequently refined and ex- 
+tended to kernel spaces by [4]. For Bayesian Transduction the idea is to bounce 
+the billiard ball in version space and to record how much time it spends in each 
+of the sub-volumes of interest. Under the assumption of ergodicity [2] w.r.t. the 
+uniform measure in the limit the accumulated flight times for each sub-volume are 
+proportional to the sub-volume itself. 
+Since the trajectory is located in  each position w and direction v of the ball can 
+be expressed as linear combinations of the b (xi), i.e. 
+w= v = 
+i=1 i=1 i,j=l 
+where c,/ are real vectors with œ components and fully determine the state of the 
+billiard. The algorithm for the determination of the label b of Xt+l proceeds as 
+follows: 
+1. Initialise the starting position w0 in V (S) using any kernel perceptron 
+algorithm that achieves zero training error (e.g. SVM [9]). Set V + = V- = 
+0. 
+460 T. Graepel, R. Herbrich and K. Obermayer 
+2. Find the closest boundary of V ($) starting from current w into direction 
+v, where the flight times vj for all points including Xt+l are determined 
+using 
+The smallest positive flight time vc - minj:rs>0 vj in kernel space corre- 
+sponds to the closest data point boundary  (xc) on the hypersphere. Note, 
+that if vc   we randomly generate a direction v pointing towards version 
+space, i.e. y(v,(x)) p 0 suming the lt bounce w at (x). 
+3. Calculate the hall's new position w  according to 
+w+rcv 
+W t = 
+IIw + 
+Calculate the distance t = []w- W']]sphere = arccos (1- ]]w- w'[] 
+on the hypersphere and add it to the volume estimate V corresponding to 
+the current label V = sign ({w + w',0(xt+))). If the test point 0 (x+) 
+w hit, i.e. e =  + 1, keep the old direction vector v. Otherwise update 
+to the reflection direction v', 
+v' = v- 2 (v, 0(xc)) 0 (xc). 
+Go back to step 2 unless the stopping criterion (8) is met. 
+Note that in practice one trajectory can be calculated in advance and can be used 
+for all test points. The estimators of the probability of the labellings are then given 
+by  = V+/(V + q- V-) and - = V-/(V + q- V-). Thus, the algorithm outputs 
+b with confidence ctrans according to 
+bl der 
+= argmaxvy 'Y, (6) 
+.. der (2 max( + -) 1)  [0,1]. (7) 
+Ctrans -- . , -- 
+Note that the Bayes Point Machine (BPM) [4] aims at an optimal approximation 
+of the transductive classification (6) by a single function f E 7/ and that the well 
+known SVM can be viewed as an approximation of the BPM by the centre of the 
+largest ball in version space. Thus, treating the real valued output If(xl+x)l 4ef  
+ Cind 
+of SVM classifiers  a confidence measure can be considered an approximation of 
+(7). The consequences will be demonstrated experimentally in the following section. 
+Disregarding the issue of mixing time [2] and the dependence of trajectories we 
+sume for the stopping criterion that the fraction p of time t spent in volume 
+V + on trajectory i of length (t + t) is a random variable having expectation p+. 
+Hoeffding's inequality [5] bounds the probability of deviation from the expectation 
+p+ by more than e, 
+P p p+ >e < exp (-2he 2) def 
+- _ _ = v. (8) 
+i=1 
+Thus if we want the deviation e from the true label probability to be less than 
+e < 0.05 with probability at let 1 - V = 0.99 we need approximately n m 1000 
+bounces. The computational effort of the above algorithm for a working set of size 
+m is of order O (n (m + )). 
+Bayesian Transduction 461 
+rejection rate 
+'"""t,,h. ' '-I--+.+. 
+' q,..½, ' ''t"-+.or.+. ' 
+oo o,s 050 o oo os oo 
+rejection rate 
+Figure 2: Generalisation error vs. rejection rate for Bayesian Transduction and 
+SVMs for the ;hyroid data set (or = 3) (a) and the heart data set (or = 10). 
+The error bars in both directions indicate one standard deviation of the estimated 
+means. The upper curve depicts the result for the SVM algorithm; the lower curve 
+is the result obtained by Bayesian Transduction. 
+4 Experimental Results 
+We focused on the confidence Xtrans Bayesian Transduction provides together with 
+the prediction 1 of the label. If the confidence C'rans reflects reliability of a label 
+estimate at a given test point then rejecting those test points whose predictions carry 
+low confidence should lead to a reduction in generalisation error on the remaining 
+test points. In the experiments we varied a rejection threshold 0 between [0, 1] thus 
+obtaining for each 0 a rejeection rate together with an estimate of the generalisation 
+error at non-rejected points. Both these curves were linked by their common O-axis 
+resulting in a generalisation error versus rejection rate plot. 
+We used the UCI 2 data sets ;hyroñd and hear; because they are medical ap- 
+plications for which the confidence of single predictions is particularly important. 
+Also a high rejection rate due to too conservative a confidence measure may in- 
+cur considerable costs. We trained a Support Vector Machine using RBF kernels 
+k (x, x ) - exp (-tlx - xll 2/2or 2) with cr chosen such as to insure the existence of a 
+version space. We used 100 different training samples obtained by random 60%:40% 
+splits of the whole data set. The margin C'nd of each test point was calculated as a 
+confidence measure of SVM classifications. For comparison we determined the la- 
+bels b and resulting confidences Ctrans using the Bayesian Transduction algorithm 
+(see Section 3) with the same value of the kernel parameter. Si.nce the rejection for 
+the Bayesian Transduction was in both cases higher than for SVMs at the same level 
+0 we determined 0max which achieves the same rejection rate for the SVM confi- 
+dence measures as Bayesian Transduction achieves at 0: 1 (l:hyroñd: 0ma x --- 2.15, 
+hear1:: 0max = 1.54). The results for the two data sets are depicted in Figure 2. 
+In the l:hyroñd example Figure 2 (a) one can see that crans is indeed an appropriate 
+indicator of confidence: at a rejection rate of approximately 20% the generalisation 
+error approaches zero at minimal variance. For any desired generalisation error 
+Bayesian Transduction needs to reject significantly less examples of the test set as 
+compared to SVM classifiers, e.g. 4% less at 2.3% generalisation error. The results of 
+the hear1: data set show even more pronounced characteristics w.r.t. to the rejection 
+2UCI University of California at Irvine: Machine Learning Repository 
+462 T. Graepel, R. Herbrich and K. Obermayer 
+rate. Note that those confidence measures considered cannot capture the effects of 
+noise in the data which leads to a generalisation error of 16.4% even at maximal 
+rejection 0 = 1 corresponding to the Bayes error under the given function class. 
+5 Conclusions and Future Work 
+In this paper we a presented a Bayesian analysis of transduction. The required 
+volume estimates for kernel perceptrons in version space are performed by an ergodic 
+billiard in kernel space. Most importantly, transduction not only determines the 
+label of a given point but also returns a confidence measure of the classification 
+in the form of the probability of the label under the model. Using this confidence 
+measure to reject test examples then lead to improved generalisation error over 
+SVMs. The billiard algorithm can be extended to the case of non-zero training 
+error by allowing the ball to penetrate walls, a property that is cap, tured by adding 
+a constant A to the diagonal of the kernel matrix [4]. Further research will aim at 
+the discovery of PAC-Bayesian bounds on the generalisation error of transduction. 
+Acknowledgements 
+We are greatly indebted to U. Kockelkorn for many interesting suggestions and 
+discussions. This project was partially funded by Technical University of Berlin via 
+rip 13/41. 
+References 
+[1] K. Bennett. Advances in Kernel Methods -- Support Vector Learning, chapter 19, 
+Combining Support Vector and Mathematical Programming Methods for Classifica- 
+tion, pages 307-326. MIT Press, 1998. 
+[2] I. Cornfeld, S. Fomin, and Y. Sinai. Ergodic Theory. Springer Verlag, 1982. 
+[3] A. Gammerman, V. Vovk, and V. Vapnik. Learning by transduction. In Proceedings 
+of Uncertainty in AI, pages 148-155, Madison, Wisconsin, 1998. 
+[4] R. Herbrich, T. Graepel, and C. Campbell. Bayesian learning in reproducing kernel 
+Hilbert spaces. Technical report, Technical University Berlin, 1999. TR 99-11. 
+[5] W. Hoeffding. Probability inequalities for sums of bounded random variables. Journal 
+of the American Statistical Association, 58:13-30, 1963. 
+[6] P. Rujkn. Playing billiard in version space. Neural Computation, 9:99-122, 1997. 
+[7] J. Shawe-Taylor. Confidence estimates of classification accuracy on new examples. 
+Technical report, Royal Holloway, University of London, 1996. NC2-TR-1996-054. 
+[8] V. Vapnik. Estimation of Dependences Based on Empirical Data. Springer, 1982. 
+[9] V. Vapnik. The Nature of Statistical Learning Theory. Springer, 1995. 
+[10] G. Wahba. Spline Models for Observational Data. Society for Industrial and Applied 
+Mathematics, Philadelphia, 1990. 

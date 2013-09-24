@@ -1,0 +1,313 @@
+Reinforcement Learning by Probability 
+Matching 
+Philip N. Sabes Michael I. Jordan 
+sabespsyche. mir. edu j ordanpsyche. mir. edu 
+Department of Brain and Cognitive Sciences 
+Massachusetts Institute of Technology 
+Cambridge, MA 02139 
+Abstract 
+We present a new algorithm for associative reinforcement learn- 
+ing. The algorithm is based upon the idea of matching a network's 
+output probability with a probability distribution derived from the 
+environment 's reward signal. This Probability Matching algorithm 
+is shown to perform faster and be less susceptible to local minima 
+than previously existing algorithms. We use Probability Match- 
+ing to train mixture of experts networks, an architecture for which 
+other reinforcement learning rules fail to converge reliably on even 
+simple problems. This architecture is particularly well suited for 
+our algorithm as it can compute arbitrarily complex functions yet 
+calculation of the output probability is simple. 
+I INTRODUCTION 
+The problem of learning associative networks from scalar reinforcement signals is 
+notoriously difficult. Although general purpose algorithms such as REINFORCE 
+(Williams, 1992) and Generalized Learning Automata (rhansalkar, 1991) exist, they 
+are generally slow and have trouble with local minima. As an example, when we 
+attempted to apply these algorithms to mixture of experts networks (Jacobs et al., 
+1991), the algorithms typically converged to the local minimum which places the 
+entire burden of the task on one expert. 
+Here we present a new reinforcement learning algorithm which has faster and more 
+reliable convergence properties than previous algorithms. The next section describes 
+the algorithm and draws comparisons between it and existing algorithms. The 
+following section details its application to Gaussian units and mixtures of Gaussian 
+experts. Finally, we present empirical results. 
+Reinforcement Learning by Probability Matching 1081 
+2 REINFORCEMENT PROBABILITY MATCHING 
+We begin by formalizing the learning problem. Given an input x  Y from the 
+environment, the network must select an output y  y. The network then receives 
+a scalar reward signal r, with a mean  and distribution that depend on x and 
+y. The goal of the learner is to choose an output which maximizes the expected 
+reward. Due to the lack of an explicit error signal, the learner must choose its 
+output stochastically, exploring for better rewards. Typically the learner starts with 
+a parameterized form for the conditional output density p0(ylx), and the learning 
+problem becomes one of finding the parameters 0 which maximize the expected 
+reward: 
+Jr(O) =/x P(x)pø(ylx)(x'y)dydx' 
+,Y 
+We present an alternative route to the maximum expected reward cost function, 
+and in doing so derive a novel learning rule for updating the network's parameters. 
+The learner's task is to choose from a set of conditional output distributions based 
+on the reward it receives from the environment. These rewards can be thought of as 
+inverse energies; input/output pairs that receive high rewards are low energy and 
+are preferred by the environment. Energies can always be converted into probabil- 
+ities through the Boltzmann distribution, and so we can define the environment 's 
+conditional distribution on 3/given x, 
+exp(-T -E(x,y)) _ exp(T-(x,y)) 
+P*(YlX) = ZT(X) -- ZT(X) ' 
+where T is a temperature parameter and ZT(X) is a normalization constant which 
+depends on T. This distribution can be thought of as representing the environment 's 
+ideal input-output mapping, high reward input-output pairs being more typical or 
+likely than low reward pairs. The temperature parameter determines the strength of 
+this preference: when T is infinity all outputs are equally likely; when T is zero only 
+the highest reward output is chosen. This new distribution is a purely theoretical 
+construct, but it can be used as a target distribution for the learner. If the t? are 
+adjusted so that p(ylx) is nearly equal to p*(ylx), then the network's output will 
+typically result in high rewards. 
+The agreement between the network and environment conditional output densities 
+can be measured with the Kullback-Liebler (KL) divergence: 
+KL(p IIp*) - -/x P(X)p(ylx)[løgP*(ylx) - løgP(ylx)] dydx (1) 
+,y 
+1 /x P(x)p(ylx)[,(x, y) - TP(x, y)] dydx q-/.,e p(x)log ZT(x)dx, 
+---- -- ,y 
+where (x, y) is defined as the logarithm of the conditional output probability and 
+can be thought of as the network's estimate of the mean reward. This cost function 
+is always greater than or equal to zero, with equality only when the two probability 
+distributions are identical. 
+Keeping only the part of Equation 1 which depends on 0, we define the Probability 
+Matching (PM) cost function: 
+JpM(9) -- --/2 p(x)po(Ylx)[(x,y) -- To(x,y)] dydx : -Jr(O) - TS(po) 
+,Y 
+The PM cost function is analogous to a free energy, balancing the energy, in the 
+form of the negative of the average reward, and the entropy S(ps) of the output 
+1082 P.N. SABES, M. I. JORDAN 
+1 
+0.5 
+-o.5 o o,5 1 c 
+T=I T=.5 
+-0.5 0 0.5 
+T--.2 
+-0.5 0 0.5 
+T = .05 
+Figure 1: p*'s (dashed) and PM optimal Gaussians (solid) for the same bimodal reward 
+function and various temperatures. Note the differences in scale. 
+distribution. A higher T corresponds to a smoother target distribution and tilts the 
+balance of the cost function in favor of the entropy term, making diffuse output dis- 
+tributions more favorable. Likewise, a small T results in a sharp target distribution 
+placing most of the weight on the reward dependent term of cost function, which is 
+always optimized by the singular solution of a spike at the highest reward output. 
+Although minimizing the PM cost function will result in sampling most often at 
+high reward outputs, it will not optimize the overall expected reward if T > 0. 
+There are two reasons for this. First, the output y which maximizes (x, y) may 
+not maximize (x,y). Such an example is seen in the first panel of Figure 1: 
+the network's conditional output density is a Gaussian with adjustable mean and 
+variance, and the environment has a bimodal reward function and T -- 1. Even in 
+the realizable case, however, the network will choose outputs which are suboptimal 
+with respect to its own predicted reward, with the probability of choosing output y 
+falling off exponentially with P (x, y). The key point here is that early in learning 
+this non-optimality is exactly what is desired. The PM cost function forces the 
+learner to maintain output density everywhere the reward, as measure by p*l/T, is 
+not much smaller than its maximum. When T is high, the rewards are effectively 
+flattened and even fairly small rewards look big. This means that a high temperature 
+ensures that the learner will explore the output space. 
+Once the network is nearly PM optimal, it would be advantageous to "sharpen up" 
+the conditional output distribution, sampling more often at outputs with higher 
+predicted rewards. This translates to decreasing the entropy of the output distri- 
+bution or lowering T. Figure I shows how the PM optimal Gaussian changes as the 
+temperature is lowered in the example discussed above; at very low temperatures 
+the output is almost always near the mode of the target distribution. In the limit 
+of T = O, JPM becomes original reward maximization criterion Jr. The idea of the 
+Probability Matching algorithm is to begin training with a large T, say unity, and 
+gradually decrease it as the performance improves, effectively shifting the bias of 
+the learner from exploration to exploitation. 
+We now must find an update rule for 0 which minimizes JPM (0). We proceed by 
+looking for a stochastic gradient descent step. Differentiating the cost function gives 
+VSJPM(O) '-- --/ p(x)p(Ylx)[ff(x,y) - TP(x,y)]V(x,y)dydx. 
+,Y 
+Thus, if after every action the parameters are updated by the step 
+AO = a[r -- TPo(x, y)] X7oo(x, y), 
+where alpha is a constant which can vary over time, then the parameters will on 
+average move down the gradient of the PM cost function. Note that any quantity 
+Reinforcement Learning by Probability Matching 1083 
+which does not depend on y or r can be added to the difference in the update rule, 
+and the expected step will still point along the direction of the gradient. 
+The form of Equation 2 is similar to the REINFORCE algorithm (Williams, 1992), 
+whose update rule is 
+A0 -- c(r - b)V0 logp0(Ylx), 
+where b, the reinforcement baseline, is a quantity which does not depend on y or r. 
+Note that these two update rules are identical when T is zero. 1 The advantage of the 
+PM rule is that it allows for an early training phase which encourages exploration 
+without forcing the output distribution to converge on suboptimal outputs. This 
+will lead to striking qualitative differences in the performance of the algorithm for 
+training mixtures of Gaussian experts. 
+3 
+UPDATE RULES FOR GAUSSIAN UNITS AND 
+MIXTURES OF GAUSSIAN EXPERTS 
+We employ Gaussian units with mean t = wTx and covariance 2I. The learner 
+must select the matrix w and scalar (r which minimize JPM (w, (r). Applying the 
+update rule in Equation 2, we get 
+1 
+Aw = c[r- T(x,y)] -(y-/)Tx 
+1( Ily- tll 1) 
+/a = c [r - r(x, y)] - as . 
+In practice, for both single Gaussian units and the mixtures presented below we 
+avoid the issue of constraining (r > 0 by updating log (r directly. 
+We can generalize the linear model by considering a conditional output distribution 
+in the form of a mixture of Gaussian experts (Jacobs et al., 1991), 
+N 
+  1 ) 
+p(ylx) -  gi(x)(27rai )- exp(-- Ily - ß 
+i--1 
+Expert i has mean t i = w/Tx and covariance aI. The prior probability given x of 
+choosing expert i, gi(x), is determined by a single layer gating network with weight 
+matrix v and softmax output units. The gating network learns a soft partitioning 
+of the input space into regions for which each expert is responsible. 
+Again, we can apply Equation 2 to get the PM update rules: 
+Avi = a[r-T(x,y)](hi-gi)x 
+Awi- [r- T(x,y)]hi--l(y - ti)Tx 
+(r i 
+Ai - [r- TP(x,y)] hi--l (llY- till2 -1) 
+where hi -- giPi(ylx)/p(ylx) is the posterior probability of choosing expert i given 
+y. We note that the PM update rules are equivalent to the supervised learning 
+gradient descent update rules in (Jacobs et al., 1991) modulated by the difference 
+between the actual and expected rewards. 
+This fact implies that the REINFORCE step is in the direction of the gradient of 
+as shown by (Williams, 1992). See Williams and Peng, 1991, for a similar REINFORCE 
+plus entropy update rule. 
+1084 P.N. SABES, M. I. JORDAN 
+Table 1: Convergence times and gate entropies for the linear example (standard errors 
+in parentheses). Convergence times: An experiment consisting of 50 runs was conducted 
+for each algorithm, with a wide range of learning rates and both reward functions. Best 
+results for each algorithm are reported. Entropy: Values are averages over the last 5,000 
+time steps of each run. 20 runs of 50,000 time steps were conducted. 
+Algorithm Convergence Time Entropy 
+rM, I lO88 (43) .993 (.001) 
+PM, T = .5 -- .97/.o2/ 
+PM, T = .1 -- .48 .04 
+REINFORCE 2998 (183) .21 .03 
+REINr-COM? 1622 (46) .21 (.03) 
+Both the hi and  depend on the overall conditional probability p(y[x), which in 
+turn depends on each pi(ylx). This adds an extra step to the training procedure. 
+After receiving the input x, the network chooses an expert based on the priors gi(x) 
+and an output y from the selected expert's output distribution. The output is then 
+sent back to each of the experts in order to compute the likelihood of their having 
+generated it. Given the set ofpi's, the network can update its parameters as above. 
+4 SIMULATIONS 
+We present three examples designed to explore the behavior of the Probability 
+Matching algorithm. In each case, networks were trained using Probability Match- 
+ing, REINFORCE, and REINFORCE with reinforcement comparison (REINF- 
+COMP), where a running average of the reward is used as a reinforcement base- 
+line (Sutton, 1984). In the first two examples an optimal output function y*(x) 
+was chosen and used to calculate a noisy error, e -- IlY- Y* (x) - zll , where z was 
+i.i.d. zero-mean Gaussian with a = .1. The error signal determined the reward 
+by one of two functions, r = -e2/2 or exp(-e2/2). When the RMSE between the 
+network mean and the optimal output was less that .05 the network was said to 
+have converged. 
+4.1 A Linear Example 
+In this example x was chosen uniformly from [-1, 1] 2 x {1}, and the optimal output 
+was y* = Ax, for a 2 x 3 matrix A. A mixture of three Gaussian experts was trained. 
+The details of the simulation and results for each algorithm are shown in Table 1. 
+Probability Matching with constant T = i shows almost a threefold reduction 
+in training time compared to REINFORCE and about a 50% improvement over 
+REINF-COMP. 
+The important point of this example is the manner in which the extra Gaussian 
+units were employed. We calculated the entropy of the gating network, normalized 
+so that a value of one means that each expert has equal probability of being chosen 
+and a value of zero means that only one expert is ever chosen. The values after 
+50,000 time steps are shown in the second column of Table 1. When T  1, the 
+Probability Matching algorithm gives the three experts roughly equal priors. This 
+is due to the fact that small differences in the experts' parameters lead to increased 
+output entropy if all experts are used. REINFORCE on the other hand always 
+converges to a solution which employs only one expert. This difference in the 
+behavior of the algorithms will have a large qualitative effect in the next example. 
+Reinforcement Learning by Probability Matching 1085 
+Table 2: Results for absolute value. The percentage of trials that converged and the 
+average time to convergence for those trials. Standard errors are in parentheses. 50 trials 
+were conducted for a range of learning rates and with both reward functions; the best 
+results for each algorithm are shown. 
+Algorithm I Successful Trials Convergence Time I 
+PM 100% 6,052 (313) 
+REINFORCE 48% 76,775 {3,329} 
+REINF-COMP 38% 42,105 (3,869) 
+0 10 20 30 40 50 0 
+20 
+10 
+lOO 
+60 2.0 
+40 
+0.0 
+20 
+.... 0 -2.0  
+10 20 30 40 50 60 o.o Lo .o .o 4.o s.o o.o Lo .o 3.o 
+(b) (c) (d) 
+4.0 5.0 
+Figure 2: Example 4.3. The environment's probability distribution for T = 1: (a) density 
+plot of p* vs. y/x, (b) cross-sectional view with y2 = 0. Locally weighted mean and 
+variance of y2/x over representative runs: (c) T = 1, (d) T = 0 (i.e. REINFORCE). 
+4.2 Absolute Value 
+We used a mixture of two Gaussian units to learn the absolute value function. 
+The details of the simulation and the best results for each algorithm are shown in 
+Table 2. Probability Matching with constant T = i converged to criterion on every 
+trial, in marked contrast to the REINFORCE algorithm. With no reinforcement 
+baseline, REINFORCE converged to criterion in only about half of the cases, less 
+with reinforcement comparison. In almost all of the trials that didn't converge, only 
+one expert was active on the domain of the input. Neither version of REINFORCE 
+ever converged to criterion in less than 14,000 time steps. 
+This example highlights the advantage of the Probability Matching algorithm. Dur- 
+ing training, all three algorithms initially use both experts to capture the overall 
+mean of the data. REINFORCE converges on this local minimum, cutting one 
+expert off before it has a chance to explore the rest of the parameter space. The 
+Probability Matching algorithm keeps both experts in use. Here, the more conser- 
+vative approach leads to a stark improvement in performance. 
+4.3 An Example with Many Local Maxima 
+In this example, the learner's conditional output distribution was a bivariate Gaus- 
+sian with tt = [Wl, w2] T z, and the environment 's rewards were a function of y/z. 
+The optimal output distribution p*(y/x) is shown in Figures 2(a,b). These figures 
+can also be interpreted as the expected value of p* for a given w. The weight vector 
+is initially chosen from a uniform distribution over [-.2, .2] 2, depicted as the very 
+small while dot in Figure 2(a). There are a series of larger and larger local maxima 
+off to the right, with a peak of height 2" at w = 2". 
+The results are shown in Table 3. REINFORCE, both with and without reinforce- 
+ment comparison, never got past third peak; the variance of the Gaussian unit would 
+1086 P.N. SABES, M. I. JORDAN 
+Table 3: Results for Example 4.3. These values represent 20 runs for 50,000 time steps 
+each. The first and second columns correspond to number of the peak the learner reached. 
+Mean Final Range of Final Mean Final 
+Algorithm log? wl log 2 wl's r 
+PM, T = 2 28,8 [19.1,51.0] > l0 s 
+PM, T -- 1 6.34 [5.09,8.08] 13.1 
+PM, T = .5 3.06 [3.04,3.07] .40 
+REINFORCE 2.17 [2.00,2.90] .019 
+REINF-COMP 2.05 [2.05,2.06] .18 
+very quickly close down to a small value making further exploration of the output 
+space impossible. Probability Matching, on the other hand, was able to find greater 
+and greater maxima, with the variance growing adaptively to match the local scale 
+of the reward function. These differences can be clearly seen in Figures 2(c,d), 
+which show typical behavior for the Probability Matching algorithm with T = 1 
+and T= 0. 
+5 CONCLUSION 
+We have presented a new reinforcement learning algorithm for associative networks 
+which converges faster and more reliably than existing algorithms. The strength of 
+the Probability Matching algorithm is that it allows for a better balance between 
+exploration of the output space and and exploitation of good outputs. The param- 
+eter T can be adjusted during learning to allow broader output distributions early 
+in training and then to force the network to sharpen up its distribution once nearly 
+optimal parameters have been found. 
+Although the applications in this paper were restricted to networks with Gaus- 
+sian units, the Probability Matching algorithm can be applied to any reinforcement 
+learning task and any conditional output distribution. It could easily be employed, 
+for example, on classification problems using logistic or multinomial (softmax) out- 
+put units or mixtures of such units. Finally, the simulations presented in this paper 
+are of simple examples. Preliminary results indicate that the advantages of the 
+Probability Matching algorithm scale up to larger, more interesting problems. 
+References 
+Jacobs, R. A., Jordan, M. I., Nowlan, S. J., and Hinton, G. E. (1991). Adaptive 
+mixtures of local experts. Neural Computation, 3:79-87. 
+Phansalkar, V. V. (1991). Learning automata algorithms for connectionist systems 
+- local and global convergence. PhD Thesis, Dept. of Electrical Engineering, 
+India Institute of Science, Bangalore. 
+Sutton, R. S. (1984). Temporal credit assignment in reinforcement learning. 
+PhD Thesis, Dept. of Computer and Information Science, University of Mas- 
+sachusetts, Amherst, MA. 
+Williams, R. J. (1992). Simple statistical gradient-following algorithms for connec- 
+tionist reinforcement learning. Machine Learning, 8:229-256. 
+Williams, R. J. and Peng, J. (1991). Function optimization using connectionist 
+reinforcement learning algorithms. Connection Science, 3:241-268. 

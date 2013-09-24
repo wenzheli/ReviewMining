@@ -1,0 +1,337 @@
+A Non-linear Information Maximisation 
+Algorithm that Performs 
+Blind Separation. 
+Anthony J. Bell 
+1;onysalk. edu 
+Terrence J. Sejnowski 
+terrysalk. edu 
+Computational Neurobiology Laboratory 
+The Salk Institute 
+10010 N. Torrey Pines Road 
+La Jolla, California 92037-1099 
+and 
+Department of Biology 
+University of California at San Diego 
+La Jolla CA 92093 
+Abstract 
+A new learning algorithm is derived which performs online stochas- 
+tic gradient ascent in the mutual information between outputs and 
+inputs of a network. In the absence of a priori knowledge about 
+the 'signal' and 'noise' components of the input, propagation of 
+information depends on calibrating network non-linearities to the 
+detailed higher-order moments of the input density functions. By 
+incidentally minimising mutual information between outputs, as 
+well as maximising their individual entropies, the network 'fac- 
+torises' the input into independent components. As an example 
+application, we have achieved near-perfect separation of ten digi- 
+tally mixed speech signals. Our simulations lead us to believe that 
+our network performs better at blind separation than the Herault- 
+Jutten network, reflecting the fact that it is derived rigorously from 
+the mutual information objective. 
+468 Anthony J. Bell, Terrence J. Sejnowski 
+1 Introduction 
+Unsupervised learning algorithms based on information theoretic principles have 
+tended to focus on linear decorrelation (Barlow & F61di/k 1989) or maximisation of 
+signal-to-noise ratios assuming Gaussian sources (Linsker 1992). With the exception 
+of (Becker 1992), there has been little attempt to use non-linearity in networks to 
+achieve something a linear network could not. 
+Non-linear networks, however, are capable of computing more general statistics 
+than those second-order ones involved in decorrelation, and as a consequence they 
+are capable of dealing with signals (and noises) which have detailed higher-order 
+structure. The success of the 'H-J' networks at blind separation (Jutten & Her- 
+ault 1991) suggests that it should be possible to separate statistically independent 
+components, by using learning rules which make use of moments of all orders. 
+This paper takes a principled approach to this problem, by starting with the ques- 
+tion of how to maximise the information passed on in non-linear feed-forward net- 
+work. Starting with an analysis of a single unit, the approach is extended to a 
+network mapping N inputs to N outputs. In the process, it will be shown that, 
+under certain fairly weak conditions, the N --* N network forms a minimally redun- 
+dant encoding of the inputs, and that it therefore performs Independent Component 
+Analysis (ICA). 
+2 Information maximisation 
+The information that output Y contains about input X is defined as: 
+x) = n(Y)- n(VlX) 
+(1) 
+where H(Y) is the entropy (information) in the output, while H(YIX ) is whatever 
+information the output has which didn't come from the input. In the case that we 
+have no noise (or rather, we don't know what is noise and what is signal in the 
+input), the mapping between X and Y is deterministic and H(YIX ) has its lowest 
+possible value of -c. Despite this, we may still differentiate eq.1 as follows (see 
+[5]): 
+o x) = aøo (2) 
+Ow 
+Thus in the noiseless case, the mutual information can be maximised by maximising 
+the entropy alone. 
+2.1 One input, one output. 
+Consider an input variable, x, passed through a transforming function, g(x), to pro- 
+duce an output variable, y, as in Fig.2.1(a). In the case that g(x) is monotonically 
+increasing or decreasing (ie: has a unique inverse), the probability density function 
+(pdf) of the output fy(y) can be written as a function of the pdf of the input fx(x), 
+(Papoulis, eq. 5-5): 
+f(Y) = Oy-7 (3) 
+A Non-Linear Information Maximization Algorithm That Performs Blind Separation 469 
+The entropy of the output, H(y), is given by: 
+H(y) - -E[ln fy(y)] - - fy(y)ln fy(y)dy 
+(4) 
+where E[.] denotes expected value. Substituting eq.3 into eq.4 gives 
+H(y)-E ln -E[lnfx(x)] 
+(5) 
+The second term on the right may be considered to be unaffected by alterations in 
+a parameter, w, determining g(x). Therefore in order to maximise the entropy of y 
+by changing w, we need only concentrate on maximising the first term, which is the 
+average log of how the input affects the output. This can be done by considering 
+the 'training set' of x's to approximate the density fx(a:), and deriving an 'online', 
+stochastic gradient descent learning rule: 
+OH O (lnOY) 
+= ow 
+In the case of the logistic transfer function y = (1 + e-) -x , u = wx + wo in which 
+the input is multiplied by a weight w and added to a bias-weight wo, the terms 
+above evaluate as: 
+Oy 
+-- wy(1-y) (7) 
+Ow  -- y(1-y)(lq-wx(1-2y)) (8) 
+Dividing eq.8 by eq.7 gives the learning rule for the logistic function, as calculated 
+from the general rule of eq.6' 
+1 
+Aw c -- + x(1 - 2y) (9) 
+w 
+Similar reasoning leads to the rule for the bias-weight: 
+Awo cr I - 2y (10) 
+The effect of these two rules can be seen in Fig. la. For example, if the input 
+pdf fx(a:) was gaussian, then the Aw0-rule would centre the steepest part of the 
+sigmoid curve on the peak of fx(x), matching input density to output slope, in a 
+manner suggested intuitively by eq.3. The Aw-rule would then scale the slope of 
+the sigmoid curve to match the variance of fx(x). For example, narrow pdfs would 
+lead to sharply-sloping sigmoids. The Aw-rule is basically anti-Hebbian , with an 
+anti-decay term. The anti-Hebbian term keeps y away from one uninformative 
+situation: that of y being saturated to 0 or 1. But anti-Hebbian rules alone make 
+weights go to zero, so the anti-decay term (l/w) keeps y away from the other 
+uninformative situation: when w is so small that y stays around 0.5. The effect 
+of these two balanced forces is to produce an output pdf fy(y) which is close to 
+the fiat unit distribution, which is the maximum entropy distribution for a variable 
+If y = tanh(wx + wo) then Aw or  - 2xy 
+470 Anthony J. Bell, Terrence J. Sejnowski 
+_ X (b) gOop t go 3 
+(a) ox 
+y 
+Figure 1: (a) Optimal information flow in sigmoidal neurons (Schraudolph et al 
+1992). Input z having density function f(z), in this case a gaussian, is passed 
+through a non-linear function g(z). The information in the resulting density, fy(y) 
+depends on matching the mean and variance of z to the threshold and slope of g(z). 
+In (b) fy (y) is plotted for different values of the weight w. The optimal weight, Wopt 
+transmits most information. 
+bounded between 0 and 1. Fig. lb illustrates a family of these distributions, with 
+the highest entropy one occurlug at Wopt. 
+A rule which maximises information for one input and one output may be suggestive 
+for structures such as synapses and photoreceptors which must position the gain of 
+their non-linearity at a level appropriate to the average value and size of the input 
+fluctuations. However, to see the advantages of this approach in artificial neural 
+networks, we now analyse the case of multi-dimensional inputs and outputs. 
+2.2 N inputs, N outputs. 
+Consider a network with an input vector x, a weight matrix W and a monotonically 
+transformed output vector y = g(Wx + w0). Analogously to eq.3, the multivariate 
+probability density function of y can be written (Papoulis, eq. 6-63): 
+fx(x) 
+fy(y)- ij I (11) 
+where IJI is the absolute value of the Jacobian of the transformation. The Jacobian 
+is the determinant of the matrix of partial derivatives: 
+J = det 
+ ... O 
+Ox Oxn 
+(12) 
+The derivation proceeds as in the previous section except instead of maximising 
+ln(Oy/Ox), now we maximise In [JI. For sigmoidal units, y = (1 + e-U) -1, u = 
+A Non-Linear Information Maximization Algorithm That Performs Blind Separation 471 
+Wx + wo, the resulting learning rules are familiar in form: 
+AW cr [wT] -l+x(1--2y) T 
+Awo cr 1 -- 2y 
+(13) 
+(14) 
+except that now x, y, w0 and I are vectors (1 is a vector of ones), W is a matrix, 
+and the anti-Hebbian term has become an outer product. The anti-decay term has 
+generalised to the inverse of the transpose of the weight matrix. For an individual 
+weight, wij, this rule amounts to: 
+cof wij + xj(1 - 2yi) (15) 
+A wij  detW 
+where cof wii, the colactor of wij, is (-1) i+j times the determinant of the matrix 
+obtained by removing the ith row and the jth column from W. 
+This rule is the same as the one for the single unit mapping, except that instead of 
+w = 0 being an unstable point of the dynamics, now any degenerate weight matrix 
+is unstable, since detW - 0 if W is degenerate. This fact enables different output 
+units, yi, to learn to represent different components in the input. When the weight 
+vectors entering two output units become too similar, det W becomes small and the 
+natural dynamic of learning causes these weight vectors to diverge. This effect is 
+mediated by the numerator, cof wij. When this cofactor becomes small, it indicates 
+that there is a degeneracy in the weight matrix of the rest of the layer (ie: those 
+weights not associated with input xj or output yi). In this case, any degeneracy in 
+W has less to do with the specific weight wij that we are adjusting. 
+3 Finding independent components- blind separation 
+Maximising the information contained in a layer of units involves maximising the 
+entropy of the individual units while minimising the mutual information (the re- 
+dundancy) between them. Considering two units: 
+H(yl,y2) = H(yl) + H(y2)- I(yl,y2) 
+(16) 
+For I(y, y2) to be zero, yx and ya must be statistically independent of each other, 
+so that fyya(y,ya) = fy (y)fya(ya). Achieving such a representation is variously 
+called factoriM code learning, redundancy reduction (Barlow 1961, Atick 1992), or 
+independent component analysis (ICA), and in the general case of continuously 
+valued variables of arbitrary distributions, no learning algorithm has been shown 
+to converge to such a representation. 
+Our method will converge to a minimum redundancy, factoriM representation as 
+long as the individual entropy terms in eq.16 do not override the redundancy term, 
+making an I(y, y2) = 0 solution sub-optimal. One way to ensure this cannot occur 
+is if we have a priori knowledge of the general form of the pdfs of the indepen- 
+dent components. Then we can tailor our choice of node-function to be optimal for 
+transmitting information about these components. For example, unit distributions 
+require piecewise linear node-functions for highest H(y), while the more common 
+gaussian forms require roughly sigmoidal curves. Once we have chosen our node- 
+functions appropriately, we can be sure that an output node y cannot have higher 
+472 Anthony J. Bell, Terrence J. Sejnowski. 
+s x Y_ 
+o? xo? 
+O' 
+unknown BLIND 
+mixing SEPARATION 
+process (learnt weights) 
+WA 
+after learning: 
+-4 0.13 0.09 
+o.o71-zl o.oo 
+o.o -o.o -o.o 
+0.02 0.03 0.00 
+-0.07 0.14 i-3.50 
+-0.07 -0.01 
+0.02 -0.06 
+-0.08 - 
+1 0.02 
+-0.01 0.04 
+Figure 2: (a) In blind separation, sources, s, have been linearly scrambled by a 
+matrix, A, to form the inputs to the network, x. We must recover the sources at 
+our output y, by somehow inverting the mapping A with our weight matrix W. The 
+problem: we know nothing about A or the sources. (b) A successful 'unscrambling' 
+occurs when WA is a 'permutation' matrix. This one resulted from separating five 
+speech signals with our algorithm. 
+entropy by representing some combination of independent components than by rep- 
+resenting just one. When this condition is satisfied for all output units, the residual 
+goal, of minimising the mutual information between the outputs, will dominate the 
+learning. See [5] for further discussion of this. 
+With this caveat in mind, we turn to the problem of blind separation, (Jutten & 
+Herault 1991), illustrated in Fig.2. A set of sources, s,..., SN, (different people 
+speaking, music, noise etc) are presumed to be mixed approximately linearly so 
+that all we receive is N superpositions of them, x,..., XN, which are input to our 
+single-layer information maximisation network. Providing the mixing matrix, A, is 
+non-singular then the original sources can be recovered if our weight matrix, W, is 
+such that WA is a 'permutation' matrix containing only one high value in each row 
+and column. 
+Unfortunately we know nothing about the sources or the mixing matrix. However, 
+if the sources are statistically independent and non-gaussian, then the information 
+in the output nodes will be maximised when each output transmits one independent 
+component only. This problem cannot be solved in general by linear decorrelation 
+techniques such as those of (Barlow & FSldi&k 1989) since second-order statistics 
+can only produce symmetrical decorrelation matrices. 
+We have tested the algorithm in eq.13 and eq.14 on digitally mixed speech signals, 
+and it reliably converges to separate the individual sources. In one example, five 
+separately-recorded speech signals from three individuals were sampled at 8kHz. 
+Three-second segments from each were linearly mixed using a matrix of random 
+values between 0.2 and 4. Each resulting mixture formed an incomprehensible 
+babble. Time points were generated at random, and for each, the corresponding 
+five mixed values were entered into the network, and weights were altered according 
+to eq.13 and eq.14. After on the order of 500,000 points were presented, the network 
+A Non-Linear Information Maximization Algorithm That Performs Blind Separation 473 
+had converged so that WA was the matrix shown in Fig.2b. As can be seen from 
+the permutation structure of this matrix, on average, 95% of each output unit is 
+dedicated to one source only, with each unit carrying a different source. Any residual 
+interference from the four other sources was inaudible. 
+We have not yet performed any systematic studies on rates of convergence or exis- 
+tence of local minima. However the algorithm has converged to separate N inde- 
+pendent components in all our tests (for 2 <_ N < 10). In contrast, we have not 
+been able to obtain convergence of the H-J network on our data set for N > 2. 
+Finally, the kind of linear static mixing we have been using is not equivalent to what 
+would be picked up by N microphones positioned around a room. However, (Platt 
+& Faggin 1992) in their work on the H-J net, discuss extensions for dealing with 
+time-delays and non-static filtering, which may also be applicable to our methods. 
+4 Discussion 
+The problem of Independent Component Analysis (ICA) has become popular re- 
+cently in the signal processing community, partly as a result of the success of the H-J 
+network. The H-J network is identical to the linear decorrelation network of (Bar- 
+low & FSldik 1989) except for non-linearities in the anti-Hebb rule which normally 
+performs only decorrelation. These non-linearities are chosen somewhat arbitrarily 
+in the hope that their polynomial expansions will yield higher-order cross-cumulants 
+useful in converging to independence (Comon et al, 1991). The H-J algorithm lacks 
+an objective function, but these insights have led (Comon 1994) to propose min- 
+imising mutual information between outputs (see also Becker 1992). Since mutual 
+information cannot be expressed as a simple function of the variables concerned, 
+Comon expands it as a function of cumulants of increasing order. 
+In this paper, we have shown that mutual information, and through it, ICA, can 
+be tackled directly (in the sense of eq.16) through a stochastic gradient approach. 
+Sigmoidal units, being bounded, are limited in their 'channel capacity'. Weights 
+transmitting information try, by following eq.13, to project their inputs to where 
+they can make a lot of difference to the output, as measured by the log of the 
+JacobJan of the transformation. In the process, each set of statistically 'dependent' 
+information is channelled to the same output unit. 
+The non-linearity is crucial. If the network were just linear, the weight matrix would 
+grow without bound since the learning rule would be: 
+AW ( [wT] -1 
+(17) 
+This reflects the fact that the information in the outputs grows with their vari- 
+ance. The non-linearity also supplies the higher-order cross-moments necessary 
+to maximise the infinite-order expansion of the information. For example, when 
+y - tanh(u), the learning rule has the form AW c [wT] -1 --2yx T, from which we 
+can write that the weights stabilise (or (AW) - O) when I = 2(tanh(u)uT). Since 
+tanh is an odd function, its series expansion is of the form tanh(u) = -.j bju 2p+1, 
+the b1 being coefficients, and thus this convergence criterion amounts to the con- 
+2p+l 
+dition i,1 bilp(ui uj) = 0 for all output unit pairs i  j, for p = O, 1, 2, 3..., 
+474 Anthony J. Bell, Terrence J. $ejnowski 
+and for the coefficients bijp coming from the Taylor series expansion of the tanh 
+function. 
+These and other issues are covered more completely in a forthcoming paper (Bell 
+& Sejnowski 1995). Applications to blind deconvolution (removing the effects of 
+unknown causal filtering) are also described, and the limitations of the approach 
+are discussed. 
+Acknowledgements 
+We are much indebted to Nici Schraudolph, who not only supplied the original idea 
+in Fig.1 and shared his unpublished calculations [13], but also provided detailed 
+criticism at every stage of the work. Much constructive advice also came from Paul 
+Viola and Alexandre Pouget. 
+References 
+[1] 
+[2] 
+[3] 
+[4] 
+[5] 
+[61 
+[7] 
+IS] 
+[9] 
+[10] 
+[111 
+[12] 
+[13] 
+Atick J.J. 1992. Could information theory provide an ecological theory of sen- 
+sory processing, Network 3,213-251 
+Barlow H.B. 1961. Possible principles underlying the transformation of sensory 
+messages, in Sensory Communication, Rosenblith W.A. (ed), MIT press 
+Barlow H.B. & FSldi&k P. 1989. Adaptation and decorrelation in the cortex, 
+in Durbin R. et al (eds) The Computing Neuron, Addison-Wesley 
+Becker S. 1992. An information-theoretic unsupervised learning algorithm for 
+neural networks, Ph.D. thesis, Dept. of Comp. Sci., Univ. of Toronto 
+Bell A.J. & Sejnowski T.J. 1995. An information-maximisation approach to 
+blind separation and blind deconvolution, Neural Computation, in press 
+Comon P., Jutten C. & Herault J. 1991. Blind separation of sources, part II: 
+problems statement, Signal processing, 24, 11-21 
+Comon P. 1994. Independent component analysis, a new concept? Signal pro- 
+cessing, 36, 287-314 
+Hopfield J.J. 1991. Olfactory computation and object perception, Proc. Natl. 
+Acad. Sci. USA, vol. 88, pp.6462-6466 
+Jutten C. & Herault J. 1991. Blind separation of sources, part I: an adaptive 
+algorithm based on neuromimetic architecture, Signal processing, 24, 1-10 
+Linsker R. 1992. Local synaptic learning rules suffice to maximise mutual in- 
+formation in a linear network, Neural Computation, 4, 691-702 
+Papoulis A. 1984. Probability, random variables and stochastic processes, œnd 
+edition, McGraw-Hill, New York 
+Platt J.C. 2z Faggin F. 1992. Networks for the separation of sources that are 
+superimposed and delayed, in Moody J.E et al (eds) Adv. Neut. Inf. Proc. Sys. 
+,/, Morgan-Kaufmann 
+Schraudolph N.N., Hart W.E. & Belew R.K. 1992. Optimal information flow 
+in sigmoidal neurons, unpublished manuscript 

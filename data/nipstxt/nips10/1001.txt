@@ -1,0 +1,352 @@
+Generalized Prioritized Sweeping 
+David Andre Nir Friedman Ronald Parr 
+Computer Science Division, 387 Soda Hall 
+University of California, Berkeley, CA 94720 
+{dandre, nir, parr}Ocs. berkeley. edu 
+Abstract 
+Prioritized sweeping is a model-based reinforcement learning method 
+that attempts to focus an agent's limited computational resources to 
+achieve a good estimate of the value of environment states. To choose ef- 
+fectively where to spend a costly planning step, classic prioritized sweep- 
+ing uses a simple heuristic to focus computation on the states that are 
+likely to have the largest errors. In this paper, we introduce generalized 
+prioritized sweeping, a principled method for generating such estimates 
+in a representation-specific manner. This allows us to extend prioritized 
+sweeping beyond an explicit, state-based representation to deal with com- 
+pact representations that are necessary for dealing with large state spaces. 
+We apply this method for generalized model approximators (such as 
+Bayesian networks), and describe preliminary experiments that compare 
+our approach with classical prioritized sweeping. 
+1 Introduction 
+In reinforcement learning, there is a tradeoff between spending time acting in the envi- 
+ronment and spending time planning what actions are best. Model-free methods take one 
+extreme on this question-- the agent updates only the state most recently visited. On the 
+other end of the spectrum lie classical dynamic programming methods that reevaluate the 
+utility of every state in the environment after every experiment. Prioritized sweeping (PS) 
+[6] provides a middle ground in that only the most "important" states are updated, according 
+to a priority metric that attempts to measure the anticipated size of the update for each state. 
+Roughly speaking, PS interleaves performing actions in the environment with propagating 
+the values of states. After updating the value of state s, PS examines all states t from which 
+the agent might reach s in one step and assigns them priority based on the expected size of 
+the change in their value. 
+A crucial desideratum for reinforcement learning is the ability to scale-up to complex 
+domains. For this, we need to use compact(or generalizing) representations of the model and 
+the value function. While it is possible to apply PS in the presence of such representations 
+(e.g., see [1]), we claim that classic PS is ill-suited in this case. With a generalizing model, 
+a single experience may affect our estimation of the dynamics of many other states. Thus, 
+we might want to update the value of states that are similar, in some appropriate sense, to 
+s since we have a new estimate of the system dynamics at these states. Note that some of 
+these states might never have been reached before and standard PS will not assign them a 
+priority at all. 
+1002 D. Andre, N. Friedman and R. Parr 
+In this paper, we present generalizedprioritized sweeping (GenPS), a method that utilizes 
+a formal principle to understand and extend PS and extend it to deal with parametric 
+representations for both the model and the value function. If GenPS is used with an explicit 
+state-space model and value function representation, an algorithm similar to the original 
+(classic) PS results. When a model approximator (such as a dynamic Bayesian network 
+[2]) is used, the resulting algorithm prioritizes the states of the environment using the 
+generalizations inherent in the model representation. 
+2 The Basic Principle 
+We assume the reader is familiar with the basic concepts of Markov Decision Processes 
+(MDPs); see, for example, [5]. We use the following notation: A MDP is a 4-tuple, 
+(8, .A,p, r) where 8 is a set of states, .A is a set of actions, p(t I s, a) is a transition 
+model that captures the probability of reaching state t after we execute action a at state 
+s, and r(s) is a reward function mapping 8 into real-valued rewards. In this paper, we 
+focus on infinite-horizon MDPs with a discount factor ?. The agent's aim is to maximize 
+the expected discounted total reward it will receive. Reinforcement learning procedures 
+attempt to achieve this objective when the agent does not know p and r. 
+A standard problem in model-based reinforcement learning is one of balancing between 
+planning (i.e., choosing a policy) and execution. Ideally, the agent would compute the 
+optimal value function for its model of the environment each time the model changes. This 
+scheme is unrealistic since finding the optimal policy for a given model is computationally 
+non-trivial. Fortunately, we can approximate this scheme if we notice that the approximate 
+model changes only slightly at each step. Thus, we can assume that the value function 
+from the previous model can be easily "repaired" to reflect these changes. This approach 
+was pursued in the DYNA [7] framework, where after the execution of an action, the 
+agent updates its model of the environment, and then performs some bounded number 
+of value propagation steps to update its approximation of the value function. Each vaiue- 
+propagation step locally enforces the Bellman equation by setting (s) -- maxa.A Q(s, a), 
+where O(s,a) = ?(s) + ? 5'8,$t5(s' [ s,a)fr(d), t5(s  [ s,a) and (s) are the agent's 
+approximation of the MDP, and  is the agent's approximation of the value function. 
+This raises the question of which states should be updated. In this paper we propose the 
+following general principle: 
+GenPS Principle: Update states where the approximation of the value 
+function will change the most. That is, update the states with the largest 
+Bellman error, E(s) = IP'(s) - maxaA O(s, a)l. 
+The motivation for this principle is straightforward. The maximum Bellman error can be 
+used to bound the maximum difference between the current value function, P'(s) and the 
+optimal value function, V*(s) [9]. This difference bounds the policy loss, the difference 
+between the expected discounted reward received under the agent's current policy and the 
+expected discounted reward received under the optimal policy. 
+To carry out this principle we have to recognize when the Bellman error at a state changes. 
+This can happen at two different stages. First, after the agent updates its model of the world, 
+new discrepancies between (s) and max O(s, a) might be introduced, which can increase 
+the Bellman error at s. Second, after the agent performs some value propagations,  is 
+changed, which may introduce new discrepancies. 
+We assume that the agent maintains a value function and a model that are parameterized 
+by Ov and OM. (We will sometimes refer to the vector that concatenates these vectors 
+together into a single, larger vector simply as 0.) When the agent observes a transition from 
+state s to s t under action a, the agent updates its environment model by adjusting some 
+of the parameters in OM. When performing value-propagations, the agent updates f; by 
+updating parameters in Or. A change in any of these parameters may change the Bellman 
+error at other states in the model. We want to recognize these states without explicitly 
+Generalized Prioritized Sweeping 1003 
+computing the Bellman error at each one. Formally, we wish to estimate the change in 
+error, IAE(8)I, due to the most recent change A0 in the parameters. 
+We propose approximating IAE(8)I by using the gradient of the right hand side of the 
+Bellman equation (i.e. maxa O(s,a)). Thus, we have:  IVmaxa O(s,a). Aol 
+which estimates the change in the Bellman error at state s as a function of the change in 
+0(s, a). The above still requires us to differentiate over a max, which is not differentiable. 
+In general, we want to to overestimate the change, to avoid "starving" states with non- 
+negligible error. Thus, we use the following upper bound: [V(max O(,a))' Ao[ _< 
+We now define the generalized prioritized sweeping procedure. The procedure maintains 
+a priority queue that assigns to each state s a priority,pri(s). After making some changes, we 
+can reassign priorities by computing an approximation of the change in the value function. 
+Ideally, this is done using a procedure that implements the following steps: 
+procedure update-priorities (&) 
+tor all s  $ pri(s) - pri(s) + max, IV0(s, a). A0 I. 
+Note that when the above procedure updates the priority for a state that has an existing 
+priority, the priorities are added together. This ensures that the priority being kept is an 
+overestimate of the priority of each state, and thus, the procedure will eventually visit all 
+states that require updating. 
+Also, in practice we would not want to reconsider the priority of all states after an update 
+(we return to this issue below). 
+Using this procedure, we can now state the general learning procedure: 
+procedure GenPS 0 
+loop 
+perform an action in the environment 
+update the model; let be be the change in 0 
+call update-priorities(A) 
+while there is available computation time 
+let $max -_- arg max, pri(s) 
+perform value-propagation for f/(sm'); let Ao be the change in 0 
+call update-priorities(A) 
+pF/($ max) --- 1('/($ max) -- max, 0($max, tz)l ' 
+Note that the GenPS procedure does not determine how actions are selected. This issue, 
+which involves the problem of exploration, is orthogonal to the our main topic. Standard 
+approaches, such as those described in [5, 6, 7], can be used with our procedure. 
+This abstract description specifies neither how to update the model, nor how to update the 
+value function in the value-propagation steps. Both of these depend on the choices made 
+in the corresponding representation of the model and the value function. Moreover, it is 
+clear that in problems that involve a large state space, we cannot afford to recompute the 
+priority of every state in updato-prioritios. However, we can simplify this computation 
+by exploiting sparseness in the model and in the worst case we may resort to approximate 
+methods for finding the states that receive high priority after each change. 
+3 Explicit, State-based Representation 
+In this section we briefly describe the instantiation of the generalized procedure when the 
+rewards, values, and transition probabilities are explicitly modeled using lookup tables. In 
+this representation, for each state s, we store the expected reward at s, denoted by Oe(s), the 
+estimated value at s, denoted by 0(,), and for each action a and state t the number of times 
+the execution of a at s lead to state t, denoted Ns,a, t. From these transition counts we can 
+In general, this will assign the state a new priority of 0, unless there is a self loop. In this case it 
+will easy to compute the new Bellman error as a by-product of the value propagation step. 
+1004 D. Andre, N. Friedman and R. Parr 
+o 
+N .... t+N,,a, t , where 0 
+Nst,a,t are 
+reconstruct the transition probabilities p(t 
+fictional counts that capture our prior information about the system's dynamics. 2 After each 
+step in the world, these reward and probability parameters are updated in the straightforward 
+manner. Value propagation steps in this representation set 0//(t ) to the right hand side of 
+the Bellman equation. 
+To apply the GenPS procedure we need to derive the gradient of the Bellman equation 
+for two situations: (a) after a single step in the environment, and (b) after a value update. 
+In case (a), the model changes after performing action s-t. In this case, it is easy to 
+tP(t I s, a)V(t')), and 
+No (v(t)- '^' 
+verify that VQ(s,a) ß Ao = Ao( o + y N 
+that VQ(s', a') - A0 = 0 if s'  s or a'  a. Thus, s is the only state whose priority 
+changes. 
+In case (b), the value function changes after updating the value of a state t. In this case, 
+VQ(s, a). Ao = ?p(t [ s, a)Aov(). It is easy to see that this is nonzero only ift is reachable 
+from 8. In both cases, it is straightforward to locate the states where the Bellman error 
+might have have changed, and the computation of the new priority is more efficient than 
+computing the Bellman-error. 3 
+Now we can relate GenPS to standard prioritized sweeping. The PS procedure has the 
+general form of this application of GenPS with three minor differences. First, after per- 
+forming a transition s-t in the environment, PS immediately performs a value propagation 
+for state s, while GenPS increments the priority of s. Second, after performing a value 
+propagation for state t, PS updates the priority of states s that can reach t with the value 
+maxa p(t [ s, a)- At(t). The priority assigned by GenPS is the same quantity multiplied by 
+?. Since PS does not introduce priorities after model changes, this multiplicative constant 
+does not change the order of states in the queue. Thirdly, GenPS uses addition to combine 
+the old priority of a state with a new one, which ensures that the priority is indeed an upper 
+bound. In contrast, PS uses max to combine priorities. 
+This discussion shows that PS can be thought of as a special case of GenPS when the 
+agent uses an explicit, state-based representation. As we show in the next section, when 
+the agent uses more compact representations, we get procedures where the prioritization 
+strategy is quite different from that used in PS. Thus, we claim that classic PS is desirable 
+primarily when explicit representations are used. 
+4 Factored Representation 
+We now examine a compact representation of/5(s' I s, a) that is based on dynamic Bayesian 
+networks (DBNs) [2]. DBNs have been combined with reinforcement learning before in 
+[8], where they were used primarily as a means getting better generalization while learning. 
+We will show that they also can be used with prioritized sweeping to focus the agent's 
+attention on groups of states that are affected as the agent refines its environment model. 
+We start by assuming that the environment state is described by a set of random variables, 
+X,..., Xn. For now, we assume that each variable can take values from a finite set 
+Val(Xi). An assignment of values a:,..., a:n to these variables describes a particular 
+environment state. Similarly, we assume that the agent's action is described by random 
+variables A,..., A. To model the system dynamics, we have to represent the probability 
+of transitions st, where s and t are two assignments to X,..., Xr and a is an assignment 
+to A,..., A. To simplify the discussion, we denote by Y,..., Yr the agent's state after 
+2Formally, we are using multinomial Dirichlet priors. See, for example, [4] for an introduction to 
+these Bayesian methods. 
+3Although ø("0 involves a summation over all states, it can be computed efficiently. To see 
+ON,,,t 
+this, note that the summation is essentially the old value of Q(s, a) (minus the immediate reward) 
+which can be retained in memory. 
+Generalized Prioritized Sweeping 1005 
+the action is executed (e.g., the state t). Thus, p(t I s, a) is represented as a conditional 
+probability P(YI , . . . , Y, [ Xi, . . . , Xn, A , . . . , A ). 
+A DBN model for such a conditional distribution consists of two components. The 
+first is a directed acyclic graph where each vertex is labeled by a random variable and in 
+which the vertices labeled X,..., Xn and A,..., A are roots. This graph speoifies the 
+factorization of the conditional distribution: 
+i=1 
+P(Y lea/), 
+where Pal are the parents of Y/in the graph. The second component of the DBN model is 
+a description of the conditional probabilities P(Y/[ Pal). Together, these two components 
+describe a unique conditional distribution. The simplest representation of P(Y/ I Pal) is a 
+table that contains a parameter Oi,v,z = P(Yi = Y I Pal = z) for each possible combination 
+of y  Val(Yi) and z  Val(Pai) (note that z is a joint assignment to several random 
+variables). It is easy to see that the "density" of the DBN graph determines the number of 
+parameters needed. In particular, a complete graph, to which we cannot add an arc without 
+violating the constraints, is equivalent to a state-based representation in terms of the number 
+of parameters needed. On the other hand, a sparse graph requires few parameters. 
+In this paper, we assume that the learner is supplied with the DBN structure and only has to 
+learn the conditional probability entries. It is often easy to assess structure information from 
+experts even when precise probabilities are not available. As in the state-based representa- 
+tion, we learn the parameters using Dirichlet priors for each multinomial distribution [4]. 
+In this method, we assess the conditional probability Oi,v,z using prior knowledge and the 
+frequency of transitions observed in the past where Y/- y among those transitions where 
+Pal - z. Learning amounts to keeping counts Ni,u,, that record the number of transitions 
+where Y/ = y and Pal = z for each variable Y/and values y  Val(Yi) and z  Val(Pai). 
+Our prior knowledge is represented by fictional counts N. ø Then we estimate probabil- 
+Ni y z+Ni ø, z 
+ities using the formula Oi,y,, .... " where Ni,.,, - -], Ni,v,,z + Niø,y,,, 
+-- Ni,., z  -- ' 
+We now identify which states should be reconsidered after we update the DBN parameters. 
+Recall that this requires estimating the term VQ(s, a). A0. Since A0 is sparse, after making 
+oq(,a) , 
+the transition s*-t*, we have that VQ(s, a) ß Ao = Y]i oJv.t ,zt ' where Yi and z' are the 
+assignments to Y/and Pal, respectively, in s*-t*. (Recall that s*, a* and t* jointly assign 
+values to all the variables in the DBN.) 
+a 
+We say that a transition s--t is consistent with an assignment X - x for a vector of 
+random variables X, denoted (s, a, t)  (X = x), if X is assigned the value x in st. 
+We also need a similar notion for a partial description of a transition. We say that s and 
+a are consistent with X = x, denoted (s, a,-)  (X = x), if there is a t such that 
+(x = 
+Using this notation, we can show that if (s, a, .)  (Pal - z'), then 
+? 1 
+Ni,.,z; Oi,y t ,z; 
+l s, a)f/(t) - 
+p(t i s, a)l?(t)] 
+, 
+and if s, a are inconsistent with Pal = z i , then oJv,.;.z7 = O. 
+This expression shows that if s is similar to s* in that both agree on the values they assign 
+to the parents of some Y/(i.e., (s, a*) is consistent with z'), then the priority of s would 
+change after we update the model. The magnitude of the priority change depends upon both 
+the similarity of s and s* (i.e. how many of the terms in VQ(s, a) ß Ao will be non-zero), 
+and the value of the states that can be reached from s. 
+1006 D. Andre, N. Friedman and R. Parr 
+II 
+3 
+2.5 
+2 
+1.5 
+I 
+0.5 
+ / 
+2000 3000 4000 5000 6000 7000 8000 9000 I0000 
+Number of iterations 
+(a) (b) (c) 
+Figure 1: (a) The maze used in the experiment. $ marks the start space, G the goal state, and 1,2 
+and 3 are the three flags the agent has to set to receive the reward. (b) The DBN structure that captures 
+the independencies in this domain. (c) A graph showing the performance of the three procedures on 
+this example. P$ is GenPS with a state-based model, P$+factored is the same procedure but with a 
+factored model, and (3enP$ exploits the factored model in prioritization. Each curve is the average 
+of 5 runs. 
+The evaluation of ONi,; ,z requires us to sum over a subset of the states -namely, those 
+states t that are consistent with zT. Unfortunately, in the worst case this will be a large 
+fragment of the state space. If the number of environment states is not large, then this might 
+be a reasonable cost to pay for the additional benefits of GenPS. However, this might be a 
+burdensome when we have a large state space, which are the cases where we expect to gain 
+the most benefit from using generalized representations such as DBN. 
+In these situations, we propose a heuristic approach for estimating VQ(s, a)Ao without 
+summing over large numbers of states for computing the change of priority for each possible 
+state. This can be done by finding upper bounds on or estimates of o2(8,a) Once we 
+have computed these estimates, we can estimate the priority change for each state s. We 
+use the notation s "i s* if s and s* both agree on the assignment to Pal. If Ui is an upper 
+bound on (or an estimate of) 
+Thus, to evaluate the priority of state s, we simply find how "similar" it is to s*. Note 
+that it is relatively straightforward to use this equation to enumerate all the states where the 
+priority change might be large. Finally, we note that the use of a DBN as a model does not 
+change the way we update priorities after a value propagation step. If we use an explicit 
+table of values, then we would update priorities as in the previous section. If we use a 
+compact description of the value function, then we can apply GenPS to get the appropriate 
+update rule. 
+5 An Experiment 
+We conducted an experiment to evaluate the effect of using GenPS with a generalizing 
+model. We used a maze domain similar to the one described in [6]. The maze, shown 
+in Figure 1 (a), contains 59 cells, and 3 binary flags, resulting in 59 x 23 - 472 possible 
+states. Initially the agent is at the start cell (marked by $) and the flags are reset. The 
+agent has four possible actions, up, down, left, and right, that succeed 80% of the time, 
+and 20% of the time the agent moves in an unintended perpendicular direction. The i'th 
+flag is set when the agent leaves the cell marked by i. The agent receives a reward when 
+it arrives at the goal cell (marked by 13) and all of the flags are set. In this situation, any 
+action resets the game. As noted in [6], this environment exhibits independencies. Namely, 
+the probability of transition from one cell to another does not depend on the flag settings. 
+Generalized Prioritized Sweeping 1007 
+These independencies can be captured easily by the simple DBN shown in Figure 1 (b) Our 
+experiment is designed to test the extent to which GenPS exploits the knowledge of these 
+independencies for faster learning. 
+We tested three procedures. The first is GenPS, which uses an explicit state-based 
+model. As explained above, this variant is essentially PS. The second procedure uses a 
+factored model of the environment for learning the model parameters, but uses the same 
+prioritization strategy as the first one. The third procedure uses the GenPS prioritization 
+strategy we describe in Section 4. All three procedures use the Boltzman exploration 
+strategy (see for example [5]). Finally, in each iteration these procedures process at most 
+10 states from the priority queue. 
+The results are shown in Figure l(c). As we can see, the Genl:>$ procedure converged 
+faster than the procedures that used classic PS. As we can see, by using the factored model 
+we get two improvements. The first improvement is due to generalization in the model. 
+This allows the agent to learn a good model of its environment after fewer iterations. This 
+explains why I:'S+factomcl converges faster than I:>$. The second improvement is due to 
+the better prioritization strategy. This explains the faster convergence of 
+6 Discussion 
+We have presented a general method for approximating the optimal use of computational 
+resources during reinforcement learning. Like classic prioritized sweeping, our method 
+aims to perform only the most beneficial value propagations. By using the gradient of the 
+Bellman equation our method generalizes the underlying principle in prioritized sweeping. 
+The generalized procedure can then be applied not only in the explicit, state-based case, 
+but in cases where approximators are used for the model. The generalized procedure also 
+extends to cases where a function approximator (such as that discussed in [3]) is used for 
+the value function, and future work will empirically test this application of GenPS. We are 
+currently working on applying GenPS to other types of model and function approximators. 
+Acknowledgments 
+We are grateful to Geoff Gordon, Daishi Harada, Kevin Murphy, and Stuart Russell for 
+discussions related to this work and comments on earlier versions of this paper. This 
+research was supported in part by ARO under the MURI program "Integrated Approach to 
+Intelligent Systems," grant number DAAH04-96-1-0341. The first author is supported by a 
+National Defense Science and Engineering Graduate Fellowship. 
+References 
+[1] S. Davies. Multidimensional triangulation and interpolation for reinforcement learning. In 
+Advances in Neural Information Processing Systems 9. 1996. 
+[2] T. Dean and K. Kanazawa. A model for reasoning about persistence and causation. Computa- 
+tional Intelligence, 5:142-150, 1989. 
+[3] G. J. Gordon. Stable function approximation in dynamic programming. In Proc. 12th 
+Int. Conf. on Machine Learning, 1995. 
+[4] D. Heckerman. A tutorial on learning with Bayesian networks. Technical Report MSR-TR-95- 
+06, Microsoft Research, 1995. Revised November 1996. 
+[5] L. P. Kaelbling, M. L. Littman and A. W. Moore. Reinforcement learning: A survey. Journal 
+of Artificial Intelligence Research, 4:237-285, 1996. 
+[6] A. W. Moore and C. G. Atkeson. Prioritized sweeping--reinforcement learning with less data 
+and less time. Machine Learning, 13:103-130, 1993. 
+[7] R.S. Sutton. Integrated architectures for learning, planning, and reacting based on approximating 
+dynamic programming. In Machine Learning: Proc. 7th Int. Conf., 1990. 
+[8] P. Tadepalli and D. Ok. Scaling up average reward reinforcement learning by approximating the 
+domain models and the value function. In Proc. 13th Int. Conf. on Machine Learning, 1996. 
+[9] R. J. Williams and L. C. III Baird. Tight performance bounds on greedy policies based on 
+imperfect value functions. Technical report, Computer Science, Northeastern University. 1993. 
