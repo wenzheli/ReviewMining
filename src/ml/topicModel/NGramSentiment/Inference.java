@@ -1,4 +1,4 @@
-package ml.topicModel.ngram;
+package ml.topicModel.NGramSentiment;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -11,7 +11,7 @@ import java.util.TreeMap;
 
 public class Inference {
     DataSet dataset;
-    NGramModel model;
+    NGramSentimentModel model;
     Options option;
     
     public Inference(DataSet dataset){
@@ -19,7 +19,7 @@ public class Inference {
     }
     
     public void initModel(Options options){
-        model = new NGramModel();
+        model = new NGramSentimentModel();
         model.init(options, dataset);
         this.option = options;
     }

@@ -1,4 +1,4 @@
-package ml.topicModel.lda;
+package ml.topicModel.NGramSentiment;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,8 +36,6 @@ public class DataSet{
         return documents.get(index);
     }
     
-    
-    // for review data set
     public DataSet(String filePath) throws IOException{
         BufferedReader br = null;
         String sCurrentLine = "";
@@ -191,7 +189,7 @@ public class DataSet{
         Map<Integer, String> indexToToken = new HashMap<Integer, String>();
         for (String token: tokenMap.keySet()){
             int cnt = tokenMap.get(token);
-            if (cnt >= 10 && cnt <= 2000){
+            if (cnt >= 40 && cnt <= 2000){
                 tokenToIndex.put(token, index);
                 indexToToken.put(index, token);
                 index++;

@@ -1,4 +1,4 @@
-package ml.topicModel.sentenceLDA;
+package ml.topicModel.NGramSentiment;
 
 /**
  * Stemmer, implementing the Porter Stemming Algorithm

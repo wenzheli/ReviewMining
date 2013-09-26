@@ -1,14 +1,9 @@
-package ml.topicModel.sentenceLDA;
+package ml.topicModel.NGramSentiment;
 
 import java.util.List;
 
 public class Document{
     List<Integer> tokens;
-    double rating;
-    
-    public void setRating(double rating){
-        this.rating = rating;
-    }
     
     public void setTokens(List<Integer> tokens){
         this.tokens = tokens;
@@ -23,9 +18,5 @@ public class Document{
     
     public int getToken(int index){
         return tokens.get(index);
-    }
-    
-    public double getRating(){
-        return rating;
     }
 }

@@ -1,9 +1,11 @@
-package ml.topicModel.sentenceLDA;
+package ml.topicModel.ASUM;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import ml.topicModel.jointAspectSentiment.SentimentWords;
 
 public class Vocabulary {
     

@@ -1,4 +1,4 @@
-package ml.topicModel.lda;
+package ml.topicModel.ASUM;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -37,22 +37,22 @@ public class Inference {
         model.updateParamters();
     }
     
-    public void printTopWords(){
-      
-        double[][] phi = model.getTopicWordDistribution();
+public void printTopWordsPositive(){
+        
+        System.out.println("Top words for positive");
+        
+        double[][][] phi = model.getTopicWordDistribution();
         int tTop = option.tWords; // get the tTop words from each topic
         String[][] topWords = new String[option.K][tTop];
         for (int k = 0; k < option.K; k++){
             // select the top words for topic k
             int vocabSize = dataset.vocab.getVocabularySize();
             
-            
-            
             int[] index = new int[vocabSize];
             for (int v = 0; v < vocabSize; v++){
                 index[v] = v;
             }
-            QuickSort.quicksort(phi[k], index);
+            QuickSort.quicksort(phi[0][k], index);
            
             for (int i = 0; i < tTop; i++){
                 topWords[k][i] = dataset.vocab.indexTotokenMap.get(index[vocabSize-i-1]); 
@@ -69,12 +69,45 @@ public class Inference {
         }
     } 
     
+    public void printTopWordsNegative(){
+        System.out.println("Top words for negative");
+    
+        double[][][] phi = model.getTopicWordDistribution();
+        int tTop = option.tWords; // get the tTop words from each topic
+        String[][] topWords = new String[option.K][tTop];
+        for (int k = 0; k < option.K; k++){
+            // select the top words for topic k
+            int vocabSize = dataset.vocab.getVocabularySize();
+        
+        
+        
+            int[] index = new int[vocabSize];
+            for (int v = 0; v < vocabSize; v++){
+                index[v] = v;
+            }
+            QuickSort.quicksort(phi[1][k], index);
+       
+            for (int i = 0; i < tTop; i++){
+                topWords[k][i] = dataset.vocab.indexTotokenMap.get(index[vocabSize-i-1]); 
+            }
+        }
+    
+        for (int k = 0; k < option.K; k++){
+            System.out.println("Top words for topic: " + k);
+            for (int i = 0; i < topWords[k].length; i++){
+                System.out.println(topWords[k][i]);
+            }
+        
+            System.out.println("****************************************");
+        }
+    } 
+
     public static void main(String[] args) throws IOException{
         
         DataSet dataset = new DataSet("data/yelp");
         Inference inference = new Inference(dataset);
         Options opt = new Options();
-        opt.alpha = 1;
+        opt.alpha = 2;
         opt.beta = 0.01;
         opt.niters = 2000;
         opt.K = 20;
@@ -83,7 +116,8 @@ public class Inference {
         inference.initModel(opt);
         inference.runSampler();
         
-        inference.printTopWords();
+        inference.printTopWordsPositive();
+        inference.printTopWordsNegative();
         
     }
 }

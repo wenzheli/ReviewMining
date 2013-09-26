@@ -1,6 +1,5 @@
-package ml.topicModel.sentenceLDA;
+package ml.topicModel.ASUM;
 
-import ml.topicModel.lda.LatentVariable;
 
 public class DistributionUtils {
     /**
@@ -21,6 +20,7 @@ public class DistributionUtils {
         return idx;
     }
     
+    
     public static LatentVariable getSample(double[][] p){
         int n = p.length * p[0].length;
         double[] temp = new double[n];
@@ -39,15 +39,15 @@ public class DistributionUtils {
         double u = Math.random() * temp[n-1];
         int idx;
         for (idx = 0; idx < n; idx++){
-            if (u < temp[idx])
+            if (u <= temp[idx])
                 break;
         }
         int topic;
         int sentiment;
         
       
-            sentiment = idx/50;
-            topic = idx%50;
+        sentiment = idx/p[0].length;
+        topic = idx%p[0].length;
      
         return new LatentVariable(topic, sentiment);
     }

@@ -1,4 +1,4 @@
-package ml.topicModel.sentenceLDA;
+package ml.topicModel.ASUM;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,7 +36,7 @@ public class DataSet{
         return documents.get(index);
     }
     
-    // this is for yelp corpus
+    // for review data sets
     public DataSet(String filePath) throws IOException{
         BufferedReader br = null;
         String sCurrentLine = "";
@@ -52,7 +52,6 @@ public class DataSet{
             int count = 0;
             br = new BufferedReader(new FileReader(f));
             while ((sCurrentLine = br.readLine()) != null){
-                
                 if (++count == 6){   
                     String review = sCurrentLine;
                     // remove the stop words
@@ -105,56 +104,55 @@ public class DataSet{
         System.out.println("Generating documents objects using vocabulary");
         fileCount = 0;
         documents = new ArrayList<Document>();
-        int positiveCnt = 0;
         for (File f: files){
-            List<Integer> tokensInDoc = new ArrayList<Integer>();
+            List<Sentence> sentenceList = new ArrayList<Sentence>();
             Document doc = new Document();
             System.out.println("Process " + ++fileCount + "th file");
             int count = 0;
             br = new BufferedReader(new FileReader(f));
             while ((sCurrentLine = br.readLine()) != null){
-             // get the rating
-                count++;
-                if (count == 3){
-                    String[] ratings = sCurrentLine.split(":");
-                    double rating = Double.parseDouble(ratings[1].trim());
-                    if (rating > 2.5)
-                        positiveCnt++;
-                    doc.setRating(rating);
-                }
-                
-                
-                if (count == 6){   
+                if (++count == 6){   
                     String review = sCurrentLine;
-                    // remove the stop words
-                    String[] tokens = review.split("\\s");
-                    for (String token : tokens){
-                        PorterStemmer stem = new PorterStemmer();
-                        String stemmedToken = stem.stemming(token);
-                        
-                        // remove puntuation before and after words
-                        String processedToken = removeSpecialCharacter(stemmedToken);
-                        if (processedToken.equals(""))
-                            continue;
-                        if (StopWords.isStopword(processedToken))
-                            continue;
-                        
-                        if (tokenToIndex.containsKey(token)){
-                            int tokenIndex = tokenToIndex.get(token);
-                            tokensInDoc.add(tokenIndex);
+                    
+                    // split each review into sentences. 
+                    String[] sentences = review.split("[\\.\\!\\?\\;]");
+                    for (String sentence : sentences){
+                        Sentence newSentence = new Sentence();
+                        List<Integer> tokensInSentence = new ArrayList<Integer>();
+                        String[] tokens = sentence.split("\\s");
+                        for (String token : tokens){
+                            PorterStemmer stem = new PorterStemmer();
+                            String stemmedToken = stem.stemming(token);
+                            
+                            // remove puntuation before and after words
+                            String processedToken = removeSpecialCharacter(stemmedToken);
+                            if (processedToken.equals(""))
+                                continue;
+                            if (StopWords.isStopword(processedToken))
+                                continue;
+                            
+                            if (tokenToIndex.containsKey(token)){
+                                int tokenIndex = tokenToIndex.get(token);
+                                tokensInSentence.add(tokenIndex);
+                            }
+                            
+                            System.out.println(tokensInSentence.size());
                         }
-                    }
+                        
+                        newSentence.setTokens(tokensInSentence);
+                        sentenceList.add(newSentence);
+                    }   
                 }
             }
             
-            doc.setTokens(tokensInDoc);
+            doc.setSentences(sentenceList);
             documents.add(doc);
         }
-        System.out.println(positiveCnt);
+        
         System.out.println("Successfully process all the documents");    
     }
   
-    // this is for NIPS corpus
+   
     public DataSet(String filePath, boolean flag) throws IOException{
         BufferedReader br = null;
         String sCurrentLine = "";
@@ -165,14 +163,14 @@ public class DataSet{
         Map<String, Integer> tokenMap = new HashMap<String, Integer>();
         // first iteration, creating vocabulary list. 
         int fileCount = 0;
-        
+        List<String> documentStringList = new ArrayList<String>();
         for (File folder: files){
             for (File f: folder.listFiles()){
                 System.out.println("Process " + ++fileCount + "th file");
-                
+                String documentString = "";
                 br = new BufferedReader(new FileReader(f));
                 while ((sCurrentLine = br.readLine()) != null){
-                   
+                    documentString = documentString + sCurrentLine + " ";
                         String text = sCurrentLine;
                         // remove the stop words
                         String[] tokens = text.split("\\s");
@@ -196,6 +194,8 @@ public class DataSet{
                         }
                     
                 }
+                
+                documentStringList.add(documentString);
             }
         }
         
@@ -205,7 +205,7 @@ public class DataSet{
         Map<Integer, String> indexToToken = new HashMap<Integer, String>();
         for (String token: tokenMap.keySet()){
             int cnt = tokenMap.get(token);
-            if (cnt >= 5 && cnt <= 5000){
+            if (cnt >= 10 && cnt <= 2000){
                 tokenToIndex.put(token, index);
                 indexToToken.put(index, token);
                 index++;
@@ -216,7 +216,6 @@ public class DataSet{
         vocab.setIndexTotokenMap(indexToToken);
         vocab.settokenToIndex(tokenToIndex);
         vocab.setSentimentWords();
-        
         System.out.println("Complete vocabulary creation ");
         System.out.println("******************************************");
         
@@ -225,44 +224,41 @@ public class DataSet{
         fileCount = 0;
         documents = new ArrayList<Document>();
         
-        for (File folder: files){
-            for (File f: folder.listFiles()){
-                List<Integer> tokensInDoc = new ArrayList<Integer>();
-                Document doc = new Document();
-                System.out.println("Process " + ++fileCount + "th file");
-               
-                br = new BufferedReader(new FileReader(f));
-                while ((sCurrentLine = br.readLine()) != null){
-                        String text = sCurrentLine;
-                        // remove the stop words
-                        String[] tokens = text.split("\\s");
-                        for (String token : tokens){
-                            PorterStemmer stem = new PorterStemmer();
-                            String stemmedToken = stem.stemming(token);
-                            
-                            // remove puntuation before and after words
-                            String processedToken = removeSpecialCharacter(stemmedToken);
-                            if (processedToken.equals(""))
-                                continue;
-                            if (StopWords.isStopword(processedToken))
-                                continue;
-                            
-                            if (tokenToIndex.containsKey(token)){
-                                int tokenIndex = tokenToIndex.get(token);
-                                tokensInDoc.add(tokenIndex);
-                            }
-                        }
+        for (String text  : documentStringList){
+            List<Sentence> sentenceList = new ArrayList<Sentence>();
+            Document doc = new Document();
+            System.out.println("Process " + ++fileCount + "th file");
+            String[] sentences = text.split("[\\.\\!\\?\\;]");
+            
+            
+            for (String paper : sentences){
+                Sentence newSentence = new Sentence();
+                List<Integer> tokensInSentence = new ArrayList<Integer>();
+                String[] tokens = paper.split("\\s");
+                for (String token : tokens){
+                    PorterStemmer stem = new PorterStemmer();
+                    String stemmedToken = stem.stemming(token);
                     
+                    // remove puntuation before and after words
+                    String processedToken = removeSpecialCharacter(stemmedToken);
+                    if (processedToken.equals(""))
+                        continue;
+                    if (StopWords.isStopword(processedToken))
+                        continue;
+                    
+                    if (tokenToIndex.containsKey(token)){
+                        int tokenIndex = tokenToIndex.get(token);
+                        tokensInSentence.add(tokenIndex);
+                    }
                 }
-                
-                doc.setTokens(tokensInDoc);
-                documents.add(doc);
+                newSentence.setTokens(tokensInSentence);
+                sentenceList.add(newSentence);
             }
             
-            
-          
-        }
-        
+            doc.setSentences(sentenceList);
+            documents.add(doc);
+    
+        }        
         System.out.println("Successfully process all the documents");    
     }
   
@@ -295,7 +291,8 @@ public class DataSet{
     }
      
     public static void main(String[] args) throws IOException{
-        DataSet dataset = new DataSet("data/yelp");
+        String aa = "adfadsf.aaa,aaaa;aaaaa!aaaaaaa";
+        String[] strs = aa.split("[\\.\\!\\?\\;]");
         
     }
     

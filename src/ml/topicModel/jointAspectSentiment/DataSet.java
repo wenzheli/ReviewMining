@@ -1,4 +1,4 @@
-package ml.topicModel.lda;
+package ml.topicModel.jointAspectSentiment;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,8 +36,7 @@ public class DataSet{
         return documents.get(index);
     }
     
-    
-    // for review data set
+    // this is for yelp corpus
     public DataSet(String filePath) throws IOException{
         BufferedReader br = null;
         String sCurrentLine = "";
@@ -53,6 +52,7 @@ public class DataSet{
             int count = 0;
             br = new BufferedReader(new FileReader(f));
             while ((sCurrentLine = br.readLine()) != null){
+                
                 if (++count == 6){   
                     String review = sCurrentLine;
                     // remove the stop words
@@ -96,6 +96,8 @@ public class DataSet{
         vocab = new Vocabulary();
         vocab.setIndexTotokenMap(indexToToken);
         vocab.settokenToIndex(tokenToIndex);
+        vocab.setSentimentWords();
+        
         System.out.println("Complete vocabulary creation ");
         System.out.println("******************************************");
         
@@ -103,6 +105,7 @@ public class DataSet{
         System.out.println("Generating documents objects using vocabulary");
         fileCount = 0;
         documents = new ArrayList<Document>();
+        int positiveCnt = 0;
         for (File f: files){
             List<Integer> tokensInDoc = new ArrayList<Integer>();
             Document doc = new Document();
@@ -110,7 +113,18 @@ public class DataSet{
             int count = 0;
             br = new BufferedReader(new FileReader(f));
             while ((sCurrentLine = br.readLine()) != null){
-                if (++count == 6){   
+             // get the rating
+                count++;
+                if (count == 3){
+                    String[] ratings = sCurrentLine.split(":");
+                    double rating = Double.parseDouble(ratings[1].trim());
+                    if (rating > 2.5)
+                        positiveCnt++;
+                    doc.setRating(rating);
+                }
+                
+                
+                if (count == 6){   
                     String review = sCurrentLine;
                     // remove the stop words
                     String[] tokens = review.split("\\s");
@@ -136,11 +150,11 @@ public class DataSet{
             doc.setTokens(tokensInDoc);
             documents.add(doc);
         }
-        
+        System.out.println(positiveCnt);
         System.out.println("Successfully process all the documents");    
     }
   
-    
+    // this is for NIPS corpus
     public DataSet(String filePath, boolean flag) throws IOException{
         BufferedReader br = null;
         String sCurrentLine = "";
@@ -191,7 +205,7 @@ public class DataSet{
         Map<Integer, String> indexToToken = new HashMap<Integer, String>();
         for (String token: tokenMap.keySet()){
             int cnt = tokenMap.get(token);
-            if (cnt >= 10 && cnt <= 2000){
+            if (cnt >= 5 && cnt <= 5000){
                 tokenToIndex.put(token, index);
                 indexToToken.put(index, token);
                 index++;
@@ -201,6 +215,8 @@ public class DataSet{
         vocab = new Vocabulary();
         vocab.setIndexTotokenMap(indexToToken);
         vocab.settokenToIndex(tokenToIndex);
+        vocab.setSentimentWords();
+        
         System.out.println("Complete vocabulary creation ");
         System.out.println("******************************************");
         

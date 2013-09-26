@@ -1,4 +1,4 @@
-package ml.topicModel.sentenceLDA;
+package ml.topicModel.jointAspectSentiment;
 
 import java.util.HashSet;
 import java.util.Set;

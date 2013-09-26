@@ -1,4 +1,4 @@
-package ml.topicModel.sentenceLDA;
+package ml.topicModel.jointAspectSentiment;
 
 import java.io.IOException;
 import java.util.Collection;
