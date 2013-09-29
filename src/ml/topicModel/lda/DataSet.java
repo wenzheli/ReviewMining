@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ml.topicModel.common.preprocessing.PorterStemmer;
+import ml.topicModel.common.preprocessing.StopWords;
+
 
 public class DataSet{
    

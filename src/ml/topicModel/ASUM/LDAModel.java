@@ -3,6 +3,8 @@ package ml.topicModel.ASUM;
 import java.util.HashMap;
 import java.util.Map;
 
+import ml.topicModel.common.data.Sentence;
+
 
 public class LDAModel {
  

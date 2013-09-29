@@ -19,5 +19,4 @@ public class Vocabulary {
     public int getVocabularySize(){
         return tokenToIndexMap.size();
     }
-    
 }

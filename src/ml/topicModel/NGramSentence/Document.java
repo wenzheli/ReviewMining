@@ -1,8 +1,6 @@
-package ml.topicModel.ASUM;
+package ml.topicModel.NGramSentence;
 
 import java.util.List;
-
-import ml.topicModel.common.data.Sentence;
 
 public class Document{
     List<Sentence> sentences;

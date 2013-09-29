@@ -1,4 +1,4 @@
-package ml.topicModel.ASUM;
+package ml.topicModel.NGSentimentSentence;
 
 import java.util.List;
 
@@ -11,5 +11,9 @@ public class Sentence {
     
     public List<Integer> getTokens(){
         return tokens;
+    }
+    
+    public int getToken(int idx){
+        return tokens.get(idx);
     }
 }

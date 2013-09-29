@@ -1,4 +1,4 @@
-package ml.topicModel.NGramSentiment;
+package ml.topicModel.NGramSentence;
 
 
 public class DistributionUtils {
@@ -22,20 +22,16 @@ public class DistributionUtils {
     
    
     
-    public static LatentVariable getSample(double[][][] p){
+    public static LatentVariable getSample(double[][] p){
         int len1 = p.length;
         int len2 = p[0].length;
-        int len3 = p[0][0].length;
-        
-        int n = len1 * len2 * len3;
+        int n = len1 * len2;
         double[] temp = new double[n];
         int cnt = 0;
-        for (int i = 0; i < len1; i++){
-            for (int j = 0; j < len2; j++){
-                for (int k = 0; k < len3; k++){
-                    temp[cnt] = p[i][j][k];
-                    cnt++;
-                }
+        for (int i = 0; i < p.length; i++){
+            for (int j = 0; j < p[0].length; j++){
+                temp[cnt] = p[i][j];
+                cnt++;
             }
         }
         
@@ -46,16 +42,17 @@ public class DistributionUtils {
         double u = Math.random() * temp[n-1];
         int idx;
         for (idx = 0; idx < n; idx++){
-            if (u <= temp[idx])
+            if (u < temp[idx])
                 break;
         }
-        int sentiment = idx / (len2 * len3);
-        int remainder = idx % (len2 * len3);
-        int topic = remainder / len3;
-        int indicatorValue = remainder%len3;
+        int topic;
+        int indicatorValue;
+        
       
+            topic = idx/len2;
+            indicatorValue = idx%len2;
      
-        return new LatentVariable(sentiment, topic, indicatorValue);
+        return new LatentVariable(topic, indicatorValue);
     }
     
 }

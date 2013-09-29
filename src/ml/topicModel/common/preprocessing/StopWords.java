@@ -1,4 +1,4 @@
-package ml.topicModel.lda;
+package ml.topicModel.common.preprocessing;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

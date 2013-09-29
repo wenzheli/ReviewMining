@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ml.topicModel.common.preprocessing.PorterStemmer;
+import ml.topicModel.common.preprocessing.StopWords;
+
 
 public class DataSet{
    
@@ -36,6 +39,7 @@ public class DataSet{
         return documents.get(index);
     }
     
+    // for yelp data set
     public DataSet(String filePath) throws IOException{
         BufferedReader br = null;
         String sCurrentLine = "";
@@ -84,7 +88,7 @@ public class DataSet{
         Map<Integer, String> indexToToken = new HashMap<Integer, String>();
         for (String token: tokenMap.keySet()){
             int cnt = tokenMap.get(token);
-            if (cnt >= 5 && cnt <= 3000){
+            if (cnt >= 30 && cnt <= 3000){
                 tokenToIndex.put(token, index);
                 indexToToken.put(index, token);
                 index++;

@@ -1,4 +1,4 @@
-package ml.topicModel.NGramSentiment;
+package ml.topicModel.NGSentimentSentence;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -11,7 +11,7 @@ import java.util.TreeMap;
 
 public class Inference {
     DataSet dataset;
-    NGramSentimentModel model;
+    NGramModelSentiSentence model;
     Options option;
     
     public Inference(DataSet dataset){
@@ -19,7 +19,7 @@ public class Inference {
     }
     
     public void initModel(Options options){
-        model = new NGramSentimentModel();
+        model = new NGramModelSentiSentence();
         model.init(options, dataset);
         this.option = options;
     }
@@ -34,12 +34,12 @@ public class Inference {
             System.out.println("gibbs sampling: " + itr + " iteration");
             model.runSampler();
             
-            if (itr % 50== 0){
+            //if (itr % 50== 0){
                 // we save the results for every 50 iterations...
                 //model.updateParamters();
                 //printTopWordsFromNGram(itr);
                 //printTopWords(itr);
-            }
+            //}
         }
         
         model.updateParamters();
@@ -157,7 +157,7 @@ public class Inference {
         inference.initModel(opt);
         inference.runSampler();
         
-        //inference.printTopWords(opt.niters);  
-        //inference.printTopWordsFromNGram(opt.niters);
+        inference.printTopWords(opt.niters);  
+        inference.printTopWordsFromNGram(opt.niters);
     }
 }

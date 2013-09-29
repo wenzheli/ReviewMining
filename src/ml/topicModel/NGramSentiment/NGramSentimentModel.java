@@ -24,8 +24,8 @@ public class NGramSentimentModel {
     private int S;  // # of sentiments
     private int I = 2;
     
-    private double [][] theta; // document - topic distributions, size D x K
-    private double [][] phi;   // topic-word distributions, size K x V
+    private double [][][] theta; // document - topic distributions, size D x K
+    private double [][][] phi;   // topic-word distributions, size K x V
     private double [][] psi;   // topic-word indicator distribution, size K * (V+1) * 2
     private double [][] sigma; // topic-word-word distribution, K * (V+1) * V
     private double [][] pi;    // document-sentiment distribution, D*S
@@ -34,17 +34,17 @@ public class NGramSentimentModel {
     private int[][] l; // latent variable, sentiment assignents for each word D * document.size()
     
     private int [][][] nSentimentTopicWords; // nSentimentTopicWords[s][k][w]: # of instances of word/term w assigned to topic k, and sentiment s, size S*K*V
-    private int [][][] nDocSentimentTopic;   // nDocSentimentTopic[i][j]: # of words in document i that assigned to topic j, size D x K
+    private byte [][][] nDocSentimentTopic;   // nDocSentimentTopic[i][j]: # of words in document i that assigned to topic j, size D x K
     private int [][] nWordSentimentTopic; // nWordTopic[s][k]: total number of words assigned to topic j, size K. 
     private int [] nWordsSum;     // nWordsSum[i]: total number of words in document i, size D
-    private int [][] nDocSentiment; // nDocSentiment[d][s]
+    private short [][] nDocSentiment; // nDocSentiment[d][s]
     private byte [][][][] nSentimentTopicPrevWordWord; //nTopicWordWord[i][j][k]:  total number of word/term k, assigned to topic i, on the condition that the previous
                                        // previous term is j. size: K * (V+1) * V
-    private int [][][] nSentimentTopicPreWord;  // nTopicPreWord[i][j]:  total number of word/term that assigned to topic i, where previous word is j. 
+    private short [][][] nSentimentTopicPreWord;  // nTopicPreWord[i][j]:  total number of word/term that assigned to topic i, where previous word is j. 
                                      // size: K *(V+1)
-    private int [][][][] nPreSentimentPreTopicPreWordIndicator;  // nTopicPreWordIndicator[i][j][k]: total number of indicator variable k, for the condition where
+    private short [][][][] nPreSentimentPreTopicPreWordIndicator;  // nTopicPreWordIndicator[i][j][k]: total number of indicator variable k, for the condition where
                                                  // the topic of previous word is i, and the previous term/word is j. 
-    private int [][][] nPreSentimentPreTopicPreWord;  // size: K * (V+1) 
+    private short [][][] nPreSentimentPreTopicPreWord;  // size: K * (V+1) 
     
     private DataSet dataset;
     
@@ -66,25 +66,26 @@ public class NGramSentimentModel {
         this.dataset = dataset;
         
         // these parameters are sufficient statistics of latent variable Z. We only sample z instead
-        theta = new double[D][K];
-        phi = new double[K][V];
+        theta = new double[S][D][K];
+        phi = new double[S][K][V];
         pi = new double[D][S];
         
         // initialize temporary variables
         nSentimentTopicWords = new int[S][K][V];
-        nDocSentimentTopic = new int[S][D][K];
+        nDocSentimentTopic = new byte[D][S][K];
         nWordSentimentTopic = new int[S][K];
         nWordsSum = new int[D];
-        nDocSentiment = new int[D][S];
+        nDocSentiment = new short[D][S];
         
         nSentimentTopicPrevWordWord = new byte[S][K][V+1][V];
-        nSentimentTopicPreWord = new int[S][K][V+1];
-        nPreSentimentPreTopicPreWordIndicator = new int[S+1][K+1][V+1][2];
-        nPreSentimentPreTopicPreWord = new int[S+1][K+1][V+1];
+        nSentimentTopicPreWord = new short[S][K][V+1];
+        nPreSentimentPreTopicPreWordIndicator = new short[S+1][K+1][V+1][2];
+        nPreSentimentPreTopicPreWord = new short[S+1][K+1][V+1];
         
         // initialize latent variable - z and x
         z = new int[D][];
         x = new int[D][];
+        l = new int[D][];
         for (int i = 0; i < D; i++){
             Document d = dataset.getDocument(i);
             int numTerms = d.getNumOfTokens();
@@ -120,7 +121,7 @@ public class NGramSentimentModel {
                 }
                 
                 // use uni-gram 
-                if (x[i][j] == 0){
+                if (randIndicatorValue == 0){
                     nSentimentTopicWords[randSentiment][randTopic][d.getToken(j)]++;  
                     nWordSentimentTopic[randSentiment][randTopic]++;
                     
@@ -148,6 +149,7 @@ public class NGramSentimentModel {
                 LatentVariable latentVariable = sample(i,j);
                 z[i][j] = latentVariable.getTopic();
                 x[i][j] = latentVariable.getIndicator();
+                l[i][j] = latentVariable.getSentiment();
             }
         }
     }
@@ -167,36 +169,81 @@ public class NGramSentimentModel {
         if (j == 0){
             nPreSentimentPreTopicPreWordIndicator[S][K][V][oldIndicatorValue]--;
             nPreSentimentPreTopicPreWord[S][K][V]--;
-          
+           
+            if (nPreSentimentPreTopicPreWordIndicator[S][K][V][oldIndicatorValue] < 0){
+                int aa =1;
+            }
+            if (nPreSentimentPreTopicPreWord[S][K][V] <0){
+                int aa =1;
+            }
+            
             // and not the last word
             if (j < termCnt - 1){
                 nPreSentimentPreTopicPreWordIndicator[oldSentiment][oldTopic][d.getToken(j)][x[i][j+1]]--;
                 nPreSentimentPreTopicPreWord[oldSentiment][oldTopic][d.getToken(j)]--;
-               
+                
+                if (nPreSentimentPreTopicPreWordIndicator[oldSentiment][oldTopic][d.getToken(j)][x[i][j+1]] <0){
+                    int aa =1;
+                }
+                if (nPreSentimentPreTopicPreWord[oldSentiment][oldTopic][d.getToken(j)] <0){
+                    int aa =1;
+                }
             }
         } else {
             nPreSentimentPreTopicPreWordIndicator[l[i][j-1]][z[i][j-1]][d.getToken(j-1)][oldIndicatorValue]--;
             nPreSentimentPreTopicPreWord[l[i][j-1]][z[i][j-1]][d.getToken(j-1)]--;
-
+            
+            if (nPreSentimentPreTopicPreWordIndicator[l[i][j-1]][z[i][j-1]][d.getToken(j-1)][oldIndicatorValue] <0){
+                int aa =1;
+            }
+            if (nPreSentimentPreTopicPreWord[l[i][j-1]][z[i][j-1]][d.getToken(j-1)]<0){
+                int aa =1;
+            }
             if (j < termCnt - 1){
                 nPreSentimentPreTopicPreWordIndicator[oldSentiment][oldTopic][d.getToken(j)][x[i][j+1]]--;
                 nPreSentimentPreTopicPreWord[oldSentiment][oldTopic][d.getToken(j)]--;
                 
+                if (nPreSentimentPreTopicPreWordIndicator[oldSentiment][oldTopic][d.getToken(j)][x[i][j+1]] <0){
+                    int aa =1;
+                }
+                
+                if (nPreSentimentPreTopicPreWord[oldSentiment][oldTopic][d.getToken(j)] <0){
+                    int aa = 1;
+                }
             }
+            
+            
         }
         
         // if unigram...
         if (oldIndicatorValue == 0){
             nSentimentTopicWords[oldSentiment][oldTopic][d.getToken(j)]--;  
+            if (nSentimentTopicWords[oldSentiment][oldTopic][d.getToken(j)] <0){
+                int aa =1;
+            }
             nWordSentimentTopic[oldSentiment][oldTopic]--;
+            if (nWordSentimentTopic[oldSentiment][oldTopic]<0){
+                int aa =1;
+            }
         } else{ // if bigram
             if (j == 0){ // if beginning term
                 nSentimentTopicPrevWordWord[oldSentiment][oldTopic][V][d.getToken(j)]--;
                 nSentimentTopicPreWord[oldSentiment][oldTopic][V]--; 
-                
+                if (nSentimentTopicPrevWordWord[oldSentiment][oldTopic][V][d.getToken(j)] <0){
+                    int aa =1;
+                }
+                if (nSentimentTopicPreWord[oldSentiment][oldTopic][V] < 0){
+                    int aa =1;
+                }
             } else{ 
                 nSentimentTopicPrevWordWord[oldSentiment][oldTopic][d.getToken(j-1)][d.getToken(j)]--;
                 nSentimentTopicPreWord[oldSentiment][oldTopic][d.getToken(j-1)]--;
+                if (nSentimentTopicPrevWordWord[oldSentiment][oldTopic][d.getToken(j-1)][d.getToken(j)] <0){
+                    int aa =1;
+                }
+                if (nSentimentTopicPreWord[oldSentiment][oldTopic][d.getToken(j-1)] < 0){
+                    int aa =1;
+                }
             }
         }
         
@@ -223,12 +270,12 @@ public class NGramSentimentModel {
                                     * ((gamma + nPreSentimentPreTopicPreWordIndicator[l[i][j-1]][(z[i][j-1])][d.getToken(j-1)][s])/(I*gamma + nPreSentimentPreTopicPreWord[l[i][j-1]][z[i][j-1]][d.getToken(j-1)]));
                            
                         }
-                        
+                   
                     } else{
                         if (j == 0){
                             p[v][k][s] = ((alpha + nDocSentimentTopic[i][v][k])/(K*alpha + nDocSentiment[i][v]))  
                                     * ((omega + nDocSentiment[i][v])/(omega + nWordsSum[i]))
-                                    * ((delta+nSentimentTopicPrevWordWord[S][k][V][d.getToken(j)])/(V*delta+nSentimentTopicPreWord[S][k][V]))
+                                    * ((delta+nSentimentTopicPrevWordWord[v][k][V][d.getToken(j)])/(V*delta+nSentimentTopicPreWord[v][k][V]))
                                     * ((gamma + nPreSentimentPreTopicPreWordIndicator[S][K][V][s])/(I*gamma + nPreSentimentPreTopicPreWord[S][K][V]));
                             
                         }else {
@@ -294,17 +341,23 @@ public class NGramSentimentModel {
     public void updateParamters(){
         // update theta
         for (int i = 0; i < D; i++){
-            for (int k = 0; k < K; k++){
-                theta[i][k] = (alpha + nDocTopic[i][k]) / (K * alpha + nWordsSum[i]);
+            for (int s = 0; s< S; s++){
+                for (int k = 0; k < K; k++){
+                    theta[i][s][k] = ((alpha + nDocSentimentTopic[i][s][k])/(K*alpha + nDocSentiment[i][s])) ;
+                } 
             }
+            
         }
         
         // update phi
-        for (int k = 0; k < K; k++){
-            for (int v = 0; v < V; v++){
-                phi[k][v] = (beta + nTopicWords[k][v]) / (V * beta + nWordTopic[k]); 
-            }
+        for (int s = 0; s <S; s++){
+            for (int k = 0; k < K; k++){
+                for (int v = 0; v < V; v++){
+                    phi[s][k][v] = (beta + nSentimentTopicWords[s][k][v]) / (V * beta + nWordSentimentTopic[s][k]); 
+                }
+            }  
         }
+        
     }
     
     public double[][] getTopWordsFromNGram(){
@@ -373,11 +426,11 @@ public class NGramSentimentModel {
     }
     
     
-    public double[][] getTopicDistribution(){
+    public double[][][] getTopicDistribution(){
         return theta;
     }
     
-    public double[][] getTopicWordDistribution(){
+    public double[][][] getTopicWordDistribution(){
         return phi;
     }
 }

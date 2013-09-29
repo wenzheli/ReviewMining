@@ -1,4 +1,4 @@
-package ml.topicModel.NGramSentiment;
+package ml.topicModel.NGSentimentSentence;
 
 
 public class DistributionUtils {
@@ -55,7 +55,7 @@ public class DistributionUtils {
         int indicatorValue = remainder%len3;
       
      
-        return new LatentVariable(sentiment, topic, indicatorValue);
+        return new LatentVariable(topic,sentiment, indicatorValue);
     }
     
 }

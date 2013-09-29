@@ -1,4 +1,4 @@
-package ml.topicModel.ASUM;
+package ml.topicModel.NGSentimentSentence;
 
 import java.util.HashMap;
 import java.util.HashSet;

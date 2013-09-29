@@ -1,4 +1,4 @@
-package ml.topicModel.NGramSentiment;
+package ml.topicModel.common.preprocessing;
 
 /**
  * Stemmer, implementing the Porter Stemming Algorithm
