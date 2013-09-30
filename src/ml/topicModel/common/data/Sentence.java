@@ -12,4 +12,8 @@ public class Sentence {
     public List<Integer> getTokens(){
         return tokens;
     }
+    
+    public int getToken(int idx){
+        return tokens.get(idx);
+    }
 }

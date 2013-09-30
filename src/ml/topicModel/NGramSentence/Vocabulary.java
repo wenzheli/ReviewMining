@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import ml.topicModel.jointAspectSentiment.SentimentWords;
+import ml.topicModel.LDASentiment.SentimentWords;
 
 public class Vocabulary {
     

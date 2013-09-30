@@ -1,8 +1,8 @@
-package ml.topicModel.NGSentimentSentence;
+package ml.topicModel.common.data;
 
 import java.util.List;
 
-public class Document{
+public class SDocument extends Document{
     List<Sentence> sentences;
     
     public void setSentences(List<Sentence> sentences){

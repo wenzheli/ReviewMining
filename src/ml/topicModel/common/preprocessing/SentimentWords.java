@@ -1,4 +1,4 @@
-package ml.topicModel.jointAspectSentiment;
+package ml.topicModel.common.preprocessing;
 
 import java.util.HashSet;
 import java.util.Set;

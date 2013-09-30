@@ -1,7 +1,10 @@
-package ml.topicModel.jointAspectSentiment;
+package ml.topicModel.LDASentiment;
 
-import ml.topicModel.lda.LatentVariable;
-
+import ml.topicModel.common.data.DataSet;
+import ml.topicModel.common.data.LatentVariable;
+import ml.topicModel.common.data.Vocabulary;
+import ml.topicModel.common.data.WDocument;
+import ml.topicModel.utils.DistributionUtils;
 
 public class LDAModel {
  
@@ -23,18 +26,20 @@ public class LDAModel {
     
     private int [][] nSentimentTopicWords; // nSentimentTopicWords[i][j]:  # of words assigned to sentiment i, and topic j. 
     private int [][][] nSentimentTopicWordWords; // nSentimentTopicWordWords[i][j][k]: # of word w_{k} assigned to sentiment i, topic j, 
+    
     private int [][][] nDocSentimentTopicWords; // total number of words in document i, assigned to sentiment j, and topic k. 
     private int [][] nDocSentimentWords; // nDocSentimentWords[i][j]: total number of words in document i, assigned to sentiment j
+    
     private int [] nDocWords;     // nWordsSum[i]: total number of words in document i, size D
     
     private DataSet dataset;
      
     // initialize parameters. 
-    public void init(Options options, DataSet dataset, Vocabulary vocab){
+    public void init(Options options, DataSet dataset){
         this.alpha = options.alpha;
         this.beta = options.beta;
         this.gamma = new double[2];
-        gamma[0] = 1;
+        gamma[0] = 5;
         gamma[1] = 1;
         this.K = options.K;
         this.S = options.S;
@@ -59,7 +64,7 @@ public class LDAModel {
         z = new int[D][];
         l = new int[D][];
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             int numTerms = d.getNumOfTokens();
             z[i] = new int[numTerms];
             l[i] = new int[numTerms];
@@ -68,6 +73,7 @@ public class LDAModel {
                 int randSentiment = (int)(Math.random() * S);
                 z[i][j] = randTopic;
                 
+                Vocabulary vocab = dataset.getVocabulary();
                 if (vocab.isPositiveWord(d.getToken(j)))
                     l[i][j] = 0;
                 else if (vocab.isNegativeWord(d.getToken(j)))
@@ -87,7 +93,7 @@ public class LDAModel {
     // this will run one iteration of collapsed gibbs sampling.
     public void runSampler(){
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             for (int j = 0; j < d.getNumOfTokens(); j++){
                 // random sample z[i][j] 
                 LatentVariable latentVariable = sample(i,j);
@@ -98,7 +104,7 @@ public class LDAModel {
     }
     
     private LatentVariable sample(int i,  int j){
-        Document d = dataset.getDocument(i);
+        WDocument d = (WDocument) dataset.getDocument(i);
         int oldTopic = z[i][j];
         int oldSentiment = l[i][j];
         
@@ -133,13 +139,7 @@ public class LDAModel {
     }
     
     public void updateParamters(){
-        // update theta
-        //for (int i = 0; i < D; i++){
-        //    for (int k = 0; k < K; k++){
-        //        theta[i][k] = (alpha + nDocTopic[i][k]) / (K * alpha + nWordsSum[i]);
-        //    }
-        //}
-        
+       
         // update phi
         for (int s = 0; s < S; s++){
             for (int k = 0; k < K; k++){
@@ -156,9 +156,6 @@ public class LDAModel {
         }
     }
     
-    public double[][] getTopicDistribution(){
-        return theta;
-    }
     
     public double[][][] getTopicWordDistribution(){
         return phi;

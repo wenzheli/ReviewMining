@@ -1,4 +1,4 @@
-package ml.topicModel.ngram;
+package ml.topicModel.NGram;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,7 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-
+import ml.topicModel.common.data.DataSet;
+import ml.topicModel.common.data.LatentVariable;
+import ml.topicModel.common.data.NGramDocument;
+import ml.topicModel.common.data.WDocument;
+import ml.topicModel.utils.DistributionUtils;
 
 
 public class NGramModel {
@@ -77,7 +81,7 @@ public class NGramModel {
         z = new int[D][];
         x = new int[D][];
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             int numTerms = d.getNumOfTokens();
             z[i] = new int[numTerms];
             x[i] = new int[numTerms];
@@ -130,18 +134,20 @@ public class NGramModel {
     // this will run one iteration of collapsed gibbs sampling.
     public void runSampler(){
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             for (int j = d.getNumOfTokens()-1; j >=0; j--){
                 // random sample z[i][j] 
                 LatentVariable latentVariable = sample(i,j);
                 z[i][j] = latentVariable.getTopic();
-                x[i][j] = latentVariable.getIndicator();
+                x[i][j] = latentVariable.getIndicatorVariable();
             }
         }
+        
+        int aaa =1;
     }
     
     private LatentVariable sample(int i,  int j){
-        Document d = dataset.getDocument(i);
+        WDocument d = (WDocument) dataset.getDocument(i);
         int termCnt = d.getNumOfTokens();
         int oldTopic = z[i][j];
         int oldIndicatorValue = x[i][j];
@@ -226,9 +232,9 @@ public class NGramModel {
         }
         
         // sample the topic topic from the distribution p[j].
-        LatentVariable latentVariable = DistributionUtils.getSample(p);
+        LatentVariable latentVariable = DistributionUtils.getSampleNGram(p);
         int newTopic = latentVariable.getTopic();
-        int newIndicatorValue = latentVariable.getIndicator();
+        int newIndicatorValue = latentVariable.getIndicatorVariable();
         
         nWordsSum[i]++;      
         nDocTopic[i][newTopic]++;
@@ -284,6 +290,81 @@ public class NGramModel {
         }
     }
     
+    // combine unigram and ngrams...
+    public double[][] getWordDistribution(){
+        List<NGramDocument> nGramDocuments = new ArrayList<NGramDocument>();
+        for (int i = 0; i < D; i++){
+            // for each document, we reconstruct vocabulary using learned x
+            List<List<Integer>> terms = new ArrayList<List<Integer>>();
+            List<Integer> topics = new ArrayList<Integer>();
+            List<Integer> words;
+            WDocument d = (WDocument) dataset.getDocument(i);
+            for (int j = 0; j < d.getNumOfTokens(); j++){
+                if(x[i][j] == 0){
+                    words = new ArrayList<Integer>();
+                    words.add(d.getToken(j));
+                    topics.add(z[i][j]);
+                    terms.add(words);
+                }else{
+                    words = new ArrayList<Integer>();
+                    words.add(d.getToken(j-1));
+                    j++;
+                    while (j< d.getNumOfTokens() && x[i][j] == 1){
+                        words.add(d.getToken(j-1));
+                        j++;
+                    }
+                    // add last word. 
+                    words.add(d.getToken(j-1));
+                    topics.add(z[i][j-1]);
+                    terms.add(words);
+                }   
+            }
+            
+            NGramDocument doc = new NGramDocument();
+            doc.setTerms(terms);
+            doc.setTopics(topics);
+            nGramDocuments.add(doc);
+        }
+        
+        // construct word distribution combining unigram and n-gram. 
+        int index = 0;
+        nGramToIndexMap = new HashMap<List<Integer>, Integer>();
+        indexToNGramMap = new HashMap<Integer, List<Integer>>();
+        for (NGramDocument nGramDoc : nGramDocuments){
+            for (List<Integer> term : nGramDoc.getTerms()){
+                if (!nGramToIndexMap.containsKey(term)){
+                    nGramToIndexMap.put(term, index);
+                    indexToNGramMap.put(index, term);
+                    index++;
+                }
+            }
+        }
+        
+        int size = nGramToIndexMap.keySet().size();
+        
+        double[][] topicNGram = new double[K][size];
+        double[] topicTotal = new double[K];
+        for (NGramDocument nGramDoc : nGramDocuments){
+            List<List<Integer>> nGramTerms = nGramDoc.getTerms();
+            List<Integer> nGramTopics = nGramDoc.getTopics();
+            for (int i = 0; i < nGramTerms.size(); i++){
+                int idx = nGramToIndexMap.get(nGramTerms.get(i));
+                topicNGram[nGramTopics.get(i)][idx]++;
+                topicTotal[nGramTopics.get(i)]++;
+            }
+        }
+        
+        double[][] topicNGramDist = new double[K][size];
+        for (int k =0; k < K; k++){
+            for (int i = 0; i < size; i++){
+                topicNGramDist[k][i] = ((beta+topicNGram[k][i])/(beta *V + topicTotal[k]));
+            }
+        }
+        
+        return topicNGramDist;
+        
+    }
+    
     public double[][] getTopWordsFromNGram(){
         List<NGramDocument> nGramDocuments = new ArrayList<NGramDocument>();
         
@@ -291,7 +372,7 @@ public class NGramModel {
             List<List<Integer>> terms = new ArrayList<List<Integer>>();
             List<Integer> topics = new ArrayList<Integer>();
             List<Integer> words;
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             for (int j = 1; j < d.getNumOfTokens(); j++){
                 if(x[i][j] == 1){
                     words = new ArrayList<Integer>();
@@ -326,14 +407,23 @@ public class NGramModel {
                 }
             }
         }
-        
+        int size = nGramToIndexMap.keySet().size();
+        double[][] topicNGram = new double[K][size];
+        double[] topicTotal = new double[K];
         double[][] topicNGramDist = new double[K][nGramToIndexMap.keySet().size()];
         for (NGramDocument nGramDoc : nGramDocuments){
             List<List<Integer>> nGramTerms = nGramDoc.getTerms();
             List<Integer> nGramTopics = nGramDoc.getTopics();
             for (int i = 0; i < nGramTerms.size(); i++){
                 int idx = nGramToIndexMap.get(nGramTerms.get(i));
-                topicNGramDist[nGramTopics.get(i)][idx]++;
+                topicNGram[nGramTopics.get(i)][idx]++;
+                topicTotal[nGramTopics.get(i)]++;
+            }
+        }
+        
+        for (int k =0; k < K; k++){
+            for (int i = 0; i < size; i++){
+                topicNGramDist[k][i] = ((beta+topicNGram[k][i])/(beta *V + topicTotal[k]));
             }
         }
         

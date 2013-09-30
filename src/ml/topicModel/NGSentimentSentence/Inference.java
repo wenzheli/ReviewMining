@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import ml.topicModel.common.data.DataSet;
+
 public class Inference {
     DataSet dataset;
     NGramModelSentiSentence model;
@@ -45,6 +47,8 @@ public class Inference {
         model.updateParamters();
     }
     
+    
+   
     public void printTopWords(int itr) throws FileNotFoundException, UnsupportedEncodingException{
       
         double[][] phi = model.getTopicWordDistribution();

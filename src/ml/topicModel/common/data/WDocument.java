@@ -1,19 +1,22 @@
-package ml.topicModel.NGSentimentSentence;
+package ml.topicModel.common.data;
 
 import java.util.List;
 
-public class Sentence {
+public class WDocument extends Document{
     List<Integer> tokens;
     
     public void setTokens(List<Integer> tokens){
         this.tokens = tokens;
     }
     
+    public int getNumOfTokens(){
+        return tokens.size();
+    }
     public List<Integer> getTokens(){
         return tokens;
     }
     
-    public int getToken(int idx){
-        return tokens.get(idx);
+    public int getToken(int index){
+        return tokens.get(index);
     }
 }

@@ -7,6 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import ml.topicModel.common.data.DataSet;
+import ml.topicModel.common.data.LatentVariable;
+import ml.topicModel.common.data.SDocument;
+import ml.topicModel.common.data.Sentence;
+import ml.topicModel.utils.DistributionUtils;
+
 
 
 public class NGramModelSentiSentence {
@@ -27,6 +33,7 @@ public class NGramModelSentiSentence {
     private double [][] phi;   // topic-word distributions, size K x V
     private double [][] psi;   // topic-word indicator distribution, size K * (V+1) * 2
     private double [][] sigma; // topic-word-word distribution, K * (V+1) * V
+    private double [][] pi;    // doc-sentiment distribution
     
     private int[][] z; // latent variable, topic assignments for each word. D * number of sentences
     private int[][][] x; // latent variable, indicator variable for denoting if the current term form bigram with the previous word
@@ -74,6 +81,7 @@ public class NGramModelSentiSentence {
         // these parameters are sufficient statistics of latent variable Z. We only sample z instead
         theta = new double[D][K];
         phi = new double[K][V];
+        pi = new double[D][S];
         
         // initialize temporary variables
         nDocSentimentTopic = new byte[D][S][K];
@@ -94,7 +102,7 @@ public class NGramModelSentiSentence {
         x = new int[D][][];
         
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            SDocument d = (SDocument) dataset.getDocument(i);
             int numSentences = d.getNumOfSentences();
             // assign topic and sentiment to each sentence. 
             z[i] = new int[numSentences];
@@ -155,7 +163,7 @@ public class NGramModelSentiSentence {
     // this will run one iteration of collapsed gibbs sampling.
     public void runSampler(){
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            SDocument d = (SDocument) dataset.getDocument(i);
             int numSentences = d.getNumOfSentences();
             for (int j = 0; j < numSentences; j++){
                 // random sample z[i][j] 
@@ -173,7 +181,7 @@ public class NGramModelSentiSentence {
     
     // sampling z,l,x for sentence j, in document i. 
     private LatentVariable sample(int i,  int j){
-        Document d = dataset.getDocument(i);
+        SDocument d = (SDocument) dataset.getDocument(i);
         Sentence sentence = d.getSentence(j);
       
         int oldTopic = z[i][j];
@@ -281,7 +289,7 @@ public class NGramModelSentiSentence {
         }
         int newTopic = latentVariable.getTopic();
         int newSentiment = latentVariable.getSentiment();
-        int newIndicatorIdx = latentVariable.getIndicator();
+        int newIndicatorIdx = latentVariable.getIndicatorVariable();
         
         int[] newIndicators = convertToIntArray(newIndicatorIdx, numTokens);
         latentVariable.setIndicators(newIndicators);
@@ -324,19 +332,21 @@ public class NGramModelSentiSentence {
     }
     
     public void updateParamters(){
-        // update theta
-        for (int i = 0; i < D; i++){
-            for (int k = 0; k < K; k++){
-                theta[i][k] = (alpha + nDocTopic[i][k]) / (K * alpha + nWordsSum[i]);
+        // update pi
+        for (int i = 0; i <D; i++){
+            for (int s = 0; s <S; s++){
+                pi[i][s] = (omega + nDocSentiment[i][s])/(omega*S + nTotalSentences[i]);
             }
         }
         
         // update phi
-        for (int k = 0; k < K; k++){
-            for (int v = 0; v < V; v++){
-                phi[k][v] = (beta + nTopicWords[k][v]) / (V * beta + nWordTopic[k]); 
-            }
-        }
+        for (int s = 0; s < S; s++){
+            for (int k = 0; k < K; k++){
+                for (int v = 0; v < V; v++){
+                    phi[k][v] = (beta + nWordSentimentTopicWords[s][k][v]) / (V * beta + nWordSentimentTopic[s][k]); 
+                }
+            } 
+        } 
     }
     
     public double[][] getTopWordsFromNGram(){
@@ -430,5 +440,9 @@ public class NGramModelSentiSentence {
     
     public double[][] getTopicWordDistribution(){
         return phi;
+    }
+    
+    public double[][] getSentimentDistribution(){
+        return pi;
     }
 }

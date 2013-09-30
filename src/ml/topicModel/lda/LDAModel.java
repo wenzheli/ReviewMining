@@ -1,4 +1,8 @@
-package ml.topicModel.lda;
+package ml.topicModel.LDA;
+
+import ml.topicModel.common.data.DataSet;
+import ml.topicModel.common.data.WDocument;
+import ml.topicModel.utils.DistributionUtils;
 
 
 public class LDAModel {
@@ -45,7 +49,7 @@ public class LDAModel {
         // initialize latent variable - z
         z = new int[D][];
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             int numTerms = d.getNumOfTokens();
             z[i] = new int[numTerms];
             for (int j = 0; j < numTerms; j++){
@@ -62,7 +66,7 @@ public class LDAModel {
     // this will run one iteration of collapsed gibbs sampling.
     public void runSampler(){
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             for (int j = 0; j < d.getNumOfTokens(); j++){
                 // random sample z[i][j] 
                 int newTopic = sampleNewTopic(i,j);
@@ -72,7 +76,7 @@ public class LDAModel {
     }
     
     private int sampleNewTopic(int i,  int j){
-        Document d = dataset.getDocument(i);
+        WDocument d = (WDocument) dataset.getDocument(i);
         int oldTopic = z[i][j];
         nTopicWords[oldTopic][d.getToken(j)]--;
         nDocTopic[i][oldTopic]--;

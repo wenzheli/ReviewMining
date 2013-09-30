@@ -1,8 +1,8 @@
-package ml.topicModel.NGSentimentSentence;
+package ml.topicModel.common.data;
 
 import java.util.List;
 
-public class NGramDocument {
+public class NGramDocument{
     List<List<Integer>> terms;
     List<Integer> topics;
     

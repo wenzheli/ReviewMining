@@ -1,4 +1,4 @@
-package ml.topicModel.NGSentimentSentence;
+package ml.topicModel.utils;
 
 public class QuickSort {
     public static void quicksort(double[] main, int[] index) {

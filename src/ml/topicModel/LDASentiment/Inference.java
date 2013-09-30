@@ -1,12 +1,16 @@
-package ml.topicModel.LDA;
+package ml.topicModel.LDASentiment;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-import ml.topicModel.LDA.Options;
 import ml.topicModel.common.data.DataSet;
+import ml.topicModel.common.data.Vocabulary;
 import ml.topicModel.common.preprocessing.DataSetGenerator;
 import ml.topicModel.utils.QuickSort;
 
@@ -39,18 +43,80 @@ public class Inference {
             if (itr % saveStep == 0){
                 model.updateParamters();
                 printTopWords(itr);
+                sentimentClassification(itr);
             }
         }
         
         model.updateParamters();
     }
     
-    public void printTopWords(int itr) throws FileNotFoundException, UnsupportedEncodingException{
-        PrintWriter writer = new PrintWriter("result/LDA/"+dataset.dataSetName + "_topWords_"+itr+".txt", "UTF-8");
-        System.out.println("Printing top words");
-        writer.println("Printing top words");
-        double[][] phi = model.getTopicWordDistribution();
+    /*
+     * Sentiment classification, and write result into file and console. 
+     */
+    public void sentimentClassification(int itr) throws FileNotFoundException, UnsupportedEncodingException{
+        int positive = 0;
+        int negative = 0;
+        PrintWriter writer = new PrintWriter("result/LDASentiment/"+dataset.dataSetName+"_sentimentClassification_"+itr+".txt", "UTF-8");
+        writer.println("Doing sentiment classification");
+        System.out.println("Doing sentiment classification.....");
+        int total = 0;  // total number of documents have ratings between 0-2.5 or 3.5-5
+        int correct = 0;
+        double[][] pi = model.getSentimentDistribution();
+        int predicted = 0;
+        int actual = 0;
+        for (int i = 0; i < dataset.getDocumentCount(); i++){
+            double rating = dataset.getDocument(i).getRating();
+            if (rating > 2 && rating < 4)
+                continue;
+            total++;
+            if (pi[i][0] > pi[i][1])
+                predicted = 0;
+            else
+                predicted = 1;
+            
+            if (rating <= 2){
+                actual = 1;
+                negative++;
+            }
+            else {
+                actual = 0;
+                positive++;
+            }
+            
+            if (predicted == actual){
+                correct++;
+          
+            }
+            
+        }
+        double accuracy = correct*1.0/total;
+        System.out.println("sentiment classification accuracy is: " + accuracy);
+        writer.println("sentiment classification accuracy is: " + accuracy);
+        writer.close();
         
+        System.out.println("positive count:" + positive);
+        System.out.println("negative count:" + negative);
+    }
+    
+    
+    public void printTopWords(int itr) throws FileNotFoundException, UnsupportedEncodingException{
+        PrintWriter writer = new PrintWriter("result/LDASentiment/"+dataset.dataSetName+"_topWords_"+itr+".txt", "UTF-8");
+        double[][][] phi = model.getTopicWordDistribution();
+        
+        // print top words for positive sentiment
+        System.out.println("Top words for positive");
+        writer.println("Top words for positive");
+        printTopWords(phi[0], writer);
+        
+        // print top words for negative sentiment. 
+        System.out.println("Top words for negative");
+        writer.println("Top words for negative");
+        printTopWords(phi[1], writer);
+        
+        writer.close();
+    }
+    
+    private void printTopWords(double[][] phi, PrintWriter writer){
         int len1 = phi.length;
         int len2 = phi[0].length;
         double[][] temp = new double[len1][len2];
@@ -62,41 +128,35 @@ public class Inference {
         
         int tTop = option.tWords; // get the tTop words from each topic
         String[][] topWords = new String[option.K][tTop];
-        double[][] topWordsProbability = new double[option.K][tTop];
-        
+        double[][] topWordsProbablity = new double[option.K][tTop];
         for (int k = 0; k < option.K; k++){
             // select the top words for topic k
             int vocabSize = dataset.vocab.getVocabularySize();
-            System.out.println("Top words for topic: " + k);
-            
             
             int[] index = new int[vocabSize];
             for (int v = 0; v < vocabSize; v++){
-                index[v] = v;
+                index[v] = v; 
             }
             
             QuickSort.quicksort(temp[k], index);
-           
+            
             for (int i = 0; i < tTop; i++){
                 topWords[k][i] = dataset.vocab.indexTotokenMap.get(index[vocabSize-i-1]); 
-                topWordsProbability[k][i] = phi[k][index[vocabSize-i-1]];
+                topWordsProbablity[k][i] = phi[k][index[vocabSize-i-1]];
             }
         }
         
         for (int k = 0; k < option.K; k++){
-            writer.println("Top words for topic: " + k);
             System.out.println("Top words for topic: " + k);
+            writer.println("Top words for topic: " + k);
             for (int i = 0; i < topWords[k].length; i++){
-                System.out.println(topWords[k][i] + ":     " + topWordsProbability[k][i]);
-                writer.println(topWords[k][i] + ":     " + topWordsProbability[k][i]);
+                System.out.println(topWords[k][i] + ":     " + topWordsProbablity[k][i]);
+                writer.println(topWords[k][i] + ":     " + topWordsProbablity[k][i]);
             }
-            
             System.out.println("****************************************");
             writer.println("****************************************");
         }
-        
-        writer.close();
-    } 
+    }
     
     public static void executeYelpDataSet() throws IOException{
         DataSet dataset = DataSetGenerator.createYelpDataSetForWordLevel("data/yelp");
@@ -115,5 +175,4 @@ public class Inference {
         inference.initModel(opt);
         inference.runSampler();
     }
-
 }
