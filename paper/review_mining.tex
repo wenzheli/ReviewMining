@@ -1,0 +1,293 @@
+\documentclass[fleqn]{article} % For LaTeX2e
+\usepackage{nips12submit_e,times}
+\usepackage{array} 		% for vertical centering table cells
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{bbm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\newtheorem{theorem}{Theorem}
+\newtheorem{mydef}{Definition}
+%\documentstyle[nips12submit_09,times,art10]{article} % For LaTeX 2.09
+
+
+\title{Joint Aspect-Sentiment N-Gram Topic Model for Customer Reviews}
+
+\author{
+Wenzhe Li\\
+University of Washington\\
+\texttt{liwenzhe@uw.edu}
+}
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to \LaTeX{} to determine where to break
+% the lines. Using \AND forces a linebreak at that point. So, if \LaTeX{}
+% puts 3 of 4 authors names on the first line, and the last on the second
+% line, try using \AND instead of \And before the third author name.
+
+\newcommand{\fix}{\marginpar{FIX}}
+\newcommand{\new}{\marginpar{NEW}}
+
+%\nipsfinalcopy % Uncomment for camera-ready version
+
+\begin{document}
+\maketitle
+\begin{abstract}
+With the increase in popularity of e-commerce, more and more customer reviews are available online. These reviews are very useful for customers to make buying decisions, and also helpful for business to improve their products based on these reviews. However, with the large amount of reviews exists for each product today, it's usually hard to go through each of them. In this paper, we propose N-Gram based topic models that can automate these process. Specifically, the unsupervised model can jointly learn the aspects and sentiments from the customer reviews. While the unigram LDA model is effective, simple and computationally efficient, it does not capture some meaningful phrase from aspect, like "Pa Thai", "working distance",etc. On the other hand, our model is able to capture more meaning phrases, and also capture the sentiment distribution for each aspect. Our experimental results showed that the proposed model works better than state-of-arts models in terms aspect mining and sentiment analysis.
+\end{abstract}
+
+\section{Introduction}
+Nowadays, there are large amount of reviews for products available online, ranging from books, restaurants, electronic devices to many others. In the review, customer will give some opinions for different aspects. For example, people who rate restaurant may provide some opinions for food, service, price, location and etc, which we call \emph{aspects}. And finally, they will provide a rating based on their overall sanctification.
+
+Different customers may talk about the different aspects for the same product. A user who is looking for computer may care about its computational power and maximum throughput, while other cares more about graphical capability. Another big problem is understanding how the sentiments for different aspects are expressed. The sentence, "The computer is great for designers" shows the positive sentiment for the graphical capability, while the sentence, "It takes forever to get the results" shows the negative sentiment for the computational power. One simple solution is to find all the positive and negative words from the sentence, and classify them based on these words. Till now, there have been lots of work done for sentiment classification using supervised learning[11,12]. But this approach typically requires a lot of labeled data, which is expensive to obtain in practice.
+
+As we can see, there are two big problems for review mining, aspect extraction and sentiment classification. Most of the existing methods[] use two-step approach: firstly, they build a model to automatically extract the aspects from the reviews. Then for each aspect, they look for sentiment words that express those aspects.
+
+In this paper, we propose a new topic model that can jointly model aspects and sentiments. More specifically, we extend the N-gram topic model to handle the sentiment as well. In addition to this, we learn the aspect for each sentence level, not on word level. This assumption is reasonable for review mining, since each sentence is likely related to only one aspect. The comparison between N-gram model and sentence-based N-gram model will be shown in later section.
+
+
+\section{Previous Work}
+There have been quite a lot of efforts put into aspect mining and sentiment classification. For sentiment classification, Turney and Littman[13] uses an unsupervised learning algorithm to classify the semantic orientation in the word/phrase level based on mutual information, and Choi et al[14] uses conditional random fields and a variation of Autoslog to classify the sentiments. Figure 1-(b) shows the google product reviews. Where large amount of reviews are automatically classified by different aspects[15]. However, these aspects are predefined for different product types.
+
+Comparing to the sentiment classification task, extracting aspects from the reviews seems more challenging. The earliest attempts for detecting aspects are based on frequently occurring noun phrases [9]. This approach works well when aspect are strongly tied to the single word, but less useful when aspects uses many low frequency terms. One common solution is to use clustering techniques to group the terms that associated with the same aspects. After that, they search for opinions associated with those aspects.
+
+With the popularity of topic model(LDA)[10], there are many variations of LDA model have been applied to the product review mining. Titov et al.[7] propose a model for modeling two types of topics in reviews: global topic and local topics. The global topics correspond to a global property of review such as brand, and local topics corresponding to the product aspects. This is because aspects are fundamentally different from the global property of products. Brody and Elhadad [8] proposed a local LDA model, where they extract the aspects from sentence instead of the whole review text. Wang et al [1] uses bootstrap methods to extract the aspects first, and then use latent models to analyze the opinions. All these methods focus on extracting aspects, or dealing with the sentiment analysis as a separate step.
+
+While most of these work focus either on aspect mining or sentiment analysis, there are few of recent attempts that jointly model aspects and sentiments. The work that is closely related to ours is []. They also argued that training for sentence level performs better than training on word level. However, all of their approaches are based on bag of words assumption that use unigram models. While unigram model is simple and computationally efficient, it lack of capability to find out meaningful phrase which consists of more than one word.
+
+
+\section{Preliminary}
+Let's first take a look at N-gram topic model. as shown in Figure 1, which was proposed by []. While the bi-gram model always generate bi-grams, the  N-gram model is flexible enough that can generate phrase that consists of arbitrary length of words. The main idea is to introduce new latent variable $X$, which is the indicator variable to denotes whether we need to combine the current word with previous one to make bi-gram. The whole generative process looks like this:
+
+\begin{enumerate}
+    \item Draw Discrete distribution $\phi_{k}$ from Dirichlet prior $\beta$, for each topic $k$.
+    \item Draw Bernoulli distribution $\psi_{kw}$ from a Beta prior $\gamma$ for each topic $k$ and each word $w$
+    \item Draw Discrete distribution $\sigma_{kw}$ from Dirichlet prior $\eta$ for each topic $k$ and each word $w$.
+    \item For each document $d$, for $d=1,....D$
+        \begin{enumerate}
+            \item draw document distribution $\theta_{d}$ from $\text{Dir}(\alpha)$
+            \item for each word $i$ in document $d$
+                \begin{enumerate}
+                    \item Draw $z_{i}$ from $\text{multinomial}(\theta_{d})$
+                    \item Draw indicator variable $x_{i}$ from Bernoulli $\psi_{z_{i-1},w_{i-1}}$
+                    \item Draw word $w_{i}$ from $\phi_{z_{i}}$ if $x=0$,  else draw $w_{i}$ from $\sigma_{z_{i},w_{i-1}}$
+                \end{enumerate}
+        \end{enumerate}
+\end{enumerate}
+
+As we notice, we draw each word either from unigram model or bi-gram model, depends on the indicator variable. This is very intuitive and makes model to generate any meaningful phrases. The derivation of gibbs sampling for N-gram topic model is straightforward, although it's a little bit complicated that uni-gram LDA model.
+
+
+We first assume that
+\[
+c(\alpha)=\frac{\sum_{i}^{}\Gamma(\alpha_{i})}{\Gamma(\sum_{i}^{}\alpha_{i})}
+\]
+For collapsed gibbs sampling we just need to calculate the following quantity:
+\begin{equation}
+p(z_{i},x_{i}|z_{-i}, x_{-i}, w, \alpha, \beta, \gamma,\delta) = \frac{p(z,x,w|\alpha,\beta,\gamma,\delta)}{p(z_{-i},x_{-i},w|\alpha,\beta,\gamma,\delta)}
+\end{equation}
+For the diving term, we can expand it to
+\begin{align*}
+&p(z,x,w|\alpha,\beta,\gamma,\delta)=p(z|\alpha)p(w|z,x,\beta,\delta)p(x|z,w,\gamma)
+\end{align*}
+The first term $p(z|\alpha)$ remains the same as in LDA. We have
+\[
+p(z|\alpha)=\prod_{d=1}^{D}\frac{c(\alpha+\sum_{j:\delta_{j}=d}^{}I_{K}(z_{j}))}{c(\alpha)}
+\]
+
+for $p(w|z,\beta)$, we need to consider two different cases.
+
+When $x_{i}=0$
+\begin{align*}
+&p(w|z,\beta)=\int p(w|z,\phi)p(\phi|\beta)d\phi \\
+=&\int \prod_{k=1}^{K}\prod_{i:z_{i}=k, x_{i}=0}^{}\prod_{v=1}^{V}\phi_{k,v}^{I_{w_{i}=v}} \times \prod_{k=1}^{K}\frac{1}{c(\beta)}\prod_{v=1}^{V}\phi_{k,v}^{\beta_{v}-1}d\phi \\
+=&\int \prod_{k=1}^{K}\frac{1}{c(\beta)}\prod_{v=1}^{V}\phi_{k,v}^{\sum_{i:z_{i}=k, x_{i}=0}^{}I_{w_{i}=v} + \beta_{v}-1}d\phi \\
+=&\prod_{k=1}^{K}\frac{c(\beta+\sum_{i:z_{i}=k, x_{i}=0}^{}I_{V}(w_{i}))}{c(\beta)}
+\end{align*}
+
+When $x_{i} =1$
+\begin{align*}
+&p(w|z,\beta)=\int p(w|z,\sigma)p(\sigma|\beta)d\sigma \\
+=&\int \prod_{k=1}^{K}\prod_{w=0}^{V}\prod_{i:z_{i}=k, w_{i-1}=w, x_{i}=1}^{}\prod_{v=1}^{V}\phi_{k,w,v}^{I_{w_{i}}=v} \times \prod_{k=1}^{K}\prod_{w=0}^{V}\frac{1}{c(\beta)}\prod_{v=1}^{V}\sigma_{k,w,v}^{\delta_{v}-1}d\sigma \\
+=&\prod_{k=1}^{K}\prod_{w=0}^{V}\frac{c(\delta+\sum_{i:z_{i}=k, w_{i-1}=w,x_{i}=1}^{}I_{V}(w_{i}))}{c(\delta)}
+\end{align*}
+
+For the last term, we have
+\begin{align*}
+&p(x|z,w,\gamma=\int p(x|z,w,\psi))p(\psi|\gamma)d\psi\\
+=&\int \prod_{k=1}^{K}\prod_{w=0}^{V}\prod_{i:z_{i}=k, w_{i-1}=w}^{}\prod_{s=0}^{1}\psi_{k,w,s}^{I_{x_{i}=s}}\times \prod_{k=1}^{K}\prod_{w=0}^{V}\prod_{s=0}^{1}\psi_{k,w,s}^{\gamma_{s}-1}\\
+=&\prod_{k=1}^{K}\prod_{w=0}^{V}\frac{c(\gamma+\sum_{i:z_{i-1}=k, w_{i-1}=w}^{}I_{S}(x_{i}))}{c(\gamma)}
+\end{align*}
+
+Finally we can get
+\begin{align*}
+p(z,x,w|\alpha,\beta,\gamma,\delta)=\prod_{d=1}^{D}\frac{c(\alpha+\sum_{j:\delta_{j}=d}^{}I_{K}(z_{j}))}{c(\alpha)}  \times \prod_{k=1}^{K}\frac{c(\beta+\sum_{i:z_{i}=k, x_{i}=0}^{}I_{V}(w_{i}))}{c(\beta)} \times  \\ \prod_{k=1}^{K}\prod_{w=0}^{V}\frac{c(\delta+\sum_{i:z_{i}=k, w_{i-1}=w,x_{i}=1}^{}I_{V}(w_{i}))}{c(\delta)} \times  \prod_{k=1}^{K}\prod_{w=0}^{V}\frac{c(\gamma+\sum_{i:z_{i-1}=k, w_{i-1}=w}^{}I_{S}(x_{i}))}{c(\gamma)}
+\end{align*}
+
+\section{Proposed Models}
+\subsection{Sentence N-gram Model}
+Unfortunately, topic model does not work well for short text, like reviews, comments and etc. If we apply the classical unigram or N-gram model to short text like reviews, it tends to give us higher level aspects. The problem was mentioned in [(paper from columbia), (paper from KAIST)] as well. The first model we proposed in this paper is sentence n-gram model, where we assume that all the words within one sentence comes from same aspect. We split the text into sentences based on conjunction symbols. 
+
+The Figure 1.b shows the sentence N-gram topic model. The generative process is as follows:
+\begin{enumerate}
+    \item Draw Discrete distribution $\phi_{k}$ from Dirichlet prior $\beta$, for each topic $k$.
+    \item Draw Bernoulli distribution $\psi_{kw}$ from a Beta prior $\gamma$ for each topic $k$ and each word $w$
+    \item Draw Discrete distribution $\sigma_{kw}$ from Dirichlet prior $\eta$ for each topic $k$ and each word $w$.
+    \item For each document $d$, for $d=1,....D$
+        \begin{enumerate}
+            \item draw document distribution $\theta_{d}$ from $\text{Dir}(\alpha)$
+            \item for each sentence $m$ in document $d$
+                \begin{enumerate}
+                    \item Draw $z_{m}$ from $\text{multinomial}(\theta_{d})$
+                    \item For each word $w_{i}$ in sentence $m$
+                    \begin{enumerate}
+                         \item Draw indicator variable $x_{i}$ from Bernoulli $\psi_{z_{m},w_{i-1}}$
+                        \item Draw word $w_{i}$ from $\phi_{z_{m}}$ if $x=0$,  else draw $w_{i}$ from $\sigma_{z_{m},w_{i-1}}$     
+                    \end{enumerate}
+                \end{enumerate}
+        \end{enumerate}
+\end{enumerate}
+
+
+
+\subsection{Aspect-Sentiment N-gram Topic Model}
+Next,we introduce our proposed model, where we incorporate sentiment information. Besides all of the existing variables, we also draw sentiment distribution for each document. By adding sentiment, we add another layer for each hyperparameters. The whole generative process is as follows:
+
+\begin{enumerate}
+    \item Draw Discrete distribution $\pi$ from Dirichlet prior $lamda$, for each sentiment type.
+    \item Draw Discrete distribution $\phi_{s,k}$ from Dirichlet prior $\beta$ for each sentiment $s$, and each topic $k$
+    \item Draw Bernoulli distribution $\psi_{s,k,w}$ from a Beta prior $\gamma$ for each sentiment $s$, and each topic $k$ and each word $w$
+    \item Draw Discrete distribution $\sigma_{s,k,w}$ from Dirichlet prior $\eta$ for each sentiment $s$, and topic $k$ and each word $w$.
+    \item For each document $d$, for $d=1,....D$
+        \begin{enumerate}
+            \item draw document distribution $\theta_{d,s}$ from $\text{Dir}(\alpha)$, for each sentiment $s$
+            \item for each word $i$ in document $d$
+                \begin{enumerate}
+                    \item Draw sentiment $l_{i}$ from $\text{multinomial}(\pi_{d})$
+                    \item Draw $z_{i}$ from $\text{multinomial}(\theta_{d,l_{i}})$
+                    \item Draw indicator variable $x_{i}$ from Bernoulli $\psi_{z_{i-1},w_{i-1}, l_{i-1}}$
+                    \item Draw word $w_{i}$ from $\phi_{l_{i},z_{i}}$ if $x=0$,  else draw $w_{i}$ from $\sigma_{l_{i},z_{i},w_{i-1}}$
+                \end{enumerate}
+        \end{enumerate}
+\end{enumerate}
+
+\subsection{Sentence Aspect-Sentiment N-gram Topic Model}
+\begin{enumerate}
+    \item Draw Discrete distribution $\pi$ from Dirichlet prior $lamda$, for each sentiment type.
+    \item Draw Discrete distribution $\phi_{s,k}$ from Dirichlet prior $\beta$ for each sentiment $s$, and each topic $k$
+    \item Draw Bernoulli distribution $\psi_{s,k,w}$ from a Beta prior $\gamma$ for each sentiment $s$, and each topic $k$ and each word $w$
+    \item Draw Discrete distribution $\sigma_{s,k,w}$ from Dirichlet prior $\eta$ for each sentiment $s$, and topic $k$ and each word $w$.
+    \item For each document $d$, for $d=1,....D$
+        \begin{enumerate}
+            \item draw document distribution $\theta_{d,s}$ from $\text{Dir}(\alpha)$, for each sentiment $s$
+            \item for each sentence $i$ in document $d$
+                \begin{enumerate}
+                    \item Draw sentiment $l_{i}$ from $\text{multinomial}(\pi_{d})$
+                    \item Draw $z_{i}$ from $\text{multinomial}(\theta_{d,l_{i}})$
+                    \item Draw indicator variable $x_{i}$ from Bernoulli $\psi_{z_{i-1},w_{i-1}, l_{i-1}}$
+                    \item For each word $w_{j}$ in sentence $i$.
+                    \begin{enumerate}
+                        \item Draw word $w_{j}$ from $\phi_{l_{i},z_{i}}$ if $x=0$,  else draw $w_{i}$ from $\sigma_{l_{i},z_{i},w_{i-1}}$
+                    \end{enumerate}
+                    
+                \end{enumerate}
+        \end{enumerate}
+\end{enumerate}
+
+
+
+\begin{figure}
+\centering
+\subfigure[N-Gram Topic Model]{
+\includegraphics[scale=0.35]{images/NGramTopic.png}
+}
+\subfigure[Joint Sentiment-Aspect N-Gram Topic Model]{
+\includegraphics[scale=0.35]{images/NGramTopicModelSentiment.png}
+}
+\subfigure[Sentence based N-Gram Topic Model]{
+\includegraphics[scale=0.25]{images/NGramSentence.png}
+}
+\subfigure[Sentence Based Joint Sentiment-Aspect N-Gram Topic Model]{
+\includegraphics[scale=0.25]{images/NGramSentimentSentence.png}
+}
+\label{fig:feature2}
+\caption[Optional caption for list of figures]{Four different variations of N-Gram topic models. (a). N-gram topic model (b) Joint Sentiment N-Gram topic model, where we integrate sentiment layout to the model. (c) Sentence N-Gram topic model, where we assume the words in the single sentence draws from the same topic. (d). Sentence joint apsect-sentiment topic model, where we add sentiment layout to the sentence N-gram model }
+\end{figure}
+
+
+
+\section{Experiments}
+In this section, we give some experimental results based on real-word data sets. We use yelp review data sets, it contains 27000 customer reviews for restaurants. The data set comes from the paper[], and we use it for comparison purpose.  
+
+\subsection{Preprocessing} 
+Stop words removal + stemming words + split into sentences (".","?","!")
+
+\subsection{Aspect Mining}
+\subsection{Sentiment Classification}
+\subsection{Perplexity Score}
+In order to measure the goodness of the model, we need some measurement tool. Perplexity score is widely used in language modeling to assess the predictive power of the model. Since the documents in the corpora are treated as unlabeled, we will do density estimation, and we hope to get the high likelihood for the test data set. In particular, we use the perplexity score, which is monotonically decreasing in the likelihood of the test data, and is equivalent to the inverse of the geometric mean per-word likelihood [10]. More formally, for the test documents set,
+
+\begin{equation}
+\text{perplexity}(D_{test})=exp\{-\frac{\sum_{d=1}^{M}\log p(w_{d})}{\sum_{d=1}^{M}N_{d}}\}
+\end{equation}
+
+In our experiment, we randomly select the 90\% of the data as training samples, while the remaining 10\% for testing samples.
+
+
+Upcoming soon
+
+
+
+
+
+
+\newpage
+\subsubsection*{References}
+\small{
+[1] Wang.H, Lu. Y and Zhai.C. Latent aspect rating analysis on review text data: a rating regression approach. {\it Proceedings of the 16th ACM SIGKDD international conference on Knowledge discovery and data mining}. pp.783--792 Washington, DC, USA 2010
+
+[2] Jo.Y and Oh.A.H. Aspect and sentiment unification model for online review analysis. {\it Proceedings of the fourth ACM international conference on Web search and data mining}. pp. 815--824, Hong Kong, China 2011.
+
+[3] Zhao.W, Jiang.J, Yan.H.F and Li.X. Jointly modeling aspects and opinions with a MaxEnt-LDA hybrid. {\it Proceedings of the 2010 Conference on Empirical Methods in Natural Language Processing}. pp. 56--65. Cambridge, Massachusetts, 2010.
+
+[4] Li.F, Huang.M and Zhu.X. Sentiment Analysis with Global Topics and Local Dependency {\it AAAI}. 2010.
+
+[5] He.Y, Lin.C and Alani.H. Automatically extracting polarity-bearing topics for cross-domain sentiment classification. {\it Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies - Volume 1} pp.123--131. Portland, Oregon, 2011
+
+[6] Lin.C and He.Y. Joint sentiment/topic model for sentiment analysis. {\it Proceedings of the 18th ACM conference on Information and knowledge management}. pp.375--384, Hong Kong, China 2009
+
+[7] Titov.I and McDonald.R. Modeling online reviews with multi-grain topic models. {\it Proceedings of the 17th international conference on World Wide Web} pp. 111--120 Beijing, China 2008
+
+[8] Brody.S and Elhadad.N. An unsupervised aspect-sentiment model for online reviews {\it Human Language Technologies: The 2010 Annual Conference of the North American Chapter of the Association for Computational Linguistics}. pp.804--812. Los Angeles, California. 2010.
+
+[9] Hu.M and Liu.B Mining and summarizing customer reviews. {\it Proceedings of the tenth ACM SIGKDD international conference on Knowledge discovery and data mining}. pp. 168--177, Seattle. WA 2004
+
+[10] David M. Blei, Andrew Y. Ng, Michael I. Jordan. Latent Dirichlet Allocation. {\it Journal of Machine Learning Research} pp. 993-1022 2003
+
+[11] Pang.B, Lee.L and Vaithyanathan.S Thumbs up?: sentiment classification using machine learning techniques {\it Proceeding EMNLP '02 Proceedings of the ACL-02 conference on Empirical methods in natural language processing} - Volume 10 Pages 79-86
+
+[12] Kim.S.M and Hovy.E. Determining the sentiment of opinions. {\it Proceeding COLING '04 Proceedings of the 20th international conference on Computational Linguistics}. Article No. 1367 .
+
+[13] P.D. Turney and M.L.Littman. Unsupervised learning for semantic orientation from a hundred-billion-word corupus. {\it CoRR}, cs.LG/0212012, 2012
+
+[14] Y.Choi, C.Cardie, E.riloff, and S.Patwardhan. Identifying sources of opinions with conditional random fields and extraction patterns. {\it In Proceedings of Human Language Technology Conference and Conference on Empirical Methods in Natural Language Processing} pages 355-362, Vancouver, British Columbia, Canada, October 2005.
+
+[15] Sasha Blair-goldensohn and Tyler Neylon and Kerry Hannan and George A. Reis and Ryan Mcdonald and Jeff Reynar Building a sentiment summarizer for local service reviews. {\it In NLP in the Information Explosion Era}. 2008
+
+[16] Gregor Heinrich. Infinite LDA ¨CImplementing the HDP with minimum code complexity. {\it Technical note} TN2011/1, 2011
+
+[17] Tom Griffiths. Gibbs sampling in the generative model of Latent Dirichlet Allocation. {\it Note}. 2007.
+
+[18] http://www.yelp.com/dataset\_challenge/
+
+[19] M. Hoffman, D. Blei, J. Paisley, and C. Wang.   Stochastic variational inference.   {\it Journal of Machine Learning Research} 2013
+
+
+\bibliography{ref}
+\end{document}
