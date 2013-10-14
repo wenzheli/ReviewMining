@@ -52,7 +52,7 @@ public class LDAModel {
         this.betaSum = new double[S];
         this.gamma = new double[S];
         // initialize gamma
-        gamma[0] = 5; // for positive
+        gamma[0] = 1; // for positive
         gamma[1] = 1; // for negative
         
         // initialzie beta using asymmetric prior
@@ -60,14 +60,15 @@ public class LDAModel {
         for (int i = 0; i < beta.length; i++){
             Arrays.fill(beta[i], 0.001);
         }
+        
         Vocabulary vocab = dataset.getVocabulary();
         Set<Integer> positiveWords = vocab.getPositiveWordS();
         for (Integer tokenId : positiveWords){
-            beta[0][tokenId] = 0.01;
+            beta[1][tokenId] = 0;
         }
         Set<Integer> negativeWords = vocab.getNegativeWords();
         for (Integer tokenId : negativeWords){
-            beta[1][tokenId] = 0.01;
+            beta[0][tokenId] = 0;
         }
         
         for (double value : beta[0]){
@@ -100,10 +101,19 @@ public class LDAModel {
             for (int j = 0; j < numSentences; j++){
                 int randTopic = (int)(Math.random() * K);
                 int randSentiment = (int)(Math.random() * S);
+                 
+                Sentence sentence = d.getSentence(j);
+                for (Integer tokenIdx : sentence.getTokens()){
+                   if (vocab.positiveWords.contains(tokenIdx)){
+                       randSentiment = 0;
+                   } else if(vocab.negativeWords.contains(tokenIdx)){
+                       randSentiment  = 1;
+                   }
+                }
+                
                 z[i][j] = randTopic;  
                 l[i][j] = randSentiment;
                 
-                Sentence sentence = d.getSentence(j);
                 for (Integer tokenIdx : sentence.getTokens()){
                     // initialize temporary variables
                     nSentimentTopicWords[randSentiment][randTopic]++;

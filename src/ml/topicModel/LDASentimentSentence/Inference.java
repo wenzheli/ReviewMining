@@ -34,7 +34,7 @@ public class Inference {
     
     public void runSampler() throws FileNotFoundException, UnsupportedEncodingException{
         int niter = option.niters;
-        int saveStep = option.savestep;
+        int saveStep = option.saveStep;
         for (int itr = 0; itr < niter; itr++){
             System.out.println("gibbs sampling: " + itr + " iteration");
             model.runSampler();
@@ -171,5 +171,9 @@ public class Inference {
        
         inference.initModel(opt);
         inference.runSampler();
+    }
+    
+    public static void main(String[] args) throws IOException{
+        Inference.executeYelpDataSet();
     }
 }

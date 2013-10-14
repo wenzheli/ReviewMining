@@ -39,7 +39,7 @@ public class LDAModel {
         this.alpha = options.alpha;
         this.beta = options.beta;
         this.gamma = new double[2];
-        gamma[0] = 5;
+        gamma[0] = 1;
         gamma[1] = 1;
         this.K = options.K;
         this.S = options.S;
@@ -117,6 +117,12 @@ public class LDAModel {
         // compute p(z[i][j]|*)
         double[][] p = new double[S][K];
         for (int s = 0; s < S; s++){
+            Vocabulary vocab = dataset.vocab;
+            if(vocab.isPositiveWord(d.getToken(j)) && s==1 
+                    || vocab.isNegativeWord(d.getToken(j)) && s==0){
+                continue;
+            }
+            
             for (int k = 0; k < K; k++){
                 p[s][k] = ((alpha + nDocSentimentTopicWords[i][s][k])/(K*alpha + nDocSentimentWords[i][s])) 
                         * ((beta+nSentimentTopicWordWords[s][k][d.getToken(j)])/(V*beta+nSentimentTopicWords[s][k]))

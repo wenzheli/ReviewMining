@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import ml.topicModel.NGSentimentSentence.SparseMatrix;
 import ml.topicModel.common.data.DataSet;
 import ml.topicModel.common.data.LatentVariable;
 import ml.topicModel.common.data.NGramDocument;
@@ -38,7 +39,7 @@ public class NGramModel {
     private int [][] nDocTopic;   // nDocTopic[i][j]: # of words in document i that assigned to topic j, size D x K
     private int [] nWordTopic; // nWordTopic[j]: total number of words assigned to topic j, size K. 
     private int [] nWordsSum;     // nWordsSum[i]: total number of words in document i, size D
-    private byte [][][] nTopicPrevWordWord; //nTopicWordWord[i][j][k]:  total number of word/term k, assigned to topic i, on the condition that the previous
+    private SparseMatrix [] nTopicPrevWordWord; //nTopicWordWord[i][j][k]:  total number of word/term k, assigned to topic i, on the condition that the previous
                                        // previous term is j. size: K * (V+1) * V
     private int [][] nTopicPreWord;  // nTopicPreWord[i][j]:  total number of word/term that assigned to topic i, where previous word is j. 
                                      // size: K *(V+1)
@@ -72,7 +73,10 @@ public class NGramModel {
         nDocTopic = new int[D][K];
         nWordTopic = new int[K];
         nWordsSum = new int[D];
-        nTopicPrevWordWord = new byte[K][V+1][V];
+        nTopicPrevWordWord = new SparseMatrix[K];
+        for (int i = 0; i < K; i++){
+            nTopicPrevWordWord[i] = new SparseMatrix(V+1);
+        }
         nTopicPreWord = new int[K][V+1];
         nTopicPreWordIndicator = new int[K+1][V+1][2];
         nTopicPreWordIndicatorSum = new int[K+1][V+1];
@@ -118,10 +122,10 @@ public class NGramModel {
                     
                 } else{ // use bigram 
                     if (j == 0){ // if beginning term
-                        nTopicPrevWordWord[randTopic][V][d.getToken(j)]++;
+                        nTopicPrevWordWord[randTopic].increment(V, d.getToken(j));
                         nTopicPreWord[randTopic][V]++;    
                     } else{ 
-                        nTopicPrevWordWord[randTopic][d.getToken(j-1)][d.getToken(j)]++;
+                        nTopicPrevWordWord[randTopic].increment(d.getToken(j-1),d.getToken(j));
                         nTopicPreWord[randTopic][d.getToken(j-1)]++;
                     }
                 }
@@ -167,10 +171,16 @@ public class NGramModel {
                
             }
         } else {
+            if (nTopicPreWordIndicator[z[i][j-1]][d.getToken(j-1)][oldIndicatorValue] < 1){
+                int aa =1;
+            }
             nTopicPreWordIndicator[z[i][j-1]][d.getToken(j-1)][oldIndicatorValue]--;
             nTopicPreWordIndicatorSum[z[i][j-1]][d.getToken(j-1)]--;
 
             if (j < termCnt - 1){
+                if (nTopicPreWordIndicator[oldTopic][d.getToken(j)][x[i][j+1]] < 0){
+                    int aa =1;
+                }
                 nTopicPreWordIndicator[oldTopic][d.getToken(j)][x[i][j+1]]--;
                 nTopicPreWordIndicatorSum[oldTopic][d.getToken(j)]--;
                 
@@ -183,11 +193,11 @@ public class NGramModel {
             nWordTopic[oldTopic]--;
         } else{ // if bigram
             if (j == 0){ // if beginning term
-                nTopicPrevWordWord[oldTopic][V][d.getToken(j)]--;
+                nTopicPrevWordWord[oldTopic].decrement(V, d.getToken(j));
                 nTopicPreWord[oldTopic][V]--; 
                 
             } else{ 
-                nTopicPrevWordWord[oldTopic][d.getToken(j-1)][d.getToken(j)]--;
+                nTopicPrevWordWord[oldTopic].decrement(d.getToken(j-1), d.getToken(j));
                 nTopicPreWord[oldTopic][d.getToken(j-1)]--;
             }
         }
@@ -216,12 +226,12 @@ public class NGramModel {
                 } else{
                     if (j == 0){
                         p[k][s] = ((alpha + nDocTopic[i][k])/(K*alpha + nWordsSum[i])) 
-                                * ((delta+nTopicPrevWordWord[k][V][d.getToken(j)])/(V*delta+nTopicPreWord[k][V]))
+                                * ((delta+nTopicPrevWordWord[k].get(V, d.getToken(j)))/(V*delta+nTopicPreWord[k][V]))
                                 * ((gamma + nTopicPreWordIndicator[K][V][s])/(I*gamma + nTopicPreWordIndicatorSum[K][V]));
                         
                     }else {
                         p[k][s] = ((alpha + nDocTopic[i][k])/(K*alpha + nWordsSum[i])) 
-                                * ((delta+nTopicPrevWordWord[k][d.getToken(j-1)][d.getToken(j)])/(V*delta+nTopicPreWord[k][d.getToken(j-1)]))
+                                * ((delta+nTopicPrevWordWord[k].get(d.getToken(j-1), d.getToken(j)))/(V*delta+nTopicPreWord[k][d.getToken(j-1)]))
                                 * ((gamma + nTopicPreWordIndicator[(z[i][j-1])][d.getToken(j-1)][s])/(I*gamma + nTopicPreWordIndicatorSum[z[i][j-1]][d.getToken(j-1)]));
                        
                     }
@@ -263,10 +273,10 @@ public class NGramModel {
             nWordTopic[newTopic]++;
         } else{ // if bigram
             if (j == 0){ // if beginning term
-                nTopicPrevWordWord[newTopic][V][d.getToken(j)]++;
+                nTopicPrevWordWord[newTopic].increment(V, d.getToken(j));
                 nTopicPreWord[newTopic][V]++;            
             } else{ 
-                nTopicPrevWordWord[newTopic][d.getToken(j-1)][d.getToken(j)]++;
+                nTopicPrevWordWord[newTopic].increment(d.getToken(j-1), d.getToken(j));
                 nTopicPreWord[newTopic][d.getToken(j-1)]++;
             }
         }

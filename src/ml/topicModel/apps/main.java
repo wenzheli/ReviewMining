@@ -14,10 +14,10 @@ public class main {
         
         // test LDASentiment
         //ml.topicModel.LDASentiment.Inference.executeNIPSDataSet();
-        //ml.topicModel.LDASentiment.Inference.executeYelpDataSet();
+        ml.topicModel.LDASentiment.Inference.executeYelpDataSet();
         
         // test LDASentimentSentence
         //ml.topicModel.LDASentimentSentence.Inference.executeNIPSDataSet();
-        ml.topicModel.LDASentimentSentence.Inference.executeYelpDataSet();
+        //ml.topicModel.LDASentimentSentence.Inference.executeYelpDataSet();
     }
 }

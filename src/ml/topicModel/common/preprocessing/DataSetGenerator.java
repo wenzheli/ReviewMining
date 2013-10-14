@@ -18,8 +18,8 @@ import ml.topicModel.common.data.WDocument;
 
 public class DataSetGenerator {
     
-    public static int minCnt = 30;
-    public static int maxCnt = 2000;
+    public static int minCnt = 10;
+    public static int maxCnt = 5000;
     // for review data sets
     public static DataSet createYelpDataSetForSentenceLevel(String filePath) throws IOException{
         
@@ -52,6 +52,9 @@ public class DataSetGenerator {
                         String processedToken = removeSpecialCharacter(stemmedToken);
                         if (processedToken.equals(""))
                             continue;
+                        if (containsInvalidCharacter(processedToken)){
+                            continue;
+                        }
                         if (StopWords.isStopword(processedToken))
                             continue;
                         
@@ -121,6 +124,9 @@ public class DataSetGenerator {
                             String processedToken = removeSpecialCharacter(stemmedToken);
                             if (processedToken.equals(""))
                                 continue;
+                            if (containsInvalidCharacter(processedToken)){
+                                continue;
+                            }
                             if (StopWords.isStopword(processedToken))
                                 continue;
                             
@@ -131,7 +137,10 @@ public class DataSetGenerator {
                         }
                         
                         newSentence.setTokens(tokensInSentence);
-                        sentenceList.add(newSentence);
+                        if (newSentence.getTokens().size() >= 1 && newSentence.getTokens().size() < 9){
+                            sentenceList.add(newSentence);
+                        }
+                        
                     }   
                 }
             }
@@ -521,6 +530,31 @@ public class DataSetGenerator {
         } else
             return "";
         
+    }
+    
+    public static boolean containsInvalidCharacter(String token){
+      
+        if (token.length() < 3){
+            return true;
+        }
+        
+        int count = 0;
+        for (int i = 0; i < token.length(); i++){
+            char ch = token.charAt(i);
+            if (Character.isDigit(ch)){
+                return true;
+            }
+            
+            if (Character.isLetter(ch)){
+                count++;
+            }
+        }
+        
+        if (count < 3){
+            return true;
+        }
+        
+        return false;
     }
     
 }

@@ -6,7 +6,7 @@ public class Options {
     public double beta = 0.01;   // beta is the prior for topic-word distributions. 
     public double gamma = 0.1;   // gamma is the prior for indicator distribution 
     public double delta = 0.01;  // delta is the prior for bi-gram topic-word distribution
-    public int niters = 2000;    // number of Gibbs sampling iteration
+    public int niters = 10000;    // number of Gibbs sampling iteration
     public int liter = 80;     // the iteration at which the model was saved  
     public int savestep = 200;  // saving period
     public int tWords = 30;    // # of top words to display

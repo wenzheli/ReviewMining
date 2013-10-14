@@ -1,24 +1,27 @@
 package ml.topicModel.NGSentimentSentence;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import ml.topicModel.common.data.DataSet;
 import ml.topicModel.common.data.LatentVariable;
+import ml.topicModel.common.data.NGramDocument;
 import ml.topicModel.common.data.SDocument;
 import ml.topicModel.common.data.Sentence;
+import ml.topicModel.common.data.Vocabulary;
 import ml.topicModel.utils.DistributionUtils;
 
-
-
 public class NGramModelSentiSentence {
- 
+    
     private double alpha;
-    private double beta;
+    private double[][] beta;
+    private double[] betaSum;
     private double gamma;
     private double delta;
     private double omega;
@@ -49,7 +52,7 @@ public class NGramModelSentiSentence {
     
     
     // used for bigram
-    private byte [][][][] nSentimentTopicPrevWordWord; //nTopicWordWord[i][j][k]:  total number of word/term k, assigned to topic i, on the condition that the previous
+    private SparseMatrix[][] nSentimentTopicPrevWordWord; //nTopicWordWord[i][j][k]:  total number of word/term k, assigned to topic i, on the condition that the previous
                                        // previous term is j. size: K * (V+1) * V
     private short [][][] nSentimentTopicPreWord;  // nTopicPreWord[i][j]:  total number of word/term that assigned to topic i, where previous word is j. 
                                      // size: K *(V+1)
@@ -66,7 +69,7 @@ public class NGramModelSentiSentence {
     // initialize parameters. 
     public void init(Options options, DataSet dataset){
         this.alpha = options.alpha;
-        this.beta = options.beta;
+        this.beta = new double[S][V];
         this.gamma = options.gamma;
         this.delta = options.delta;
         this.omega = options.omega;
@@ -90,7 +93,7 @@ public class NGramModelSentiSentence {
         nWordSentimentTopic = new int[S][K];
         nWordSentimentTopicWords = new int[S][K][V];
         
-        nSentimentTopicPrevWordWord = new byte[S][K][V+1][V];
+        nSentimentTopicPrevWordWord = new SparseMatrix[S][K];
         nSentimentTopicPreWord = new short[S][K][V+1];
         nPreSentimentPreTopicPreWordIndicator = new short[S][K][V+1][I];
         nPreSentimentPreTopicPreWord = new short[S][K][V+1];
@@ -100,6 +103,35 @@ public class NGramModelSentiSentence {
         z = new int[D][];
         l = new int[D][];
         x = new int[D][][];
+        
+        for (int s= 0; s < S; s++){
+            for (int k =0; k < K; k++){
+                nSentimentTopicPrevWordWord[s][k] = new SparseMatrix(V+1);
+            }
+        }
+        // initialzie beta using asymmetric prior
+        this.beta = new double[S][V];
+        for (int i = 0; i < beta.length; i++){
+            Arrays.fill(beta[i], 0.001);
+        }
+        
+        Vocabulary vocab = dataset.getVocabulary();
+        Set<Integer> positiveWords = vocab.getPositiveWordS();
+        for (Integer tokenId : positiveWords){
+            beta[1][tokenId] = 0;
+        }
+        Set<Integer> negativeWords = vocab.getNegativeWords();
+        for (Integer tokenId : negativeWords){
+            beta[0][tokenId] = 0;
+        }
+        
+        betaSum = new double[S];
+        for (double value : beta[0]){
+            betaSum[0]+=value;
+        }
+        for (double value : beta[1]){
+            betaSum[1]+=value;
+        }
         
         for (int i = 0; i < D; i++){
             SDocument d = (SDocument) dataset.getDocument(i);
@@ -114,10 +146,20 @@ public class NGramModelSentiSentence {
                 // assign topic and sentiment for each sentence. 
                 int randTopic = (int)(Math.random() * K);
                 int randSentiment = (int)(Math.random() *S);
+             
+                Sentence sentence = d.getSentence(j);
+          
+                for (Integer tokenIdx : sentence.getTokens()){
+                   if (vocab.positiveWords.contains(tokenIdx)){
+                       randSentiment = 0;
+                   } else if(vocab.negativeWords.contains(tokenIdx)){
+                       randSentiment  = 1;
+                   }
+                }
+                
                 z[i][j] = randTopic;
                 l[i][j] = randSentiment;
                 
-                Sentence sentence = d.getSentence(j);
                 x[i][j] = new int[sentence.getTokens().size()];
                 
                 // iterate each token. 
@@ -143,10 +185,12 @@ public class NGramModelSentiSentence {
                         nWordSentimentTopicWords[randSentiment][randTopic][sentence.getToken(k)]++;
                     } else{ // use bigram. 
                         if (k ==0){ // if begining word
-                            nSentimentTopicPrevWordWord[randSentiment][randTopic][V][sentence.getToken(k)]++;
+                            //nSentimentTopicPrevWordWord[randSentiment][randTopic][V][sentence.getToken(k)]++;
+                            nSentimentTopicPrevWordWord[randSentiment][randTopic].increment(V, sentence.getToken(k));
                             nSentimentTopicPreWord[randSentiment][randTopic][V]++;
                         }else{
-                            nSentimentTopicPrevWordWord[randSentiment][randTopic][sentence.getToken(k-1)][sentence.getToken(k)]++;
+                            //nSentimentTopicPrevWordWord[randSentiment][randTopic][sentence.getToken(k-1)][sentence.getToken(k)]++;
+                            nSentimentTopicPrevWordWord[randSentiment][randTopic].increment(sentence.getToken(k-1),sentence.getToken(k));
                             nSentimentTopicPreWord[randSentiment][randTopic][sentence.getToken(k-1)]++;
                         }
                     }
@@ -211,26 +255,25 @@ public class NGramModelSentiSentence {
                 nWordSentimentTopicWords[oldSentiment][oldTopic][sentence.getToken(k)]--;
             } else{ // use bigram. 
                 if (k ==0){ // if begining word
-                    nSentimentTopicPrevWordWord[oldSentiment][oldTopic][V][sentence.getToken(k)]--;
+                    //nSentimentTopicPrevWordWord[oldSentiment][oldTopic][V][sentence.getToken(k)]--;
+                    nSentimentTopicPrevWordWord[oldSentiment][oldTopic].decrement(V, sentence.getToken(k));
                     nSentimentTopicPreWord[oldSentiment][oldTopic][V]--;
                 }else{
-                    nSentimentTopicPrevWordWord[oldSentiment][oldTopic][sentence.getToken(k-1)][sentence.getToken(k)]--;
+                    //nSentimentTopicPrevWordWord[oldSentiment][oldTopic][sentence.getToken(k-1)][sentence.getToken(k)]--;
+                    nSentimentTopicPrevWordWord[oldSentiment][oldTopic].decrement(sentence.getToken(k-1), sentence.getToken(k));
                     nSentimentTopicPreWord[oldSentiment][oldTopic][sentence.getToken(k-1)]--;
                 }
             }
         }
         
         
-        
         /*
          *  compute p(z[i][j]|*)
          */
         int numTokens = sentence.getTokens().size();
+        
         // generate random permutation
         int totalPermutation = (int) Math.pow(2, numTokens-1);
-        if (totalPermutation == 0){
-            int aaa =1;
-        }
         
         double[][][] p = new double[S][K][totalPermutation];
         
@@ -258,15 +301,17 @@ public class NGramModelSentiSentence {
                     // calculate p(w|z,l,x,beta,delta)
                     for (int tokenIdx = 0; tokenIdx < numTokens; tokenIdx++){
                         if (indicators[tokenIdx] == 0){
-                            term4 = term4 * (((beta + nWordSentimentTopicWords[s][k][sentence.getToken(tokenIdx)])
-                                    /(beta * V + nWordSentimentTopic[s][k])));
+                            term4 = term4 * (((beta[s][tokenIdx] + nWordSentimentTopicWords[s][k][sentence.getToken(tokenIdx)])
+                                    /(betaSum[s] + nWordSentimentTopic[s][k])));
                         }else{
                             if (tokenIdx == 0){
-                                term4 = term4 * (((delta + nSentimentTopicPrevWordWord[s][k][V][sentence.getToken(tokenIdx)])
-                                        /(delta * V + nSentimentTopicPreWord[s][k][V])));
+                                //term4 = term4 * (((delta + nSentimentTopicPrevWordWord[s][k][V][sentence.getToken(tokenIdx)])
+                                term4 = term4 * (((delta + nSentimentTopicPrevWordWord[s][k].get(V,sentence.getToken(tokenIdx)))
+                                /(delta * V + nSentimentTopicPreWord[s][k][V])));
                             }else{
-                                term4 = term4 * (((delta + nSentimentTopicPrevWordWord[s][k][sentence.getToken(tokenIdx-1)][sentence.getToken(tokenIdx)])
-                                        /(delta * V + nSentimentTopicPreWord[s][k][sentence.getToken(tokenIdx-1)])));
+                                //term4 = term4 * (((delta + nSentimentTopicPrevWordWord[s][k][sentence.getToken(tokenIdx-1)][sentence.getToken(tokenIdx)])
+                                term4 = term4 * (((delta + nSentimentTopicPrevWordWord[s][k].get(sentence.getToken(tokenIdx-1), sentence.getToken(tokenIdx)))
+                                /(delta * V + nSentimentTopicPreWord[s][k][sentence.getToken(tokenIdx-1)])));
                             }
                             
                         }
@@ -318,10 +363,12 @@ public class NGramModelSentiSentence {
                 nWordSentimentTopicWords[newSentiment][newTopic][sentence.getToken(k)]++;
             } else{ // use bigram. 
                 if (k ==0){ // if begining word
-                    nSentimentTopicPrevWordWord[newSentiment][newTopic][V][sentence.getToken(k)]++;
+                    //nSentimentTopicPrevWordWord[newSentiment][newTopic][V][sentence.getToken(k)]++;
+                    nSentimentTopicPrevWordWord[newSentiment][newTopic].increment(V, sentence.getToken(k));
                     nSentimentTopicPreWord[newSentiment][newTopic][V]++;
                 }else{
-                    nSentimentTopicPrevWordWord[newSentiment][newTopic][sentence.getToken(k-1)][sentence.getToken(k)]++;
+                    //nSentimentTopicPrevWordWord[newSentiment][newTopic][sentence.getToken(k-1)][sentence.getToken(k)]++;
+                    nSentimentTopicPrevWordWord[newSentiment][newTopic].increment(sentence.getToken(k-1), sentence.getToken(k));
                     nSentimentTopicPreWord[newSentiment][newTopic][sentence.getToken(k-1)]++;
                 }
             }
@@ -338,15 +385,6 @@ public class NGramModelSentiSentence {
                 pi[i][s] = (omega + nDocSentiment[i][s])/(omega*S + nTotalSentences[i]);
             }
         }
-        
-        // update phi
-        for (int s = 0; s < S; s++){
-            for (int k = 0; k < K; k++){
-                for (int v = 0; v < V; v++){
-                    phi[k][v] = (beta + nWordSentimentTopicWords[s][k][v]) / (V * beta + nWordSentimentTopic[s][k]); 
-                }
-            } 
-        } 
     }
     
     public double[][] getTopWordsFromNGram(){

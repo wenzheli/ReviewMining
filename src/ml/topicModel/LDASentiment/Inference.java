@@ -175,4 +175,8 @@ public class Inference {
         inference.initModel(opt);
         inference.runSampler();
     }
+    
+    public static void main(String[] args) throws IOException{
+        Inference.executeYelpDataSet();
+    }
 }
