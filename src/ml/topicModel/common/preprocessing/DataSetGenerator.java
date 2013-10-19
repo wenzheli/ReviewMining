@@ -19,7 +19,7 @@ import ml.topicModel.common.data.WDocument;
 public class DataSetGenerator {
     
     public static int minCnt = 10;
-    public static int maxCnt = 5000;
+    public static int maxCnt = 3000;
     // for review data sets
     public static DataSet createYelpDataSetForSentenceLevel(String filePath) throws IOException{
         
@@ -137,7 +137,7 @@ public class DataSetGenerator {
                         }
                         
                         newSentence.setTokens(tokensInSentence);
-                        if (newSentence.getTokens().size() >= 1 && newSentence.getTokens().size() < 9){
+                        if (newSentence.getTokens().size() >= 1 && newSentence.getTokens().size() < 10){
                             sentenceList.add(newSentence);
                         }
                         

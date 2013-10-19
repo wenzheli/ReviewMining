@@ -8,8 +8,8 @@ public class Options {
     public double delta = 0.01;  // delta is the prior for bi-gram topic-word distribution
     public double omega = 1;
     public int niters = 10000;    // number of Gibbs sampling iteration
-    public int savestep = 100;  // saving period
+    public int savestep = 50;  // saving period
     public int tWords = 10;    // # of top words to display
-    public int K = 10;         // # of topics we learn from the model. 
+    public int K = 50;         // # of topics we learn from the model. 
     public int S = 2;
 }

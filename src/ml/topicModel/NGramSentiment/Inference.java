@@ -120,7 +120,7 @@ public class Inference {
         }
         
         
-     // also, write into file
+        // also, write into file
         PrintWriter writer = new PrintWriter("result/yelp_ngram-"+itr+".txt", "UTF-8");
         for (int k = 0; k < option.K; k++){
             writer.println("Top words for topic: " + k);
@@ -151,7 +151,7 @@ public class Inference {
         opt.gamma = 0.1;
         opt.delta = 0.01;
         opt.niters = 2000;
-        opt.K = 20;
+        opt.K = 50;
         opt.tWords = 20;
         
         inference.initModel(opt);

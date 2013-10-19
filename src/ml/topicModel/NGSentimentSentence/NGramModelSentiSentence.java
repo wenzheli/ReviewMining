@@ -22,7 +22,7 @@ public class NGramModelSentiSentence {
     private double alpha;
     private double[][] beta;
     private double[] betaSum;
-    private double gamma;
+    private double[] gamma;
     private double delta;
     private double omega;
     
@@ -70,7 +70,10 @@ public class NGramModelSentiSentence {
     public void init(Options options, DataSet dataset){
         this.alpha = options.alpha;
         this.beta = new double[S][V];
-        this.gamma = options.gamma;
+        this.gamma = new double[2];
+        gamma[0] = 5;
+        gamma[1] = 1;
+        
         this.delta = options.delta;
         this.omega = options.omega;
         
@@ -267,13 +270,15 @@ public class NGramModelSentiSentence {
         }
         
         
+        
         /*
          *  compute p(z[i][j]|*)
          */
         int numTokens = sentence.getTokens().size();
-        
+      
         // generate random permutation
         int totalPermutation = (int) Math.pow(2, numTokens-1);
+       
         
         double[][][] p = new double[S][K][totalPermutation];
         
@@ -289,11 +294,11 @@ public class NGramModelSentiSentence {
                     // calculate the p(x|z,w,l,gamma)
                     for (int tokenIdx = 0; tokenIdx < numTokens; tokenIdx++){
                         if (tokenIdx == 0){ // if starting
-                            term3 = term3 * (((gamma + nPreSentimentPreTopicPreWordIndicator[s][k][V][indicators[tokenIdx]])
-                                    /(gamma * I + nPreSentimentPreTopicPreWord[s][k][V])));
+                            term3 = term3 * (((indicators[tokenIdx] + nPreSentimentPreTopicPreWordIndicator[s][k][V][indicators[tokenIdx]])
+                                    /(gamma[0]+gamma[1] + nPreSentimentPreTopicPreWord[s][k][V])));
                         }else{
-                            term3 = term3 * (((gamma + nPreSentimentPreTopicPreWordIndicator[s][k][sentence.getToken(tokenIdx-1)-1][indicators[tokenIdx]])
-                                    /(gamma * I + nPreSentimentPreTopicPreWord[s][k][sentence.getToken(tokenIdx-1)])));
+                            term3 = term3 * (((indicators[tokenIdx] + nPreSentimentPreTopicPreWordIndicator[s][k][sentence.getToken(tokenIdx-1)-1][indicators[tokenIdx]])
+                                    /(gamma[0]+gamma[1] + nPreSentimentPreTopicPreWord[s][k][sentence.getToken(tokenIdx-1)])));
                         }
                     }
                     

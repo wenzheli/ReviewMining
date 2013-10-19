@@ -8,6 +8,6 @@ public class Options {
     public int niters = 10000;    // number of Gibbs sampling iteration  
     public int saveStep = 100;  // saving period
     public int tWords = 30;    // # of top words to display
-    public int K = 10;         // # of topics we learn from the model. 
+    public int K = 50;         // # of topics we learn from the model. 
     public int S = 2;           // # of sentiments. 
 }

@@ -88,7 +88,7 @@ public class DataSet{
         Map<Integer, String> indexToToken = new HashMap<Integer, String>();
         for (String token: tokenMap.keySet()){
             int cnt = tokenMap.get(token);
-            if (cnt >= 30 && cnt <= 3000){
+            if (cnt >= 50 && cnt <= 3000){
                 tokenToIndex.put(token, index);
                 indexToToken.put(index, token);
                 index++;
