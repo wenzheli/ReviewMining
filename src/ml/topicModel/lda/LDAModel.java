@@ -117,6 +117,31 @@ public class LDAModel {
         }
     }
     
+    /**
+     * Calculate the perplexity score for training set. 
+     * @return
+     */
+    public double getPerplexityScore(){
+        double ppx = 0;
+        int size = 0;
+        for (int i = 0; i < D; i++){
+            WDocument d = (WDocument) dataset.getDocument(i);
+            for (int j = 0; j < d.getNumOfTokens(); j++){
+                int token = d.getToken(j);
+                double prob = 0;
+                for (int k = 0; k < K; k++){
+                    prob += phi[k][token] * theta[i][k];
+                }
+                prob = Math.log(prob);
+                if (!Double.isInfinite(prob) && !Double.isNaN(prob)){
+                    ppx += prob;
+                    size++;
+                }
+            }
+        }      
+        return Math.exp(-ppx/size);
+    }
+    
     public double[][] getTopicDistribution(){
         return theta;
     }

@@ -19,7 +19,8 @@ import ml.topicModel.common.data.WDocument;
 public class DataSetGenerator {
     
     public static int minCnt = 10;
-    public static int maxCnt = 3000;
+    public static int maxCnt = 5000;
+    public static int fileMaxCnt = 2000;
     // for review data sets
     public static DataSet createYelpDataSetForSentenceLevel(String filePath) throws IOException{
         
@@ -137,9 +138,8 @@ public class DataSetGenerator {
                         }
                         
                         newSentence.setTokens(tokensInSentence);
-                        if (newSentence.getTokens().size() >= 1 && newSentence.getTokens().size() < 10){
-                            sentenceList.add(newSentence);
-                        }
+                        sentenceList.add(newSentence);
+                        
                         
                     }   
                 }
@@ -286,6 +286,9 @@ public class DataSetGenerator {
         // first iteration, creating vocabulary list. 
         int fileCount = 0;
         for (File f: files){
+            if (fileCount > 5000){
+                break;
+            }
             System.out.println("Process " + ++fileCount + "th file");
             int count = 0;
             br = new BufferedReader(new FileReader(f));
@@ -342,6 +345,9 @@ public class DataSetGenerator {
         fileCount = 0;
         List<Document> documents = new ArrayList<Document>();
         for (File f: files){
+            if (fileCount > 5000){
+                break;
+            }
             List<Integer> tokensInDoc = new ArrayList<Integer>();
             Document doc = new WDocument();
             System.out.println("Process " + ++fileCount + "th file");
@@ -404,9 +410,13 @@ public class DataSetGenerator {
         Map<String, Integer> tokenMap = new HashMap<String, Integer>();
         // first iteration, creating vocabulary list. 
         int fileCount = 0;
-        
+        int fileCnt = 0;
         for (File folder: files){
             for (File f: folder.listFiles()){
+                fileCnt++;
+                if (fileCnt > fileMaxCnt)
+                    break;
+                
                 System.out.println("Process " + ++fileCount + "th file");
                 
                 br = new BufferedReader(new FileReader(f));
@@ -462,8 +472,13 @@ public class DataSetGenerator {
         fileCount = 0;
         List<Document> documents = new ArrayList<Document>();
         
+        fileCnt = 0;
         for (File folder: files){
             for (File f: folder.listFiles()){
+                fileCnt++;
+                if (fileCnt > fileMaxCnt)
+                    break;
+                
                 List<Integer> tokensInDoc = new ArrayList<Integer>();
                 Document doc = new WDocument();
                 System.out.println("Process " + ++fileCount + "th file");

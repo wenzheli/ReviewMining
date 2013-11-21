@@ -4,6 +4,7 @@ package ml.topicModel.LDASentiment;
 public class Options {
     public double alpha = 1;  // alpha is the prior for document-topic distributions
     public double beta = 0.01;   // beta is the prior for topic-word distributions. 
+    public double gamma = 1;
     public int niters = 2000;    // number of Gibbs sampling iteration
     public int liter = 80;     // the iteration at which the model was saved  
     public int savestep = 200;  // saving period
