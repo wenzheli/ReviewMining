@@ -18,9 +18,9 @@ import ml.topicModel.common.data.WDocument;
 
 public class DataSetGenerator {
     
-    public static int minCnt = 10;
-    public static int maxCnt = 5000;
-    public static int fileMaxCnt = 2000;
+    public static int minCnt = 20;
+    public static int maxCnt = 3000;
+    public static int fileMaxCnt = 5000;
     // for review data sets
     public static DataSet createYelpDataSetForSentenceLevel(String filePath) throws IOException{
         
@@ -36,6 +36,8 @@ public class DataSetGenerator {
         // first iteration, creating vocabulary list. 
         int fileCount = 0;
         for (File f: files){
+            if (fileCount > fileMaxCnt )
+                break;
             System.out.println("Process " + ++fileCount + "th file");
             int count = 0;
             br = new BufferedReader(new FileReader(f));
@@ -95,6 +97,8 @@ public class DataSetGenerator {
         fileCount = 0;
         List<Document> documents = new ArrayList<Document>();
         for (File f: files){
+            if (fileCount > fileMaxCnt )
+                break;
             List<Sentence> sentenceList = new ArrayList<Sentence>();
             Document doc = new SDocument();
             System.out.println("Process " + ++fileCount + "th file");
