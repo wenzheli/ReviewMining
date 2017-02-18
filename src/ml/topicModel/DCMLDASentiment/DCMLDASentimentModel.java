@@ -8,7 +8,7 @@ import ml.topicModel.common.data.WDocument;
 import ml.topicModel.common.data.DataSet;
 import ml.topicModel.common.data.Document;
 import ml.topicModel.utils.ConvergeUtil;
-import ml.topicModel.utils.DistUtil;
+//import ml.topicModel.utils.DistUtil;
 import ml.topicModel.utils.DistributionUtils;
 import ml.topicModel.utils.SparseMatrix;
 
@@ -418,7 +418,7 @@ public class DCMLDASentimentModel {
         double ppx = 0;
         int size = 0;
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             for (int j = 0; j < d.getNumOfTokens(); j++){
                 int token = d.getToken(j);
                 double prob = 0;
@@ -450,7 +450,7 @@ public class DCMLDASentimentModel {
         return alpha;
     }
     
-    public double[][] getBeta(){
+    public double[][][] getBeta(){
         return beta;
     }
 }

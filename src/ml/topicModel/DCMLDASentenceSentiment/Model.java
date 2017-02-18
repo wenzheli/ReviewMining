@@ -5,14 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import ml.topicModel.common.data.LatentVariable;
-import ml.topicModel.common.data.SDocument;
-import ml.topicModel.common.data.Sentence;
-import ml.topicModel.common.data.Vocabulary;
-import ml.topicModel.common.data.DataSet;
-import ml.topicModel.common.data.Document;
+import ml.topicModel.common.data.*;
 import ml.topicModel.utils.ConvergeUtil;
-import ml.topicModel.utils.DistUtil;
+//import ml.topicModel.utils.DistUtil;
 import ml.topicModel.utils.DistributionUtils;
 import ml.topicModel.utils.SparseMatrix;
 
@@ -478,7 +473,7 @@ public class Model {
         double ppx = 0;
         int size = 0;
         for (int i = 0; i < D; i++){
-            Document d = dataset.getDocument(i);
+            WDocument d = (WDocument) dataset.getDocument(i);
             for (int j = 0; j < d.getNumOfTokens(); j++){
                 int token = d.getToken(j);
                 double prob = 0;
@@ -510,7 +505,7 @@ public class Model {
         return alpha;
     }
     
-    public double[][] getBeta(){
+    public double[][][] getBeta(){
         return beta;
     }
 }

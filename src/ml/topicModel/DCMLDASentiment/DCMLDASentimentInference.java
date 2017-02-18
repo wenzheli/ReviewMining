@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 
 import ml.topicModel.common.data.DataSet;
 import ml.topicModel.common.preprocessing.DataSetGenerator;
+import ml.topicModel.utils.QuickSort;
 
 
 /**
@@ -69,14 +70,14 @@ public class DCMLDASentimentInference {
         writer.println("Printing top words....");
         
         // beta is the prior for DCMLDA, which plays similar role as \psi in LDA. 
-        double[][] beta = model.getBeta();
+        double[][][] beta = model.getBeta();
         
         int len1 = beta.length;
         int len2 = beta[0].length;
         double[][] temp = new double[len1][len2];
         for (int i = 0; i < len1; i++){
             for (int j =0; j < len2; j++){
-                temp[i][j] = beta[i][j];
+                temp[i][j] = beta[i][j][0];
             }
         }
         
@@ -99,7 +100,7 @@ public class DCMLDASentimentInference {
            
             for (int i = 0; i < tTop; i++){
                 topWords[k][i] = dataset.vocab.indexTotokenMap.get(index[vocabSize-i-1]); 
-                topWordsProbability[k][i] = beta[k][index[vocabSize-i-1]];
+                topWordsProbability[k][i] = beta[k][index[vocabSize-i-1]][0];
             }
         }
         

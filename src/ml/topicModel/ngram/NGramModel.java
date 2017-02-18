@@ -1,4 +1,4 @@
-package ml.topicModel.NGram;
+package ml.topicModel.ngram;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import ml.topicModel.NGSentimentSentence.SparseMatrix;
+import ml.topicModel.NGramSentence.Options;
 import ml.topicModel.common.data.DataSet;
 import ml.topicModel.common.data.LatentVariable;
 import ml.topicModel.common.data.NGramDocument;
@@ -35,10 +36,10 @@ public class NGramModel {
     private int[][] z; // latent variable, topic assignments for each word. D * document.size()
     private int[][] x; // latent variable, indicator variable for denoting if the current term form bigram with the previous word
     
-    private int [][] nTopicWords; // nTopicWords[i][j]: # of instances of word/term j assigned to topic i, size K*V
+    public int [][] nTopicWords; // nTopicWords[i][j]: # of instances of word/term j assigned to topic i, size K*V
     private int [][] nDocTopic;   // nDocTopic[i][j]: # of words in document i that assigned to topic j, size D x K
     private int [] nWordTopic; // nWordTopic[j]: total number of words assigned to topic j, size K. 
-    private int [] nWordsSum;     // nWordsSum[i]: total number of words in document i, size D
+    public int [] nWordsSum;     // nWordsSum[i]: total number of words in document i, size D
     private SparseMatrix [] nTopicPrevWordWord; //nTopicWordWord[i][j][k]:  total number of word/term k, assigned to topic i, on the condition that the previous
                                        // previous term is j. size: K * (V+1) * V
     private int [][] nTopicPreWord;  // nTopicPreWord[i][j]:  total number of word/term that assigned to topic i, where previous word is j. 

@@ -47,24 +47,26 @@ public class Inference {
     
     public void printTopWords(int itr) throws FileNotFoundException, UnsupportedEncodingException{
       
-        double[][] phi = model.getTopicWordDistribution();
+        double[][][] phi = model.getTopicWordDistribution();
         int tTop = option.tWords; // get the tTop words from each topic
         String[][] topWords = new String[option.K][tTop];
-        for (int k = 0; k < option.K; k++){
-            // select the top words for topic k
-            Map<Double, Integer> map = new TreeMap<Double, Integer>();
-            for (int v = 0; v < dataset.vocab.getVocabularySize(); v++){
-                map.put(phi[k][v], v);
-            }
-            
-            Collection<Integer> indices = map.values();
-            Object[] objects =  indices.toArray();
-            int[] sortedIndexs = new int[objects.length];
-            for (int i = 0; i < objects.length; i++){
-                sortedIndexs[i] = Integer.parseInt(objects[i].toString());
-            }
-            for (int i = 0; i < tTop; i++){
-                topWords[k][i] = dataset.vocab.indexTotokenMap.get(sortedIndexs[objects.length-i-1]); 
+        for (int s = 0; s <option.S ; s++) {
+            for (int k = 0; k < option.K; k++) {
+                // select the top words for topic k
+                Map<Double, Integer> map = new TreeMap<Double, Integer>();
+                for (int v = 0; v < dataset.vocab.getVocabularySize(); v++) {
+                    map.put(phi[s][k][v], v);
+                }
+
+                Collection<Integer> indices = map.values();
+                Object[] objects = indices.toArray();
+                int[] sortedIndexs = new int[objects.length];
+                for (int i = 0; i < objects.length; i++) {
+                    sortedIndexs[i] = Integer.parseInt(objects[i].toString());
+                }
+                for (int i = 0; i < tTop; i++) {
+                    topWords[k][i] = dataset.vocab.indexTotokenMap.get(sortedIndexs[objects.length - i - 1]);
+                }
             }
         }
         

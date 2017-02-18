@@ -19,4 +19,6 @@ public class Document{
     public int getToken(int index){
         return tokens.get(index);
     }
+
+
 }

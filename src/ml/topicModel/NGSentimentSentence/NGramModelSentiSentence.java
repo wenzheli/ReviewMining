@@ -9,12 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import ml.topicModel.common.data.DataSet;
-import ml.topicModel.common.data.LatentVariable;
-import ml.topicModel.common.data.NGramDocument;
-import ml.topicModel.common.data.SDocument;
-import ml.topicModel.common.data.Sentence;
-import ml.topicModel.common.data.Vocabulary;
+import ml.topicModel.common.data.*;
 import ml.topicModel.utils.DistributionUtils;
 
 public class NGramModelSentiSentence {
@@ -401,11 +396,11 @@ public class NGramModelSentiSentence {
             List<Integer> words;
             Document d = dataset.getDocument(i);
             for (int j = 1; j < d.getNumOfTokens(); j++){
-                if(x[i][j] == 1){
+                if(x[i][j].length==1){
                     words = new ArrayList<Integer>();
                     words.add(d.getToken(j-1));
                     j++;
-                    while (j< d.getNumOfTokens() && x[i][j] == 1){
+                    while (j< d.getNumOfTokens() && x[i][j].length==1){
                         words.add(d.getToken(j-1));
                         j++;
                     }

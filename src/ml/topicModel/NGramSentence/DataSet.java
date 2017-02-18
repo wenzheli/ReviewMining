@@ -1,5 +1,8 @@
 package ml.topicModel.NGramSentence;
 
+import ml.topicModel.common.preprocessing.PorterStemmer;
+import ml.topicModel.common.preprocessing.StopWords;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
