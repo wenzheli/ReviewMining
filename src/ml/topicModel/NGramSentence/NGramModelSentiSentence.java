@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import ml.topicModel.ngram.*;
 
 
-
-public class NGramModelSentiSentence {
+public class NGramModelSentiSentence extends NGramModel{
  
     private double alpha;
     private double beta;
@@ -324,11 +324,11 @@ public class NGramModelSentiSentence {
             List<Integer> words;
             Document d = dataset.getDocument(i);
             for (int j = 1; j < d.getNumOfTokens(); j++){
-                if(x[i][j] == 1){
+                if(x[i][j].length==1){
                     words = new ArrayList<Integer>();
                     words.add(d.getToken(j-1));
                     j++;
-                    while (j< d.getNumOfTokens() && x[i][j] == 1){
+                    while (j< d.getNumOfTokens() && x[i][j].length == 1){
                         words.add(d.getToken(j-1));
                         j++;
                     }
